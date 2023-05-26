@@ -4,6 +4,7 @@ from github import Github
 import os
 import sys
 import logging
+import PyGithub
 
 if "OPENAI_API_KEY" not in st.secrets:
     st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
