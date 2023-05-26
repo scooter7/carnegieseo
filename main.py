@@ -1,6 +1,8 @@
 import streamlit as st
 import openai
 from github import Github
+import os
+import sys
 
 if "OPENAI_API_KEY" not in st.secrets:
     st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
