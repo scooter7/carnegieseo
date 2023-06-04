@@ -36,6 +36,8 @@ placeholders = {
 def generate_article(content_type, keyword, writing_style, audience, institution, emulate, word_count):
     
     style = placeholders.get(writing_style, writing_style)
+    if isinstance(style, list):
+        style = ", ".join(style)
     
     messages = [
         {"role": "user", "content": "This will be a " + content_type},
@@ -46,7 +48,7 @@ def generate_article(content_type, keyword, writing_style, audience, institution
     ]
     
     if institution:
-        messages.append({"role": "user", "content": "The " + content_type + " include references to the benefits of + institution "})
+        messages.append({"role": "user", "content": "The " + content_type + " include references to the benefits of " + institution})
     
     if emulate:
         messages.append({"role": "user", "content": "Write like " + emulate + " in terms of grammar and sentence construction style but do not use any of the example content in the output"})
