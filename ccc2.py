@@ -38,12 +38,6 @@ def generate_article(keyword, writing_style, institution, audience, word_count):
     print(result)
     return result
 
-writing_styles = {
-    "Purple": "Casual",
-    "Informative": "Informative",
-    "Witty": "Witty"
-}
-
 keyword = st.text_input("Enter a keyword:")
 writing_style = st.selectbox("Select writing style:", list(writing_styles.keys()))
 selected_style = writing_styles[writing_style]
