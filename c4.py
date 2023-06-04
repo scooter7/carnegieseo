@@ -47,7 +47,7 @@ def generate_article(content_type, keyword, writing_style, audience, style_guide
         messages.append({"role": "user", "content": "The " + content_type + " should be written to appeal to " + audience})
     
     if style_guide:
-        messages.append({"role": "user", "content": "Use the rules of the " + style_guide + " style guid when writing"})
+        messages.append({"role": "user", "content": "Use the rules of the " + style_guide + " style guide when writing"})
     
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
