@@ -47,14 +47,15 @@ def generate_article(content_type, keyword, writing_style, audience, institution
 
     if emulate:
         emulate_message = {
-            "role": "system",
-            "content": f"Prompt: Write a {content_type} that emulates the grammar and sentence construction styles of {emulate}. Do not use any of the provided example content. Just emulate the style of writing."
+            "role": "assistant",
+            "content": emulate
         }
         messages.append(emulate_message)
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        messages=messages
+        messages=messages,
+        max_tokens=word_count
     )
 
     result = ''
@@ -63,6 +64,7 @@ def generate_article(content_type, keyword, writing_style, audience, institution
 
     print(result)
     return result
+
 
 
 content_type = st.text_input("Define content type:")
