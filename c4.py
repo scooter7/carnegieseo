@@ -36,7 +36,7 @@ placeholders = {
 def generate_article(content_type, keyword, writing_style, audience, style_guide, institution, word_count):
     
     messages = [
-        {"role": "user", "content": "This will be a " + content_type},
+        {"role": "user", "content": "This will be a SEO optimized " + content_type},
         {"role": "user", "content": "This will be " + content_type + " about " + keyword},
         {"role": "user", "content": "The " + content_type + " should have the style " + writing_style},
         {"role": "user", "content": "The email should mention the benefits of attending " + institution},
