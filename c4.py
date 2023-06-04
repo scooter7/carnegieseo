@@ -47,7 +47,7 @@ def generate_article(content_type, keyword, writing_style, audience, emulate, in
         messages.append({"role": "user", "content": "The " + content_type + " should be written to appeal to " + audience})
     
     if emulate:
-        messages.append({"role": "user", "content": "Write like " + emulate + " in terms of grammar and sentence construction style"})
+        messages.append({"role": "user", "content": "Write like " + emulate + " only in terms of grammar and sentence construction style but don't use any of the actual content"})
     
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
