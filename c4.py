@@ -33,7 +33,7 @@ placeholders = {
     # Add more color and adjective placeholders as needed
 }
 
-def generate_article(content_type, keyword, writing_style, audience, emulate, institution, word_count):
+def generate_article(content_type, keyword, writing_style, audience, style_guide, institution, word_count):
     
     messages = [
         {"role": "user", "content": "This will be a " + content_type},
@@ -46,8 +46,8 @@ def generate_article(content_type, keyword, writing_style, audience, emulate, in
     if audience:
         messages.append({"role": "user", "content": "The " + content_type + " should be written to appeal to " + audience})
     
-    if emulate:
-        messages.append({"role": "user", "content": "Write like " + emulate + " only in terms of grammar and sentence construction style but don't use any of the actual content"})
+    if style_guide:
+        messages.append({"role": "user", "content": "Use the rules of the " + style_guide + " style guid when writing"})
     
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
@@ -65,7 +65,7 @@ content_type = st.text_input("Define content type:")
 keyword = st.text_input("Enter a keyword:")
 writing_style = st.selectbox("Select writing style:", list(placeholders.keys()))
 audience = st.text_input("Audience (optional):")
-emulate = st.text_area("Emulate (optional):", value='', height=200, max_chars=1000)
+style_guide = st.text_input("Style Guide (optional):")
 institution = st.text_input("Institution:")
 word_count = st.slider("Select word count:", min_value=100, max_value=1000, step=50, value=100)
 submit_button = st.button("Generate Content")
@@ -73,7 +73,7 @@ submit_button = st.button("Generate Content")
 if submit_button:
     message = st.empty()
     message.text("Busy generating...")
-    article = generate_article(content_type, keyword, writing_style, audience, emulate, institution, word_count)
+    article = generate_article(content_type, keyword, writing_style, audience, style_guide, institution, word_count)
     message.text("")
     st.write(article)
     st.download_button(
