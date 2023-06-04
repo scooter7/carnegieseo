@@ -34,12 +34,13 @@ placeholders = {
 }
 
 def generate_article(content_type, keyword, writing_style, audience, emulate, word_count):
-    style = placeholders.get(writing_style, writing_style)
+    style = random.choice(placeholders.get(writing_style, writing_style))
     
     messages = [
         {"role": "user", "content": "This will be a " + content_type},
         {"role": "user", "content": "This will be " + content_type + " about " + keyword},
         {"role": "user", "content": "The " + content_type + " should have the style " + style},
+        {"role": "user", "content": "The email should mention the benefits of attending " + institution},
         {"role": "user", "content": "The " + content_type + " length should " + str(word_count)}
     ]
     
@@ -66,13 +67,14 @@ keyword = st.text_input("Enter a keyword:")
 writing_style = st.selectbox("Select writing style:", list(placeholders.keys()))
 audience = st.text_input("Audience (optional):")
 emulate = st.text_area("Emulate (optional):", value='', height=200, max_chars=1000)
+institution = st.text_input("Institution:")
 word_count = st.slider("Select word count:", min_value=100, max_value=1000, step=50, value=100)
 submit_button = st.button("Generate Content")
 
 if submit_button:
     message = st.empty()
     message.text("Busy generating...")
-    article = generate_article(content_type, keyword, writing_style, audience, emulate, word_count)
+    article = generate_article(content_type, keyword, writing_style, audience, emulate, institution, word_count)
     message.text("")
     st.write(article)
     st.download_button(
