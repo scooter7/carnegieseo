@@ -19,7 +19,7 @@ repo = g.get_repo("scooter7/carnegieseo")
 
 st.title("Carnegie Content Creator")
 
-def generate_article(keyword, writing_style, institution, word_count):
+def generate_article(keyword, writing_style, institution, audience, word_count):
     #return "This is a test article generated without making API calls."
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
