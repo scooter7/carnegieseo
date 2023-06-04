@@ -34,7 +34,6 @@ placeholders = {
 }
 
 def generate_article(content_type, keyword, writing_style, audience, emulate, institution, word_count):
-    style = random.choice(placeholders.get(writing_style, writing_style))
     
     messages = [
         {"role": "user", "content": "This will be a " + content_type},
