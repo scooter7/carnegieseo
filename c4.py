@@ -25,7 +25,7 @@ placeholders = {
     "Maroon - gritty, determined": ["gritty", "determined"],
     "Orange - artistic, creative": ["artistic", "creative"],
     "Yellow - innovative, intelligent": ["innovative", "intelligent"],
-    "Red - entertaining humorous": ["entertaining", "humorous"],
+    "Red - entertaining, humorous": ["entertaining", "humorous"],
     "Blue - confident, influential": ["confident", "influential"],
     "Pink - charming, elegenat": ["charming", "elegant"],
     "Silver - rebellious, daring": ["rebellious", "daring"],
