@@ -53,7 +53,7 @@ if submit_button:
     else:
         message_type = "email"
     
-    article = generate_article(keyword, writing_style, institution, word_count, article_type=message_type)
+    article = generate_article_type(keyword, writing_style, institution, word_count, article_type=message_type)
     message.text("")
     st.write(article)
     st.download_button(
