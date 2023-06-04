@@ -40,7 +40,7 @@ def generate_article(keyword, writing_style, institution, word_count):
 keyword = st.text_input("Enter a keyword:")
 writing_style = st.selectbox("Select writing style:", ["Casual", "Informative", "Witty"])
 institution = st.text_input("Institution:")
-word_count = st.slider("Select word count:", min_value=300, max_value=1000, step=100, value=300)
+word_count = st.slider("Select word count:", min_value=100, max_value=1000, step=100, value=100)
 submit_button = st.button("Generate Email")
 
 if submit_button:
