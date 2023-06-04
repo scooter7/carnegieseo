@@ -70,7 +70,7 @@ keyword = st.text_input("Enter a keyword:")
 writing_style = st.selectbox("Select writing style:", list(placeholders.keys()))
 audience = st.text_input("Audience (optional):")
 institution = st.text_input("Institution (optional):")
-emulate = st.text_area("Emulate by pasting in up to 300 words of sample content(optional):", value='', height=200, max_chars=3000)
+emulate = st.text_area("Emulate by pasting in up to 3000 words of sample content(optional):", value='', height=200, max_chars=3000)
 word_count = st.slider("Select word count:", min_value=100, max_value=1000, step=50, value=100)
 submit_button = st.button("Generate Content")
 
