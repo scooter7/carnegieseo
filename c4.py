@@ -19,21 +19,21 @@ repo = g.get_repo("scooter7/carnegieseo")
 
 st.title("Carnegie Content Creator")
 
-def generate_article(content_type, keyword, writing_style, audience, emulate, word_count):
-    placeholders = {
-        "Purple": ["caring", "encouraging"],
-        "Green": ["adventurous", "curious"],
-        "Maroon": ["gritty", "determined"],
-        "Orange": ["artistic", "creative"],
-        "Yellow": ["innovative", "intelligent"],
-        "Red": ["entertaining", "humorous"],
-        "Blue": ["confident", "influential"],
-        "Pink": ["charming", "elegant"],
-        "Silver": ["rebellious", "daring"],
-        "Beige": ["dedicated", "humble"],
-        # Add more color and adjective placeholders as needed
-    }
+placeholders = {
+    "Purple": ["caring", "encouraging"],
+    "Green": ["adventurous", "curious"],
+    "Maroon": ["gritty", "determined"],
+    "Orange": ["artistic", "creative"],
+    "Yellow": ["innovative", "intelligent"],
+    "Red": ["entertaining", "humorous"],
+    "Blue": ["confident", "influential"],
+    "Pink": ["charming", "elegant"],
+    "Silver": ["rebellious", "daring"],
+    "Beige": ["dedicated", "humble"],
+    # Add more color and adjective placeholders as needed
+}
 
+def generate_article(content_type, keyword, writing_style, audience, emulate, word_count):
     style = placeholders.get(writing_style, writing_style)
     
     messages = [
