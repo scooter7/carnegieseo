@@ -46,14 +46,15 @@ def generate_article(content_type, keyword, writing_style, audience, institution
         messages.append({"role": "user", "content": "The " + content_type + " include references to the benefits of " + institution})
 
     if emulate:
-        style_message = {"role": "user", "content": "Write like " + emulate + " in terms of grammar and sentence construction style, but do not use any of the example content in the output. Just emulate the style of the writing only with no verbatim use of the provided content"}
-        emulate_messages = [style_message]
-    else:
-        emulate_messages = []
+        emulate_message = {
+            "role": "system",
+            "content": f"Prompt: Write a {content_type} that emulates the grammar and sentence construction styles of {emulate}. Do not use any of the provided example content. Just emulate the style of writing."
+        }
+        messages.append(emulate_message)
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        messages=messages + emulate_messages
+        messages=messages
     )
 
     result = ''
@@ -62,6 +63,7 @@ def generate_article(content_type, keyword, writing_style, audience, institution
 
     print(result)
     return result
+
 
 content_type = st.text_input("Define content type:")
 keyword = st.text_input("Enter a keyword:")
