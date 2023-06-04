@@ -27,6 +27,7 @@ def generate_article(keyword, writing_style, institution, word_count):
                 {"role": "user", "content": "Write an email about " + keyword},
                 {"role": "user", "content": "The email should be " + writing_style},
                 {"role": "user", "content": "The email should mention the benefits of attending " + institution},
+                {"role": "user", "content": "The email should be written to appeal to " + audience},
                 {"role": "user", "content": "The email length should " + str(word_count)},
             ]
     )
@@ -40,6 +41,7 @@ def generate_article(keyword, writing_style, institution, word_count):
 keyword = st.text_input("Enter a keyword:")
 writing_style = st.selectbox("Select writing style:", ["Casual", "Informative", "Witty"])
 institution = st.text_input("Institution:")
+audience = st.text_input("Audience:")
 word_count = st.slider("Select word count:", min_value=100, max_value=1000, step=100, value=100)
 submit_button = st.button("Generate Email")
 
