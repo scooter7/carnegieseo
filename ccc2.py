@@ -48,7 +48,7 @@ submit_button = st.button("Generate Email")
 if submit_button:
     message = st.empty()
     message.text("Busy generating...")
-    article = generate_article(keyword, writing_style, institution, word_count)
+    article = generate_article(keyword, writing_style, institution, audience, word_count)
     message.text("")
     st.write(article)
     st.download_button(
