@@ -34,11 +34,6 @@ placeholders = {
 }
 
 def generate_article(content_type, keyword, writing_style, audience, institution, emulate, word_count):
-    
-    style = placeholders.get(writing_style, writing_style)
-    if isinstance(style, list):
-        style = ", ".join(style)
-    
     messages = [
         {"role": "user", "content": "This will be a " + content_type},
         {"role": "user", "content": "This will be " + content_type + " about " + keyword},
@@ -46,18 +41,21 @@ def generate_article(content_type, keyword, writing_style, audience, institution
         {"role": "user", "content": "The " + content_type + " should be written to appeal to " + audience},
         {"role": "user", "content": "The " + content_type + " length should " + str(word_count)}
     ]
-    
+
     if institution:
         messages.append({"role": "user", "content": "The " + content_type + " include references to the benefits of " + institution})
-    
+
     if emulate:
-        messages.append({"role": "user", "content": "Write like " + emulate + " in terms of grammar and sentence construction style, but do not use any of the example content in the output. Just emulate the style of the writing only with no verbatim use of the provided content"})
-    
+        style_message = {"role": "user", "content": "Write like " + emulate + " in terms of grammar and sentence construction style, but do not use any of the example content in the output. Just emulate the style of the writing only with no verbatim use of the provided content"}
+        emulate_messages = [style_message]
+    else:
+        emulate_messages = []
+
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        messages=messages
+        messages=messages + emulate_messages
     )
-    
+
     result = ''
     for choice in response.choices:
         result += choice.message.content
