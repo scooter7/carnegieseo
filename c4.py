@@ -27,7 +27,7 @@ placeholders = {
     "Yellow - innovative, intelligent": ["innovative", "intelligent"],
     "Red - entertaining, humorous": ["entertaining", "humorous"],
     "Blue - confident, influential": ["confident", "influential"],
-    "Pink - charming, elegenat": ["charming", "elegant"],
+    "Pink - charming, elegantt": ["charming", "elegant"],
     "Silver - rebellious, daring": ["rebellious", "daring"],
     "Beige - dedicated, humble": ["dedicated", "humble"],
     # Add more color and adjective placeholders as needed
