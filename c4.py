@@ -19,35 +19,36 @@ repo = g.get_repo("scooter7/carnegieseo")
 
 st.title("Carnegie Content Creator")
 
-placeholders = {
-    "Purple": ["caring", "encouraging"],
-    "Green": ["adventurous", "curious"],
-    "Maroon": ["gritty", "determined"],
-    "Orange": ["artistic", "creative"],
-    "Yellow": ["innovative", "intelligent"],
-    "Red": ["entertaining", "humorous"],
-    "Blue": ["confident", "influential"],
-    "Pink": ["charming", "elegant"],
-    "Silver": ["rebellious", "daring"],
-    "Beige": ["dedicated", "humble"],
-    # Add more color and adjective placeholders as needed
-}
+def generate_article(content_type, keyword, writing_style, audience, institution, emulate, word_count):
+    placeholders = {
+        "Purple": ["caring", "encouraging"],
+        "Green": ["adventurous", "curious"],
+        "Maroon": ["gritty", "determined"],
+        "Orange": ["artistic", "creative"],
+        "Yellow": ["innovative", "intelligent"],
+        "Red": ["entertaining", "humorous"],
+        "Blue": ["confident", "influential"],
+        "Pink": ["charming", "elegant"],
+        "Silver": ["rebellious", "daring"],
+        "Beige": ["dedicated", "humble"],
+        # Add more color and adjective placeholders as needed
+    }
 
-def generate_article(content_type, keyword, writing_style, audience, style_guide, institution, word_count):
+    style = placeholders.get(writing_style, writing_style)
     
     messages = [
-        {"role": "user", "content": "This will be a SEO optimized " + content_type},
+        {"role": "user", "content": "This will be a " + content_type},
         {"role": "user", "content": "This will be " + content_type + " about " + keyword},
-        {"role": "user", "content": "The " + content_type + " should have the style " + writing_style},
-        {"role": "user", "content": "The email should mention the benefits of attending " + institution},
+        {"role": "user", "content": "The " + content_type + " should have the style " + style},
+        {"role": "user", "content": "The " + content_type + " should be written to appeal to " + audience},
         {"role": "user", "content": "The " + content_type + " length should " + str(word_count)}
     ]
     
-    if audience:
-        messages.append({"role": "user", "content": "The " + content_type + " should be written to appeal to " + audience})
+    if institution:
+        messages.append({"role": "user", "content": "The " + content_type + " include references to the benefits of + institution "})
     
-    if style_guide:
-        messages.append({"role": "user", "content": "Use the rules of the " + style_guide + " style guide when writing"})
+    if emulate:
+        messages.append({"role": "user", "content": "Write like " + emulate + " in terms of grammar and sentence construction style but do not use any of the example content in the output"})
     
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
@@ -65,15 +66,15 @@ content_type = st.text_input("Define content type:")
 keyword = st.text_input("Enter a keyword:")
 writing_style = st.selectbox("Select writing style:", list(placeholders.keys()))
 audience = st.text_input("Audience (optional):")
-style_guide = st.text_input("Style Guide URL (optional):")
-institution = st.text_input("Institution:")
+institution = st.text_input("Institution (optional):")
+emulate = st.text_area("Emulate (optional):", value='', height=200, max_chars=3000)
 word_count = st.slider("Select word count:", min_value=100, max_value=1000, step=50, value=100)
 submit_button = st.button("Generate Content")
 
 if submit_button:
     message = st.empty()
     message.text("Busy generating...")
-    article = generate_article(content_type, keyword, writing_style, audience, style_guide, institution, word_count)
+    article = generate_article(content_type, keyword, writing_style, audience, institution, emulate, word_count)
     message.text("")
     st.write(article)
     st.download_button(
