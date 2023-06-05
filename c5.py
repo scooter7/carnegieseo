@@ -46,8 +46,8 @@ def generate_article(content_type, keyword, writing_style, audience, institution
         messages.append({"role": "user", "content": "The " + content_type + " include references to the benefits of " + institution})
 
     if stats_facts:
-        messages.append({"role": "user", "content": "Include the following statistics or facts: " + stats_facts})
-
+        messages.append({"role": "user", "content": "The content produced is required to include the following statistics or facts: " + stats_facts})
+    
     if emulate:
         emulate_message = {
             "role": "assistant",
