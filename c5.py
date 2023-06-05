@@ -58,12 +58,29 @@ def generate_article(content_type, keyword, writing_style, audience, institution
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=messages,
-        max_tokens=word_count
+        max_tokens=word_count,
+        n=1,  # Generate a single response
+        stop=None,  # Stop when max_tokens reached
+        temperature=0.7,  # Adjust temperature as needed
     )
 
     result = ''
     for choice in response.choices:
         result += choice.message.content
+
+    # If the response is incomplete, continue generating until completion
+    while response.choices[0].message.content.endswith("..."):
+        messages[-1]["content"] = response.choices[0].message.content
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=messages,
+            max_tokens=word_count - len(result),
+            n=1,
+            stop=None,
+            temperature=0.7,
+        )
+        for choice in response.choices:
+            result += choice.message.content
 
     print(result)
     return result
