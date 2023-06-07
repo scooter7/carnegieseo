@@ -65,8 +65,11 @@ placeholders = {
 
 def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, h1_text, h2_text, style_rules):
     messages = [
-        {"role": "user", "content": "The " + content_type + " should have the style " + ", ".join([style + " (" + str(weight) + "%)" for style, weight in zip(writing_styles, style_weights)])},
+        {"role": "user", "content": "The " + content_type + " should have the style: "}
     ]
+
+    for style, weight in zip(writing_styles, style_weights):
+        messages.append({"role": "user", "content": f"- {style} ({weight}%) "})
 
     # Append verb and adjective banks based on selected writing styles
     for style in writing_styles:
@@ -81,20 +84,21 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
             adjective_bank = placeholders[style]["adjectives"]
             verb_bank_message = {
                 "role": "assistant",
-                "content": f"Verb Bank: {', '.join(verb_bank)}"
+                "content": "Verb Bank: " + ", ".join(verb_bank)
             }
             adjective_bank_message = {
                 "role": "assistant",
-                "content": f"Adjective Bank: {', '.join(adjective_bank)}"
+                "content": "Adjective Bank: " + ", ".join(adjective_bank)
             }
             messages.append(verb_bank_message)
             messages.append(adjective_bank_message)
 
     messages.extend([
         {"role": "user", "content": "This will be a " + content_type},
-        {"role": "user", "content": "This will be " + content_type + " about " + ", ".join(keywords)},
+        {"role": "user", "content": "This will be " + content_type + " about " + keywords},
+        {"role": "user", "content": "The " + content_type + " should have the style " + writing_styles},
         {"role": "user", "content": "The " + content_type + " should be written to appeal to " + audience},
-        {"role": "user", "content": "The " + content_type + " length should be " + str(word_count)},
+        {"role": "user", "content": "The " + content_type + " length should be " + str(word_count) + " words"}
     ])
 
     if institution:
@@ -109,6 +113,13 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
             "content": emulate
         }
         messages.append(emulate_message)
+
+    if style_rules:
+        style_rules_message = {
+            "role": "user",
+            "content": "Style Rules:\n" + style_rules
+        }
+        messages.append(style_rules_message)
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
@@ -142,44 +153,32 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
 
 
 content_type = st.text_input("Define content type:")
-keywords = st.text_input("Enter keywords (comma-separated):").split(",")
+keywords = st.text_input("Enter keywords (comma-separated):")
 writing_styles = st.multiselect("Select writing styles:", list(placeholders.keys()))
-style_weights = st.text_input("Enter style weights (comma-separated):").split(",")
+style_weights = st.multiselect("Select style weights:", [f"{style} ({weight}%)"
+                                                         for style, weight in zip(writing_styles, range(0, 101, 10))],
+                               default=[f"{style} (100%)" for style in writing_styles])
 audience = st.text_input("Audience (optional):")
 institution = st.text_input("Institution (optional):")
 emulate = st.text_area("Emulate by pasting in up to 3000 words of sample content (optional):", value="", height=200, max_chars=3000)
 stats_facts = st.text_area("Enter specific statistics or facts (optional):", value="", height=200, max_chars=3000)
 word_count = st.slider("Select word count:", min_value=100, max_value=1000, step=50, value=100)
-title = st.text_input("Enter the title:", required=True)
+title = st.text_input("Enter title (required):")
 h1_text = st.text_input("Enter H1 text:")
 h2_text = st.text_input("Enter H2 text:")
-style_rules = st.text_area("Paste grammar and citation rules (optional):", value="", height=200)
+style_rules = st.text_area("Enter style rules (optional):", value="", height=200)
 
 submit_button = st.button("Generate Content")
 
 if submit_button:
     message = st.empty()
     message.text("Busy generating...")
-    article = generate_article(
-        content_type,
-        keywords,
-        writing_styles,
-        style_weights,
-        audience,
-        institution,
-        emulate,
-        word_count,
-        stats_facts,
-        title,
-        h1_text,
-        h2_text,
-        style_rules,
-    )
+    article = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, h1_text, h2_text, style_rules)
     message.text("")
     st.write(article)
     st.download_button(
-        label="Download as text",
+        label="Download content",
         data=article,
-        file_name="generated_content.txt",
-        mime="text/plain",
+        file_name="Content.txt",
+        mime="text/txt",
     )
