@@ -69,7 +69,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
     ]
 
     for style, weight in zip(writing_styles, style_weights):
-        messages.append({"role": "user", "content": f"- {style} ({weight})"})
+        messages.append({"role": "user", "content": f"- {style} ({weight})% "})
 
     # Append verb and adjective banks based on selected writing styles
     for style in writing_styles:
@@ -96,7 +96,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
     messages.extend([
         {"role": "user", "content": "This will be a " + content_type},
         {"role": "user", "content": "This will be " + content_type + " about " + keywords},
-        {"role": "user", "content": "The " + content_type + " should have the style " + writing_styles},
+        {"role": "user", "content": "The " + content_type + " should have the style " + ", ".join(writing_styles)},
         {"role": "user", "content": "The " + content_type + " should be written to appeal to " + audience},
         {"role": "user", "content": "The " + content_type + " length should be " + str(word_count) + " words"}
     ])
@@ -151,24 +151,20 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
     print(result)
     return result
 
-
 content_type = st.text_input("Define content type:")
 keywords = st.text_input("Enter keywords (comma-separated):")
 writing_styles = st.multiselect("Select writing styles:", list(placeholders.keys()))
-style_weights = st.multiselect("Select style weights:", [f"{style} ({weight})%"
-                                                         for style, weight in zip(writing_styles, range(0, 101, 10))],
+style_weights = st.multiselect("Select style weights:", [f"{style} ({weight})%" for style, weight in zip(writing_styles, range(0, 101, 10))],
                                default=[f"{style} (100%)" for style in writing_styles])
 audience = st.text_input("Audience (optional):")
 institution = st.text_input("Institution (optional):")
 emulate = st.text_area("Emulate by pasting in up to 3000 words of sample content (optional):", value="", height=200, max_chars=3000)
 stats_facts = st.text_area("Enter specific statistics or facts (optional):", value="", height=200, max_chars=3000)
-word_count = st.slider("Select word count:", min_value=100, max_value=1000, step=50, value=100)
-title = st.text_input("Enter title (required):")
-h1_text = st.text_input("Enter H1 text:")
-h2_text = st.text_input("Enter H2 text:")
-style_rules = st.text_area("Enter style rules (optional):", value="", height=200)
-
-submit_button = st.button("Generate Content")
+word_count = st.slider("Select word count:", min_value=50, max_value=2000, step=50)
+title = st.text_input("Enter article title (optional):")
+h1_text = st.text_input("Enter H1 text (optional):")
+h2_text = st.text_input("Enter H2 text (optional):")
+style_rules = st.text_area("Enter any style rules (optional):")
 
 if submit_button:
     message = st.empty()
