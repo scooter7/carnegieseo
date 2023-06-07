@@ -63,7 +63,7 @@ placeholders = {
     # Add more color and adjective placeholders as needed
 }
 
-def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, h1_settings, h2_settings, style_rules):
+def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, h1_text, h2_text, style_rules):
     messages = [
         {"role": "user", "content": "The " + content_type + " should have the style " + ", ".join(writing_styles)},
     ]
@@ -91,6 +91,8 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
             messages.append(adjective_bank_message)
 
     messages.extend([
+        {"role": "user", "content": "This will be a " + content_type},
+        {"role": "user", "content": "This will be " + content_type + " about " + ", ".join(keywords)},
         {"role": "user", "content": "The " + content_type + " should be written to appeal to " + audience},
         {"role": "user", "content": "The " + content_type + " length should be " + str(word_count)},
     ])
@@ -148,9 +150,9 @@ institution = st.text_input("Institution (optional):")
 emulate = st.text_area("Emulate by pasting in up to 3000 words of sample content (optional):", value="", height=200, max_chars=3000)
 stats_facts = st.text_area("Enter specific statistics or facts (optional):", value="", height=200, max_chars=3000)
 word_count = st.slider("Select word count:", min_value=100, max_value=1000, step=50, value=100)
-title = st.text_input("Enter the title:")
-h1_settings = st.selectbox("Select H1 settings:", ["None", "Default", "Custom"])
-h2_settings = st.selectbox("Select H2 settings:", ["None", "Default", "Custom"])
+title = st.text_input("Enter the title:", required=True)
+h1_text = st.text_area("Enter H1 text:", height=100, max_chars=500)
+h2_text = st.text_area("Enter H2 text:", height=100, max_chars=500)
 style_rules = st.text_area("Paste grammar and citation rules (optional):", value="", height=200)
 
 submit_button = st.button("Generate Content")
@@ -169,8 +171,8 @@ if submit_button:
         word_count,
         stats_facts,
         title,
-        h1_settings,
-        h2_settings,
+        h1_text,
+        h2_text,
         style_rules,
     )
     message.text("")
