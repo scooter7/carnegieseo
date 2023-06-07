@@ -63,7 +63,7 @@ placeholders = {
     # Add more color and adjective placeholders as needed
 }
 
-def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, h1_settings, h2_settings, style_rules):
+def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, style_rules):
     messages = [
         {"role": "user", "content": "This will be a " + content_type},
         {"role": "user", "content": "This will be " + content_type + " about " + ", ".join(keywords)},
