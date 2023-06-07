@@ -70,9 +70,9 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
     ]
 
      # Modify user messages to include writing styles with weighted percentages
-        for i, style in enumerate(writing_styles):
-        weight = style_weights[i][1]
-        messages.append({"role": "user", "content": f"The {content_type} should have the style {style} with a weight of {weight*100:.1f}%"})
+     for i, style in enumerate(writing_styles):
+     weight = style_weights[i][1]
+     messages.append({"role": "user", "content": f"The {content_type} should have the style {style} with a weight of {weight*100:.1f}%"})
 
         if selected_verbs:
             messages.append({"role": "user", "content": f"The {content_type} should use the verbs: {', '.join(selected_verbs)}"})
