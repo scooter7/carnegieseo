@@ -63,7 +63,7 @@ placeholders = {
     # Add more color and adjective placeholders as needed
 }
 
-def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, style_rules):
+def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, h1_settings, h2_settings, style_rules):
     messages = [
         {"role": "user", "content": "This will be a " + content_type},
         {"role": "user", "content": "This will be " + content_type + " about " + ", ".join(keywords)},
@@ -73,11 +73,6 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
     for i, style in enumerate(writing_styles):
         weight = style_weights[i]
         messages.append({"role": "user", "content": f"The {content_type} should have the style {style} with a weight of {weight * 100:.1f}%"})
-
-        if selected_verbs:
-            messages.append({"role": "user", "content": f"The {content_type} should use the verbs: {', '.join(selected_verbs)}"})
-        if selected_adjectives:
-            messages.append({"role": "user", "content": f"The {content_type} should use the adjectives: {', '.join(selected_adjectives)}"})
 
     messages.extend([
         {"role": "user", "content": "The " + content_type + " should have the style " + ", ".join(writing_styles)},
