@@ -93,11 +93,12 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         messages.append({"role": "user", "content": "The style rules are as follows: " + style_rules})
 
     if emulate:
-        emulate_message = {
-            "role": "assistant",
-            "content": emulate
-        }
-        messages.append(emulate_message)
+    if emulate:
+    emulate_message = {
+        "role": "assistant",
+        "content": "Emulate the grammar and writing mechanics based on the given prompts but do not use any of the actual example content provided."
+    }
+    messages.append(emulate_message)
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
