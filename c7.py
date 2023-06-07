@@ -1,6 +1,5 @@
 import streamlit as st
 import openai
-from github import Github
 import os
 import sys
 import logging
@@ -65,20 +64,20 @@ placeholders = {
 
 def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, h1_text, h2_text, style_rules):
     messages = [
-        {"role": "user", "content": "The " + content_type + " should have the style: "}
+        {"role": "system", "content": "The " + content_type + " should have the style: "}
     ]
 
     for style, weight in zip(writing_styles, style_weights):
-        messages.append({"role": "user", "content": f"- {style} ({weight})% "})
+        messages.append({"role": "system", "content": f"- {style} ({weight})% "})
 
     # Append verb and adjective banks based on selected writing styles
     for style in writing_styles:
         style_message = {
-            "role": "user",
+            "role": "system",
             "content": "The " + content_type + " should use verbs from the " + style + " verb bank and adjectives from the " + style + " adjective bank."
         }
         messages.append(style_message)
-        
+
         if style in placeholders:
             verb_bank = placeholders[style]["verbs"]
             adjective_bank = placeholders[style]["adjectives"]
@@ -94,18 +93,18 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
             messages.append(adjective_bank_message)
 
     messages.extend([
-        {"role": "user", "content": "This will be a " + content_type},
-        {"role": "user", "content": "This will be " + content_type + " about " + keywords},
-        {"role": "user", "content": "The " + content_type + " should have the style " + ", ".join(writing_styles)},
-        {"role": "user", "content": "The " + content_type + " should be written to appeal to " + audience},
-        {"role": "user", "content": "The " + content_type + " length should be " + str(word_count) + " words"}
+        {"role": "system", "content": "This will be a " + content_type},
+        {"role": "system", "content": "This will be " + content_type + " about " + keywords},
+        {"role": "system", "content": "The " + content_type + " should have the style " + ", ".join(writing_styles)},
+        {"role": "system", "content": "The " + content_type + " should be written to appeal to " + audience},
+        {"role": "system", "content": "The " + content_type + " length should be " + str(word_count) + " words"}
     ])
 
     if institution:
-        messages.append({"role": "user", "content": "The " + content_type + " should include references to the benefits of " + institution})
+        messages.append({"role": "system", "content": "The " + content_type + " should include references to the benefits of " + institution})
 
     if stats_facts:
-        messages.append({"role": "user", "content": "The content produced is required to include the following statistics or facts: " + stats_facts})
+        messages.append({"role": "system", "content": "The content produced is required to include the following statistics or facts: " + stats_facts})
 
     if emulate:
         emulate_message = {
@@ -116,7 +115,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
 
     if style_rules:
         style_rules_message = {
-            "role": "user",
+            "role": "system",
             "content": "Style Rules:\n" + style_rules
         }
         messages.append(style_rules_message)
@@ -132,11 +131,11 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
 
     result = ""
     for choice in response.choices:
-        result += choice.message.content
+        result += choice["message"]["content"]
 
     # If the response is incomplete, continue generating until completion
     while response.choices[0].message.content.endswith("..."):
-        messages[-1]["content"] = response.choices[0].message.content
+        messages[-1]["content"] = response.choices[0]["message"]["content"]
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=messages,
@@ -146,7 +145,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
             temperature=0.7,
         )
         for choice in response.choices:
-            result += choice.message.content
+            result += choice["message"]["content"]
 
     print(result)
     return result
@@ -154,20 +153,18 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
 content_type = st.text_input("Define content type:")
 keywords = st.text_input("Enter keywords (comma-separated):")
 writing_styles = st.multiselect("Select writing styles:", list(placeholders.keys()))
-style_weights = st.multiselect(
-    "Select style weights:",
-    [f"{style} ({weight})%" for style, weight in zip(writing_styles, range(0, 101, 10))],
-    default=[f"{style} (100%)" for style in writing_styles if style in writing_styles]
-)
+style_weights = st.multiselect("Select style weights:", [f"{style} ({weight})%" for style, weight in zip(writing_styles, range(0, 101, 10)))],
+                               default=[f"{style} (100%)" for style in writing_styles],
+                               key="style_weights")
 audience = st.text_input("Audience (optional):")
 institution = st.text_input("Institution (optional):")
 emulate = st.text_area("Emulate by pasting in up to 3000 words of sample content (optional):", value="", height=200, max_chars=3000)
 stats_facts = st.text_area("Enter specific statistics or facts (optional):", value="", height=200, max_chars=3000)
-word_count = st.slider("Select word count:", min_value=50, max_value=2000, step=50)
-title = st.text_input("Enter article title (optional):")
+word_count = st.slider("Select word count:", min_value=50, max_value=1000, step=50, value=500)
+title = st.text_input("Enter title (optional):")
 h1_text = st.text_input("Enter H1 text (optional):")
 h2_text = st.text_input("Enter H2 text (optional):")
-style_rules = st.text_area("Enter any style rules (optional):")
+style_rules = st.text_area("Enter style rules (optional):")
 
 if submit_button:
     message = st.empty()
