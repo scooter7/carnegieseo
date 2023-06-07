@@ -69,15 +69,15 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         {"role": "user", "content": "This will be " + content_type + " about " + ", ".join(keywords)},
     ]
 
-     # Modify user messages to include writing styles with weighted percentages
-     for i, style in enumerate(writing_styles):
+    # Modify user messages to include writing styles with weighted percentages
+    for i, style in enumerate(writing_styles):
         weight = style_weights[i][1]
         messages.append({"role": "user", "content": f"The {content_type} should have the style {style} with a weight of {weight*100:.1f}%"})
 
-        if selected_verbs:
-            messages.append({"role": "user", "content": f"The {content_type} should use the verbs: {', '.join(selected_verbs)}"})
-        if selected_adjectives:
-            messages.append({"role": "user", "content": f"The {content_type} should use the adjectives: {', '.join(selected_adjectives)}"})
+    if selected_verbs:
+        messages.append({"role": "user", "content": f"The {content_type} should use the verbs: {', '.join(selected_verbs)}"})
+    if selected_adjectives:
+        messages.append({"role": "user", "content": f"The {content_type} should use the adjectives: {', '.join(selected_adjectives)}"})
 
     messages.extend([
         {"role": "user", "content": "The " + content_type + " should have the style " + ", ".join(writing_styles)},
@@ -144,7 +144,7 @@ title = st.text_input("Enter the title:")
 style_rules = st.text_area("Enter style rules (optional):", value='', height=200, max_chars=3000)
 
 if st.button("Generate"):
-    result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, h1_settings, h2_settings, style_rules)
+    result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, style_rules)
     st.markdown(result)
     st.download_button(
         label="Download content",
