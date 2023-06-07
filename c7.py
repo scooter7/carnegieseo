@@ -126,6 +126,8 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         for choice in response.choices:
             result += choice.message.content
 
+    result = f"# {title}\n\n{result}"  # Prepend title to result
+    
     return result
 
 
