@@ -134,7 +134,10 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
 content_type = st.text_input("Define content type:")
 keywords = st.text_input("Enter comma-separated keywords:")
 writing_styles = st.multiselect("Select writing styles:", list(placeholders.keys()))
-style_weights = st.multiselect("Select style weights:", [1] * len(writing_styles), key="style_weights")
+style_weights = []
+for style in writing_styles:
+    weight = st.slider(f"Select weight for {style}:", min_value=1, max_value=10, step=1, value=1)
+    style_weights.append(weight)
 audience = st.text_input("Audience (optional):")
 institution = st.text_input("Institution (optional):")
 emulate = st.text_area("Emulate by pasting in up to 3000 words of sample content (optional):", value='', height=200, max_chars=3000)
