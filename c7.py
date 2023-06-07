@@ -142,11 +142,15 @@ title = st.text_input("Enter the title:")
 style_rules = st.text_area("Enter style rules (optional):", value='', height=200, max_chars=3000)
 
 if st.button("Generate"):
-    result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, style_rules)
-    st.markdown(result)
-    st.download_button(
-        label="Download content",
-        data=result,
-        file_name='Content.txt',
-        mime='text/txt',
-    )
+    if not title:
+        st.error("Please enter a title.")
+    else:
+        result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, style_rules)
+        st.markdown(result)
+        st.download_button(
+            label="Download content",
+            data=result,
+            file_name='Content.txt',
+            mime='text/txt',
+        )
+
