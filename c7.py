@@ -156,8 +156,8 @@ keywords = st.text_input("Enter keywords (comma-separated):")
 writing_styles = st.multiselect("Select writing styles:", list(placeholders.keys()))
 style_weights = st.multiselect(
     "Select style weights:",
-    [f"{style} ({weight})%" for style, weight in zip(writing_styles, range(0, 101, 10))],
-    default=[f"{style} (100%)" for style in writing_styles if style in writing_styles],
+    [f"{style} ({weight})%" for style, weight in zip(writing_styles, range(0, len(writing_styles) * 10, 10))],
+    default=[f"{style} (100%)" for style in writing_styles],
 )
 audience = st.text_input("Audience (optional):")
 institution = st.text_input("Institution (optional):")
