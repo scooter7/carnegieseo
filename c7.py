@@ -65,7 +65,7 @@ placeholders = {
 
 def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, h1_text, h2_text, style_rules):
     messages = [
-        {"role": "user", "content": "The " + content_type + " should have the style " + ", ".join(writing_styles)},
+        {"role": "user", "content": "The " + content_type + " should have the style " + ", ".join([style + " (" + str(weight) + "%)" for style, weight in zip(writing_styles, style_weights)])},
     ]
 
     # Append verb and adjective banks based on selected writing styles
@@ -151,8 +151,8 @@ emulate = st.text_area("Emulate by pasting in up to 3000 words of sample content
 stats_facts = st.text_area("Enter specific statistics or facts (optional):", value="", height=200, max_chars=3000)
 word_count = st.slider("Select word count:", min_value=100, max_value=1000, step=50, value=100)
 title = st.text_input("Enter the title:", required=True)
-h1_text = st.text_area("Enter H1 text:", height=100, max_chars=500)
-h2_text = st.text_area("Enter H2 text:", height=100, max_chars=500)
+h1_text = st.text_input("Enter H1 text:")
+h2_text = st.text_input("Enter H2 text:")
 style_rules = st.text_area("Paste grammar and citation rules (optional):", value="", height=200)
 
 submit_button = st.button("Generate Content")
