@@ -157,7 +157,8 @@ style_weights_input = st.text_input("Enter style weights (comma-separated):")
 style_weights = [weight.strip() for weight in style_weights_input.split(",")]
 
 # Validate and normalize style weights
-total_weights = sum(int(weight.split("%")[0].strip()) for weight in style_weights)
+# Validate and normalize style weights
+total_weights = sum(int(weight.split("%")[0].strip()) for weight in style_weights if weight.strip())
 if total_weights != 100:
     st.error("Total style weights should add up to 100%.")
     sys.exit(1)
