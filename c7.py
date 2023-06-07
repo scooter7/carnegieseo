@@ -154,10 +154,10 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
 content_type = st.text_input("Define content type:")
 keywords = st.text_input("Enter keywords (comma-separated):")
 writing_styles = st.multiselect("Select writing styles:", list(placeholders.keys()))
-default_style_weights = [f"{style} (100%)" for style in writing_styles if style in placeholders]
+default_style_weights = [f"{writing_style} (100%)" for writing_style in writing_styles if writing_style in placeholders]
 style_weights = st.multiselect(
     "Select style weights:",
-    [f"{style} ({weight})%" for writing_style, weight in zip(writing_styles, range(0, len(writing_styles) * 10, 10))],
+    [f"{writing_style} ({weight})%" for writing_style, weight in zip(writing_styles, range(0, len(writing_styles) * 10, 10))],
     default=default_style_weights,
 )
 audience = st.text_input("Audience (optional):")
