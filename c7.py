@@ -169,6 +169,15 @@ h1_text = st.text_input("Enter H1 text (optional):")
 h2_text = st.text_input("Enter H2 text (optional):")
 style_rules = st.text_area("Enter any style rules (optional):")
 
-if st.button("Generate Article"):
-    result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, h1_text, h2_text, style_rules)
-    st.write(result)
+if submit_button:
+    message = st.empty()
+    message.text("Busy generating...")
+    article = generate_article(content_type, keyword_list, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts)
+    message.text("")
+    st.write(article)
+    st.download_button(
+        label="Download content",
+        data=article,
+        file_name='Content.txt',
+        mime='text/txt',
+    )
