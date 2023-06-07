@@ -157,7 +157,7 @@ writing_styles = st.multiselect("Select writing styles:", list(placeholders.keys
 style_weights = st.multiselect(
     "Select style weights:",
     [f"{style} ({weight})%" for style, weight in zip(writing_styles, range(0, 101, 10))],
-    default=[f"{style} (100%)" for style in writing_styles if style in placeholders],
+    default=[f"{style} (100%)" for style in writing_styles if style in writing_styles]
 )
 audience = st.text_input("Audience (optional):")
 institution = st.text_input("Institution (optional):")
