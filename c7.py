@@ -69,7 +69,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
     ]
 
     for writing_style, weight in zip(writing_styles, style_weights):
-        messages.append({"role": "user", "content": f"- {style} ({weight})% "})
+        messages.append({"role": "user", "content": f"- {writing_style} ({weight})% "})
 
     # Append verb and adjective banks based on selected writing styles
     for style in writing_styles:
@@ -169,10 +169,10 @@ h1_text = st.text_input("Enter H1 text (optional):")
 h2_text = st.text_input("Enter H2 text (optional):")
 style_rules = st.text_area("Enter any style rules (optional):")
 
-if submit_button:
+if st.button("Generate Article"):
     message = st.empty()
     message.text("Busy generating...")
-    article = generate_article(content_type, keyword_list, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts)
+    article = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, h1_text, h2_text, style_rules)
     message.text("")
     st.write(article)
     st.download_button(
