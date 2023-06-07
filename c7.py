@@ -63,16 +63,16 @@ placeholders = {
     # Add more color and adjective placeholders as needed
 }
 
-def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, h1_text, h2_text, style_rules):
+def generate_article(content_type, keywords, style_weights, audience, institution, emulate, word_count, stats_facts, title, h1_text, h2_text, style_rules):
     messages = [
         {"role": "user", "content": "The " + content_type + " should have the style: "}
     ]
 
-    for writing_style, weight in zip(writing_styles, style_weights):
+    for writing_style, weight in zip(placeholders.keys(), style_weights):
         messages.append({"role": "user", "content": f"- {writing_style} ({weight})% "})
 
     # Append verb and adjective banks based on selected writing styles
-    for style in writing_styles:
+    for style in placeholders.keys():
         style_message = {
             "role": "user",
             "content": "The " + content_type + " should use verbs from the " + style + " verb bank and adjectives from the " + style + " adjective bank."
@@ -96,7 +96,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
     messages.extend([
         {"role": "user", "content": "This will be a " + content_type},
         {"role": "user", "content": "This will be " + content_type + " about " + keywords},
-        {"role": "user", "content": "The " + content_type + " should have the style " + ", ".join(writing_styles)},
+        {"role": "user", "content": "The " + content_type + " should have the style " + ", ".join(placeholders.keys())},
         {"role": "user", "content": "The " + content_type + " should be written to appeal to " + audience},
         {"role": "user", "content": "The " + content_type + " length should be " + str(word_count) + " words"}
     ])
@@ -153,22 +153,24 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
 
 content_type = st.text_input("Define content type:")
 keywords = st.text_input("Enter keywords (comma-separated):")
-writing_styles = st.multiselect("Select writing styles:", list(placeholders.keys()))
-default_style_weights = [f"{writing_style} (100%)" for writing_style in writing_styles if writing_style in placeholders]
-style_weights = st.multiselect(
-    "Select style weights:",
-    [f"{writing_style} ({weight})%" for writing_style, weight in zip(writing_styles, range(0, len(writing_styles) * 10, 10))],
-    default=default_style_weights,
-)
+style_weights_input = st.text_input("Enter style weights (comma-separated):")
+style_weights = [weight.strip() for weight in style_weights_input.split(",")]
+
+# Validate and normalize style weights
+total_weights = sum(int(weight.split("%")[0].strip()) for weight in style_weights)
+if total_weights != 100:
+    st.error("Total style weights should add up to 100%.")
+    sys.exit(1)
+
 audience = st.text_input("Audience (optional):")
 institution = st.text_input("Institution (optional):")
 emulate = st.text_area("Emulate by pasting in up to 3000 words of sample content (optional):", value="", height=200, max_chars=3000)
 stats_facts = st.text_area("Enter specific statistics or facts (optional):", value="", height=200, max_chars=3000)
-word_count = st.slider("Select word count:", min_value=50, max_value=2000, step=50)
-title = st.text_input("Enter article title (optional):")
-h1_text = st.text_input("Enter H1 text (optional):")
-h2_text = st.text_input("Enter H2 text (optional):")
-style_rules = st.text_area("Enter any style rules (optional):")
+word_count = st.number_input("Word count:", min_value=1, step=1, value=100)
+title = st.text_input("Title (optional):")
+h1_text = st.text_input("H1 Text (optional):")
+h2_text = st.text_input("H2 Text (optional):")
+style_rules = st.text_area("Style Rules (optional):")
 
 if st.button("Generate Article"):
     message = st.empty()
