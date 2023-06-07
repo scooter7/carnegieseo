@@ -70,7 +70,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
     ]
 
      # Modify user messages to include writing styles with weighted percentages
-        for i, style in enumerate(writing_styles):
+     for i, style in enumerate(writing_styles):
         weight = style_weights[i][1]
         messages.append({"role": "user", "content": f"The {content_type} should have the style {style} with a weight of {weight*100:.1f}%"})
 
@@ -141,8 +141,6 @@ emulate = st.text_area("Emulate by pasting in up to 3000 words of sample content
 stats_facts = st.text_area("Enter specific statistics or facts (optional):", value='', height=200, max_chars=3000)
 word_count = st.slider("Select word count:", min_value=100, max_value=1000, step=50, value=100)
 title = st.text_input("Enter the title:")
-h1_settings = st.text_input("Enter H1 settings:")
-h2_settings = st.text_input("Enter H2 settings:")
 style_rules = st.text_area("Enter style rules (optional):", value='', height=200, max_chars=3000)
 
 if st.button("Generate"):
