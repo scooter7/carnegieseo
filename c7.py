@@ -22,77 +22,84 @@ st.title("Carnegie Content Creator")
 placeholders = {
     "Purple - caring, encouraging": {
         "verbs": ["care", "encourage"],
-        "adjectives": ["caring", "encouraging"],
+        "adjectives": ["caring", "encouraging"]
     },
     "Green - adventurous, curious": {
-        "verbs": ["explore", "discover"],
-        "adjectives": ["adventurous", "curious"],
+        "verbs": ["adventure", "explore"],
+        "adjectives": ["adventurous", "curious"]
     },
     "Maroon - gritty, determined": {
         "verbs": ["persevere", "strive"],
-        "adjectives": ["gritty", "determined"],
+        "adjectives": ["gritty", "determined"]
     },
     "Orange - artistic, creative": {
-        "verbs": ["create", "express"],
-        "adjectives": ["artistic", "creative"],
+        "verbs": ["create", "imagine"],
+        "adjectives": ["artistic", "creative"]
     },
     "Yellow - innovative, intelligent": {
-        "verbs": ["innovate", "intellect"],
-        "adjectives": ["innovative", "intelligent"],
+        "verbs": ["innovate", "discover"],
+        "adjectives": ["innovative", "intelligent"]
     },
     "Red - entertaining, humorous": {
         "verbs": ["entertain", "amuse"],
-        "adjectives": ["entertaining", "humorous"],
+        "adjectives": ["entertaining", "humorous"]
     },
     "Blue - confident, influential": {
         "verbs": ["inspire", "influence"],
-        "adjectives": ["confident", "influential"],
+        "adjectives": ["confident", "influential"]
     },
     "Pink - charming, elegant": {
-        "verbs": ["charm", "grace"],
-        "adjectives": ["charming", "elegant"],
+        "verbs": ["charm", "captivate"],
+        "adjectives": ["charming", "elegant"]
     },
     "Silver - rebellious, daring": {
         "verbs": ["rebel", "dare"],
-        "adjectives": ["rebellious", "daring"],
+        "adjectives": ["rebellious", "daring"]
     },
     "Beige - dedicated, humble": {
         "verbs": ["dedicate", "humble"],
-        "adjectives": ["dedicated", "humble"],
+        "adjectives": ["dedicated", "humble"]
     },
     # Add more color and adjective placeholders as needed
 }
 
 def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, h1_settings, h2_settings, style_rules):
     messages = [
-        {"role": "user", "content": "This will be a " + content_type},
-        {"role": "user", "content": "This will be " + content_type + " about " + ", ".join(keywords)},
+        {"role": "user", "content": "The " + content_type + " should have the style " + ", ".join(writing_styles)},
     ]
 
-     # Modify user messages to include writing styles with weighted percentages
-     for i, style in enumerate(writing_styles):
-     weight = style_weights[i][1]
-     messages.append({"role": "user", "content": f"The {content_type} should have the style {style} with a weight of {weight*100:.1f}%"})
-
-        if selected_verbs:
-            messages.append({"role": "user", "content": f"The {content_type} should use the verbs: {', '.join(selected_verbs)}"})
-        if selected_adjectives:
-            messages.append({"role": "user", "content": f"The {content_type} should use the adjectives: {', '.join(selected_adjectives)}"})
+    # Append verb and adjective banks based on selected writing styles
+    for style in writing_styles:
+        style_message = {
+            "role": "user",
+            "content": "The " + content_type + " should use verbs from the " + style + " verb bank and adjectives from the " + style + " adjective bank."
+        }
+        messages.append(style_message)
+        
+        if style in placeholders:
+            verb_bank = placeholders[style]["verbs"]
+            adjective_bank = placeholders[style]["adjectives"]
+            verb_bank_message = {
+                "role": "assistant",
+                "content": f"Verb Bank: {', '.join(verb_bank)}"
+            }
+            adjective_bank_message = {
+                "role": "assistant",
+                "content": f"Adjective Bank: {', '.join(adjective_bank)}"
+            }
+            messages.append(verb_bank_message)
+            messages.append(adjective_bank_message)
 
     messages.extend([
-        {"role": "user", "content": "The " + content_type + " should have the style " + ", ".join(writing_styles)},
         {"role": "user", "content": "The " + content_type + " should be written to appeal to " + audience},
         {"role": "user", "content": "The " + content_type + " length should be " + str(word_count)},
     ])
 
     if institution:
-        messages.append({"role": "user", "content": "The " + content_type + " include references to the benefits of " + institution})
+        messages.append({"role": "user", "content": "The " + content_type + " should include references to the benefits of " + institution})
 
     if stats_facts:
         messages.append({"role": "user", "content": "The content produced is required to include the following statistics or facts: " + stats_facts})
-
-    if style_rules:
-        messages.append({"role": "user", "content": "The style rules are as follows: " + style_rules})
 
     if emulate:
         emulate_message = {
@@ -128,29 +135,49 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         for choice in response.choices:
             result += choice.message.content
 
+    print(result)
     return result
 
 
 content_type = st.text_input("Define content type:")
-keywords = st.text_input("Enter comma-separated keywords:")
+keywords = st.text_input("Enter keywords (comma-separated):").split(",")
 writing_styles = st.multiselect("Select writing styles:", list(placeholders.keys()))
-style_weights = st.multiselect("Select style weights:", [1] * len(writing_styles), key="style_weights")
+style_weights = st.text_input("Enter style weights (comma-separated):").split(",")
 audience = st.text_input("Audience (optional):")
 institution = st.text_input("Institution (optional):")
-emulate = st.text_area("Emulate by pasting in up to 3000 words of sample content (optional):", value='', height=200, max_chars=3000)
-stats_facts = st.text_area("Enter specific statistics or facts (optional):", value='', height=200, max_chars=3000)
+emulate = st.text_area("Emulate by pasting in up to 3000 words of sample content (optional):", value="", height=200, max_chars=3000)
+stats_facts = st.text_area("Enter specific statistics or facts (optional):", value="", height=200, max_chars=3000)
 word_count = st.slider("Select word count:", min_value=100, max_value=1000, step=50, value=100)
 title = st.text_input("Enter the title:")
-h1_settings = st.text_input("Enter H1 settings:")
-h2_settings = st.text_input("Enter H2 settings:")
-style_rules = st.text_area("Enter style rules (optional):", value='', height=200, max_chars=3000)
+h1_settings = st.selectbox("Select H1 settings:", ["None", "Default", "Custom"])
+h2_settings = st.selectbox("Select H2 settings:", ["None", "Default", "Custom"])
+style_rules = st.text_area("Paste grammar and citation rules (optional):", value="", height=200)
 
-if st.button("Generate"):
-    result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, h1_settings, h2_settings, style_rules)
-    st.markdown(result)
+submit_button = st.button("Generate Content")
+
+if submit_button:
+    message = st.empty()
+    message.text("Busy generating...")
+    article = generate_article(
+        content_type,
+        keywords,
+        writing_styles,
+        style_weights,
+        audience,
+        institution,
+        emulate,
+        word_count,
+        stats_facts,
+        title,
+        h1_settings,
+        h2_settings,
+        style_rules,
+    )
+    message.text("")
+    st.write(article)
     st.download_button(
-        label="Download content",
-        data=result,
-        file_name='Content.txt',
-        mime='text/txt',
+        label="Download as text",
+        data=article,
+        file_name="generated_content.txt",
+        mime="text/plain",
     )
