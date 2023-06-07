@@ -69,7 +69,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
     ]
 
     for style, weight in zip(writing_styles, style_weights):
-        messages.append({"role": "user", "content": f"- {style} ({weight}%) "})
+        messages.append({"role": "user", "content": f"- {style} ({weight})"})
 
     # Append verb and adjective banks based on selected writing styles
     for style in writing_styles:
@@ -84,11 +84,11 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
             adjective_bank = placeholders[style]["adjectives"]
             verb_bank_message = {
                 "role": "assistant",
-                "content": "Verb Bank: " + ", ".join(verb_bank)
+                "content": "Verb Bank (" + style + "): " + ", ".join(verb_bank)
             }
             adjective_bank_message = {
                 "role": "assistant",
-                "content": "Adjective Bank: " + ", ".join(adjective_bank)
+                "content": "Adjective Bank (" + style + "): " + ", ".join(adjective_bank)
             }
             messages.append(verb_bank_message)
             messages.append(adjective_bank_message)
@@ -155,7 +155,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
 content_type = st.text_input("Define content type:")
 keywords = st.text_input("Enter keywords (comma-separated):")
 writing_styles = st.multiselect("Select writing styles:", list(placeholders.keys()))
-style_weights = st.multiselect("Select style weights:", [f"{style} ({weight}%)"
+style_weights = st.multiselect("Select style weights:", [f"{style} ({weight})%"
                                                          for style, weight in zip(writing_styles, range(0, 101, 10))],
                                default=[f"{style} (100%)" for style in writing_styles])
 audience = st.text_input("Audience (optional):")
