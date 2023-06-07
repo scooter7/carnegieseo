@@ -22,90 +22,77 @@ st.title("Carnegie Content Creator")
 placeholders = {
     "Purple - caring, encouraging": {
         "verbs": ["care", "encourage"],
-        "adjectives": ["caring", "encouraging"]
+        "adjectives": ["caring", "encouraging"],
     },
     "Green - adventurous, curious": {
-        "verbs": ["adventure", "explore"],
-        "adjectives": ["adventurous", "curious"]
+        "verbs": ["explore", "discover"],
+        "adjectives": ["adventurous", "curious"],
     },
     "Maroon - gritty, determined": {
         "verbs": ["persevere", "strive"],
-        "adjectives": ["gritty", "determined"]
+        "adjectives": ["gritty", "determined"],
     },
     "Orange - artistic, creative": {
-        "verbs": ["create", "imagine"],
-        "adjectives": ["artistic", "creative"]
+        "verbs": ["create", "express"],
+        "adjectives": ["artistic", "creative"],
     },
     "Yellow - innovative, intelligent": {
-        "verbs": ["innovate", "discover"],
-        "adjectives": ["innovative", "intelligent"]
+        "verbs": ["innovate", "intellect"],
+        "adjectives": ["innovative", "intelligent"],
     },
     "Red - entertaining, humorous": {
         "verbs": ["entertain", "amuse"],
-        "adjectives": ["entertaining", "humorous"]
+        "adjectives": ["entertaining", "humorous"],
     },
     "Blue - confident, influential": {
         "verbs": ["inspire", "influence"],
-        "adjectives": ["confident", "influential"]
+        "adjectives": ["confident", "influential"],
     },
     "Pink - charming, elegant": {
-        "verbs": ["charm", "captivate"],
-        "adjectives": ["charming", "elegant"]
+        "verbs": ["charm", "grace"],
+        "adjectives": ["charming", "elegant"],
     },
     "Silver - rebellious, daring": {
         "verbs": ["rebel", "dare"],
-        "adjectives": ["rebellious", "daring"]
+        "adjectives": ["rebellious", "daring"],
     },
     "Beige - dedicated, humble": {
         "verbs": ["dedicate", "humble"],
-        "adjectives": ["dedicated", "humble"]
+        "adjectives": ["dedicated", "humble"],
     },
     # Add more color and adjective placeholders as needed
 }
 
-def generate_article(content_type, keywords, style_weights, audience, institution, emulate, word_count, stats_facts, title, h1_text, h2_text, style_rules):
+def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, h1_settings, h2_settings, style_rules):
     messages = [
-        {"role": "user", "content": "The " + content_type + " should have the style: "}
+        {"role": "user", "content": "This will be a " + content_type},
+        {"role": "user", "content": "This will be " + content_type + " about " + ", ".join(keywords)},
     ]
 
-    for writing_style, weight in zip(placeholders.keys(), style_weights):
-        messages.append({"role": "user", "content": f"- {writing_style} ({weight})% "})
+     # Modify user messages to include writing styles with weighted percentages
+        for i, style in enumerate(writing_styles):
+        weight = style_weights[i][1]
+        messages.append({"role": "user", "content": f"The {content_type} should have the style {style} with a weight of {weight*100:.1f}%"})
 
-    # Append verb and adjective banks based on selected writing styles
-    for style in placeholders.keys():
-        style_message = {
-            "role": "user",
-            "content": "The " + content_type + " should use verbs from the " + style + " verb bank and adjectives from the " + style + " adjective bank."
-        }
-        messages.append(style_message)
-        
-        if style in placeholders:
-            verb_bank = placeholders[style]["verbs"]
-            adjective_bank = placeholders[style]["adjectives"]
-            verb_bank_message = {
-                "role": "assistant",
-                "content": "Verb Bank (" + style + "): " + ", ".join(verb_bank)
-            }
-            adjective_bank_message = {
-                "role": "assistant",
-                "content": "Adjective Bank (" + style + "): " + ", ".join(adjective_bank)
-            }
-            messages.append(verb_bank_message)
-            messages.append(adjective_bank_message)
+        if selected_verbs:
+            messages.append({"role": "user", "content": f"The {content_type} should use the verbs: {', '.join(selected_verbs)}"})
+        if selected_adjectives:
+            messages.append({"role": "user", "content": f"The {content_type} should use the adjectives: {', '.join(selected_adjectives)}"})
 
     messages.extend([
-        {"role": "user", "content": "This will be a " + content_type},
-        {"role": "user", "content": "This will be " + content_type + " about " + keywords},
-        {"role": "user", "content": "The " + content_type + " should have the style " + ", ".join(placeholders.keys())},
+        {"role": "user", "content": "The " + content_type + " should have the style " + ", ".join(writing_styles)},
         {"role": "user", "content": "The " + content_type + " should be written to appeal to " + audience},
-        {"role": "user", "content": "The " + content_type + " length should be " + str(word_count) + " words"}
+        {"role": "user", "content": "The " + content_type + " length should be " + str(word_count)},
     ])
 
     if institution:
-        messages.append({"role": "user", "content": "The " + content_type + " should include references to the benefits of " + institution})
+        messages.append({"role": "user", "content": "The " + content_type + " include references to the benefits of " + institution})
 
     if stats_facts:
         messages.append({"role": "user", "content": "The content produced is required to include the following statistics or facts: " + stats_facts})
+
+    if style_rules:
+        messages.append({"role": "user", "content": "The style rules are as follows: " + style_rules})
 
     if emulate:
         emulate_message = {
@@ -113,13 +100,6 @@ def generate_article(content_type, keywords, style_weights, audience, institutio
             "content": emulate
         }
         messages.append(emulate_message)
-
-    if style_rules:
-        style_rules_message = {
-            "role": "user",
-            "content": "Style Rules:\n" + style_rules
-        }
-        messages.append(style_rules_message)
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
@@ -148,39 +128,29 @@ def generate_article(content_type, keywords, style_weights, audience, institutio
         for choice in response.choices:
             result += choice.message.content
 
-    print(result)
     return result
 
+
 content_type = st.text_input("Define content type:")
-keywords = st.text_input("Enter keywords (comma-separated):")
-style_weights_input = st.text_input("Enter style weights (comma-separated):")
-style_weights = [weight.strip() for weight in style_weights_input.split(",")]
-
-# Validate and normalize style weights
-total_weights = sum(int(weight.split("%")[0].strip()) for weight in style_weights if weight.strip())
-if total_weights != 100:
-    st.error("Total style weights should add up to 100%.")
-    sys.exit(1)
-
+keywords = st.text_input("Enter comma-separated keywords:")
+writing_styles = st.multiselect("Select writing styles:", list(placeholders.keys()))
+style_weights = st.multiselect("Select style weights:", [1] * len(writing_styles), key="style_weights")
 audience = st.text_input("Audience (optional):")
 institution = st.text_input("Institution (optional):")
-emulate = st.text_area("Emulate by pasting in up to 3000 words of sample content (optional):", value="", height=200, max_chars=3000)
-stats_facts = st.text_area("Enter specific statistics or facts (optional):", value="", height=200, max_chars=3000)
-word_count = st.number_input("Word count:", min_value=1, step=1, value=100)
-title = st.text_input("Title (optional):")
-h1_text = st.text_input("H1 Text (optional):")
-h2_text = st.text_input("H2 Text (optional):")
-style_rules = st.text_area("Style Rules (optional):")
+emulate = st.text_area("Emulate by pasting in up to 3000 words of sample content (optional):", value='', height=200, max_chars=3000)
+stats_facts = st.text_area("Enter specific statistics or facts (optional):", value='', height=200, max_chars=3000)
+word_count = st.slider("Select word count:", min_value=100, max_value=1000, step=50, value=100)
+title = st.text_input("Enter the title:")
+h1_settings = st.text_input("Enter H1 settings:")
+h2_settings = st.text_input("Enter H2 settings:")
+style_rules = st.text_area("Enter style rules (optional):", value='', height=200, max_chars=3000)
 
-if st.button("Generate Article"):
-    message = st.empty()
-    message.text("Busy generating...")
-    article = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, h1_text, h2_text, style_rules)
-    message.text("")
-    st.write(article)
+if st.button("Generate"):
+    result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, h1_settings, h2_settings, style_rules)
+    st.markdown(result)
     st.download_button(
         label="Download content",
-        data=article,
+        data=result,
         file_name='Content.txt',
         mime='text/txt',
     )
