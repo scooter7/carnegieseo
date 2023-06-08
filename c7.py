@@ -90,7 +90,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         messages.append({"role": "user", "content": "The content produced is required to include the following statistics or facts: " + stats_facts})
 
     if style_rules:
-        messages.append({"role": "user", "content": "The style rules are as follows: " + style_rules})
+        messages.append({"role": "user", "content": "The content produced is required to incorporate the specified " + style_rules})
 
     if emulate:
         emulate_message = {
