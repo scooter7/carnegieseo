@@ -64,7 +64,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
 
     messages = [
         {"role": "system", "content": "You are a content creator."},
-        {"role": "user", "content": "Generate an article."},
+        {"role": "user", "content": "Generate content."},
         {"role": "assistant", "content": f"Sure! What type of content would you like to generate?"},
         {"role": "user", "content": content_type},
         {"role": "assistant", "content": "Great! Please provide me with some keywords related to the content."},
@@ -82,8 +82,8 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
             style_adjectives = placeholders[style]["adjectives"]
             verb = random.choice(style_verbs)
             adjective = random.choice(style_adjectives)
-            verb_instruction = f"The content should {verb}"
-            adjective_instruction = f"The content should be {adjective}"
+            verb_instruction = f"The content should include{verb}"
+            adjective_instruction = f"The content should include {adjective}"
             messages.append({"role": "user", "content": verb_instruction})
             messages.append({"role": "user", "content": adjective_instruction})
 
