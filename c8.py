@@ -105,7 +105,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=messages,
-        max_tokens=word_count * 10,  # Adjusted to account for token-to-word conversion
+        max_tokens=word_count,
         n=1,  # Generate a single response
         stop=None,  # Stop when max_tokens reached
         temperature=0.7,  # Adjust temperature as needed
