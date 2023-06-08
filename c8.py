@@ -2,6 +2,7 @@ import streamlit as st
 import openai
 import sys
 import logging
+import random
 
 if "OPENAI_API_KEY" not in st.secrets:
     st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
