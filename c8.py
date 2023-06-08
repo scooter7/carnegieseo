@@ -75,22 +75,25 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
     # Modify user messages to include writing styles with weighted percentages
     for i, style in enumerate(writing_styles):
         weight = style_weights[i]
-        messages.append({"role": "user", "content": f"The {content_type} should have the style {style} with a weight of {weight * 100:.1f}%"})
+        messages.append({"role": "user", "content": f"The {content_type} should have {style} style with a weight of {weight * 100:.1f}%"})
 
     messages.extend([
-        {"role": "user", "content": "The " + content_type + " should have the style " + ", ".join(writing_styles)},
-        {"role": "user", "content": "The " + content_type + " should be written to appeal to " + audience},
-        {"role": "user", "content": "The " + content_type + " length should be " + str(word_count)},
+        {"role": "user", "content": f"The {content_type} should have {', '.join(writing_styles)} styles"},
+        {"role": "user", "content": f"The {content_type} should be written to appeal to {audience}"},
+        {"role": "user", "content": f"The {content_type} length should be {word_count} words"},
     ])
 
     if institution:
-        messages.append({"role": "user", "content": "The " + content_type + " include references to the benefits of " + institution})
+        messages.append({"role": "user", "content": f"The {content_type} should include references to the benefits of {institution}"})
 
     if stats_facts:
-        messages.append({"role": "user", "content": "The content produced is required to include the following statistics or facts: " + stats_facts})
+        messages.append({"role": "user", "content": f"The content produced is required to include the following statistics or facts: {stats_facts}"})
 
     if style_rules:
-        messages.append({"role": "user", "content": "The style rules are as follows: " + style_rules})
+        style_rules_list = [rule.strip() for rule in style_rules.split("\n") if "::" in rule]
+        messages.append({"role": "user", "content": "The style rules are as follows: (style rules should not mention color names)"})
+        for rule in style_rules_list:
+            messages.append({"role": "user", "content": rule})
 
     if emulate:
         emulate_message = {
@@ -102,7 +105,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=messages,
-        max_tokens=word_count,
+        max_tokens=word_count * 10,  # Adjusted to account for token-to-word conversion
         n=1,  # Generate a single response
         stop=None,  # Stop when max_tokens reached
         temperature=0.7,  # Adjust temperature as needed
@@ -118,7 +121,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=messages,
-            max_tokens=word_count - len(result),
+            max_tokens=word_count * 10 - len(result),  # Adjusted to account for token-to-word conversion
             n=1,
             stop=None,
             temperature=0.7,
@@ -130,7 +133,6 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
 
     # Apply style rules if specified
     if style_rules:
-        style_rules_list = style_rules.split("\n")
         result = apply_style_rules(result, style_rules_list)
 
     return result
