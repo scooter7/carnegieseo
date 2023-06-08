@@ -90,7 +90,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         messages.append({"role": "user", "content": "The content produced is required to include the following statistics or facts: " + stats_facts})
 
     if style_rules:
-        messages.append({"role": "user", "content": "The content produced is required to incorporate the specified " + style_rules})
+        messages.append({"role": "user", "content": "The style rules are as follows: " + style_rules})
 
     if emulate:
         emulate_message = {
@@ -130,11 +130,16 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
 
     # Apply style rules if specified
     if style_rules:
-        # Apply your style rules here
-        # Example: result = apply_style_rules(result, style_rules)
-        pass
+        result = apply_style_rules(result, style_rules)
 
     return result
+
+def apply_style_rules(text, style_rules):
+    # Implement your logic to apply the specified style rules to the text
+    # Example: Replace specific patterns, modify formatting, etc.
+    # You can use regular expressions or other techniques based on your requirements
+    # Return the modified text
+    return text
 
 
 content_type = st.text_input("Define content type:")
