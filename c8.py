@@ -130,7 +130,8 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
 
     # Apply style rules if specified
     if style_rules:
-        result = apply_style_rules(result, style_rules)
+        style_rules_list = style_rules.split("\n")
+        result = apply_style_rules(result, style_rules_list)
 
     return result
 
