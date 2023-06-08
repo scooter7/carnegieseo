@@ -91,7 +91,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
 
     if style_rules:
         style_rules_list = [rule.strip() for rule in style_rules.split("\n") if "::" in rule]
-        messages.append({"role": "user", "content": "The style rules are as follows: (style rules should not mention color names)"})
+        messages.append({"role": "user", "content": "Please have the output use these defined grammar and mechanics rules, but don't mention the style rules within the actual content. These rules should solely dictate grammar and mechanics (style rules should not mention color names)"})
         for rule in style_rules_list:
             messages.append({"role": "user", "content": rule})
 
