@@ -128,6 +128,12 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
 
     result = f"# {title}\n\n{result}"  # Prepend title to result
 
+    # Apply style rules if specified
+    if style_rules:
+        # Apply your style rules here
+        # Example: result = apply_style_rules(result, style_rules)
+        pass
+
     return result
 
 
