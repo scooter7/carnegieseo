@@ -155,7 +155,7 @@ if st.button("Generate"):
     if not title:
         st.error("Please enter a title.")
     else:
-        result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, style_rules)
+        result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, style_rules, placeholders)
         st.markdown(result)
         st.download_button(
             label="Download content",
