@@ -58,7 +58,7 @@ placeholders = {
     # Add more color and adjective placeholders as needed
 }
 
-def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, style_rules):
+def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, style_rules, placeholders):
     if not title:
         return "Error: Title is required."
 
