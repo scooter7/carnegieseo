@@ -94,10 +94,10 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
 
     if emulate:
         emulate_message = {
-        "role": "assistant",
-        "content": "Emulate the grammar and writing mechanics based on the given prompts but do not use any of the actual example content provided."
-    }
-    messages.append(emulate_message)
+            "role": "assistant",
+            "content": "Emulate the grammar and writing mechanics based on the given prompts but do not use any of the actual example content provided."
+        }
+        messages.append(emulate_message)
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
@@ -127,7 +127,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
             result += choice.message.content
 
     result = f"# {title}\n\n{result}"  # Prepend title to result
-    
+
     return result
 
 
