@@ -1,7 +1,5 @@
 import streamlit as st
 import openai
-from github import Github
-import os
 import sys
 import logging
 
@@ -12,10 +10,6 @@ if "OPENAI_API_KEY" not in st.secrets:
 openai_api_key = st.secrets["OPENAI_API_KEY"]
 
 logging.info(f"OPENAI_API_KEY: {openai_api_key}")
-
-# Set up the GitHub API
-g = Github(st.secrets["GITHUB_TOKEN"])
-repo = g.get_repo("scooter7/carnegieseo")
 
 st.title("Carnegie Content Creator")
 
@@ -68,39 +62,50 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         return "Error: Title is required."
 
     messages = [
-        {"role": "user", "content": "This will be a " + content_type},
-        {"role": "user", "content": "This will be " + content_type + " about " + ", ".join(keywords)},
+        {"role": "system", "content": "You are a content creator."},
+        {"role": "user", "content": "Generate an article."},
+        {"role": "assistant", "content": f"Sure! What type of content would you like to generate?"},
+        {"role": "user", "content": content_type},
+        {"role": "assistant", "content": "Great! Please provide me with some keywords related to the content."},
+        {"role": "user", "content": keywords},
+        {"role": "assistant", "content": "Alright. Now, let's select the writing styles for the content."},
     ]
 
-    # Modify user messages to include writing styles with weighted percentages
     for i, style in enumerate(writing_styles):
         weight = style_weights[i]
-        messages.append({"role": "user", "content": f"The {content_type} should have {style} style with a weight of {weight * 100:.1f}%"})
+        messages.append({"role": "assistant", "content": f"The content should have {style} style with a weight of {weight * 100:.1f}%"})
+
+        # Include placeholder verbs and adjectives in user instructions
+        if style in placeholders:
+            style_verbs = placeholders[style]["verbs"]
+            style_adjectives = placeholders[style]["adjectives"]
+            verb = random.choice(style_verbs)
+            adjective = random.choice(style_adjectives)
+            verb_instruction = f"The content should {verb}"
+            adjective_instruction = f"The content should be {adjective}"
+            messages.append({"role": "user", "content": verb_instruction})
+            messages.append({"role": "user", "content": adjective_instruction})
 
     messages.extend([
-        {"role": "user", "content": f"The {content_type} should have {', '.join(writing_styles)} styles"},
-        {"role": "user", "content": f"The {content_type} should be written to appeal to {audience}"},
-        {"role": "user", "content": f"The {content_type} length should be {word_count} words"},
+        {"role": "assistant", "content": f"The content should have {', '.join(writing_styles)} styles"},
+        {"role": "assistant", "content": "Please specify the target audience for the content (optional)."},
+        {"role": "user", "content": audience},
+        {"role": "assistant", "content": "Do you want the content to include references to any specific institution or organization? If yes, please provide the name; otherwise, you can skip this step."},
+        {"role": "user", "content": institution},
+        {"role": "assistant", "content": "To generate the content, I need to understand the writing style. You can help by providing some style rules that dictate grammar and mechanics. These rules should solely dictate grammar and mechanics, and should not mention the color names. Please enter the style rules below (optional)."},
+        {"role": "user", "content": style_rules},
+        {"role": "assistant", "content": "Please provide any specific statistics or facts that you would like to include in the content (optional)."},
+        {"role": "user", "content": stats_facts},
+        {"role": "assistant", "content": "Lastly, let me know the desired word count for the content."},
+        {"role": "user", "content": str(word_count)},
+        {"role": "assistant", "content": "Lastly, could you please provide a title for the content?"},
+        {"role": "user", "content": title},
+        {"role": "assistant", "content": "Alright, generating the content..."},
     ])
 
-    if institution:
-        messages.append({"role": "user", "content": f"The {content_type} should include references to the benefits of {institution}"})
-
-    if stats_facts:
-        messages.append({"role": "user", "content": f"The content produced is required to include the following statistics or facts: {stats_facts}"})
-
-    if style_rules:
-        style_rules_list = [rule.strip() for rule in style_rules.split("\n") if "::" in rule]
-        messages.append({"role": "user", "content": "Please have the output use these defined grammar and mechanics rules, but don't mention the style rules within the actual content. These rules should solely dictate grammar and mechanics (style rules should not mention color names)"})
-        for rule in style_rules_list:
-            messages.append({"role": "user", "content": rule})
-
     if emulate:
-        emulate_message = {
-            "role": "assistant",
-            "content": "Emulate the grammar and writing mechanics based on the given prompts but do not use any of the actual example content provided."
-        }
-        messages.append(emulate_message)
+        messages.append({"role": "system", "content": "emulate"})
+        messages.append({"role": "user", "content": emulate})
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
@@ -111,9 +116,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         temperature=0.7,  # Adjust temperature as needed
     )
 
-    result = ""
-    for choice in response.choices:
-        result += choice.message.content
+    result = response.choices[0].message.content
 
     # If the response is incomplete, continue generating until completion
     while response.choices[0].message.content.endswith("..."):
@@ -126,29 +129,11 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
             stop=None,
             temperature=0.7,
         )
-        for choice in response.choices:
-            result += choice.message.content
+        result += response.choices[0].message.content
 
     result = f"# {title}\n\n{result}"  # Prepend title to result
 
-    # Apply style rules if specified
-    if style_rules:
-        result = apply_style_rules(result, style_rules_list)
-
     return result
-
-def apply_style_rules(text, style_rules):
-    modified_text = text
-
-    # Apply each style rule to the modified text
-    for rule in style_rules:
-        rule_parts = rule.split("::")  # Split rule into two parts: pattern and replacement
-        if len(rule_parts) == 2:
-            pattern, replacement = rule_parts
-            modified_text = modified_text.replace(pattern, replacement)
-
-    # Return the modified text
-    return modified_text
 
 content_type = st.text_input("Define content type:")
 keywords = st.text_input("Enter comma-separated keywords:")
@@ -159,11 +144,11 @@ for style in writing_styles:
     style_weights.append(weight)
 audience = st.text_input("Audience (optional):")
 institution = st.text_input("Institution (optional):")
-emulate = st.text_area("Emulate by pasting in up to 3000 words of sample content (optional):", value='', height=200, max_chars=3000)
-stats_facts = st.text_area("Enter specific statistics or facts (optional):", value='', height=200, max_chars=3000)
-word_count = st.slider("Select word count:", min_value=100, max_value=1000, step=50, value=100)
-title = st.text_input("Enter the title:")
-style_rules = st.text_area("Enter style rules:", value='', height=200)
+emulate = st.text_area("Emulate by pasting in up to 3000 words of sample content (optional):")
+word_count = st.number_input("Desired word count:", min_value=1, value=500)
+stats_facts = st.text_area("Statistics or facts to include (optional):")
+title = st.text_input("Title:")
+style_rules = st.text_area("Style rules (optional):")
 
 if st.button("Generate"):
     if not title:
