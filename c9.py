@@ -60,7 +60,7 @@ placeholders = {
     # Add more color and adjective placeholders as needed
 }
 
-def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, style_rules, placeholders, style_guide):
+def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, placeholders, style_guide):
     if not title:
         return "Error: Title is required."
 
@@ -84,8 +84,8 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
             style_adjectives = placeholders[style]["adjectives"]
             verb = random.choice(style_verbs)
             adjective = random.choice(style_adjectives)
-            verb_instruction = f"The content should include{verb}"
-            adjective_instruction = f"The content should include {adjective}"
+            verb_instruction = f"The content must include{verb}"
+            adjective_instruction = f"The content must include {adjective}"
             messages.append({"role": "user", "content": verb_instruction})
             messages.append({"role": "user", "content": adjective_instruction})
 
@@ -95,8 +95,6 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         {"role": "user", "content": audience},
         {"role": "assistant", "content": "Do you want the content to include references to any specific institution or organization? If yes, please provide the name; otherwise, you can skip this step."},
         {"role": "user", "content": institution},
-        {"role": "assistant", "content": "To generate the content, I need to understand the writing style. You can help by providing some style rules that dictate grammar and mechanics. These rules should solely dictate grammar and mechanics, and should not mention the color names. Please enter the style rules below (optional)."},
-        {"role": "user", "content": style_rules},
         {"role": "assistant", "content": "Please provide any specific statistics or facts that you would like to include in the content (optional)."},
         {"role": "user", "content": stats_facts},
         {"role": "assistant", "content": "Lastly, let me know the desired word count for the content."},
@@ -169,7 +167,7 @@ if st.button("Generate"):
     if not title:
         st.error("Please enter a title.")
     else:
-        result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, style_rules, placeholders, style_guide)
+        result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, placeholders, style_guide)
         st.markdown(result)
         st.download_button(
             label="Download content",
