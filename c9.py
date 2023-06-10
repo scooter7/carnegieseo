@@ -160,7 +160,6 @@ emulate = st.text_area("Emulate by pasting in up to 3000 words of sample content
 word_count = st.number_input("Desired word count:", min_value=1, value=500)
 stats_facts = st.text_area("Statistics or facts to include (optional):")
 title = st.text_input("Title:")
-style_rules = st.text_area("Style rules (optional):")
 style_guide = st.selectbox("Select style guide:", ["MLA", "APA", "Chicago"])
 
 if st.button("Generate"):
