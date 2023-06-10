@@ -66,7 +66,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
 
     messages = [
         {"role": "system", "content": "You are a content creator."},
-        {"role": "user", "content": "Generate content."},
+        {"role": "user", "content": "Generate seo-optimized content."},
         {"role": "assistant", "content": f"Sure! What type of content would you like to generate?"},
         {"role": "user", "content": content_type},
         {"role": "assistant", "content": "Great! Please provide me with some keywords related to the content."},
