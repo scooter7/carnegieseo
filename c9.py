@@ -108,18 +108,18 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         messages.append({"role": "user", "content": "Emulate the style and grammar of the following content:"})
         messages.append({"role": "assistant", "content": emulate})
 
-if style_guide == "MLA":
-    style_prompt = "generate the content using the MLA style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
-elif style_guide == "APA":
-    style_prompt = "generate the content using the APA style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
-elif style_guide == "Chicago":
-    style_prompt = "generate the content using the Chicago style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
-elif style_guide == "None":
-    style_prompt = "generate the content without following any specific style guide."
-else:
-    style_prompt = "generate the content."
+    if style_guide == "MLA":
+        style_prompt = "generate the content using the MLA style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
+    elif style_guide == "APA":
+        style_prompt = "generate the content using the APA style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
+    elif style_guide == "Chicago":
+        style_prompt = "generate the content using the Chicago style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
+    elif style_guide == "None":
+        style_prompt = "generate the content without following any specific style guide."
+    else:
+        style_prompt = "generate the content."
 
-messages.append({"role": "assistant", "content": style_prompt})
+    messages.append({"role": "assistant", "content": style_prompt})
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
