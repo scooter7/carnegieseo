@@ -125,10 +125,12 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
             temperature=0,
             n=1,
             stop=None,
-            log_level="info",
-        )
-        style_instruction = f"The content should have grammar and style similar to the provided text:\n\n{emulate_text}"
-        messages.append({"role": "user", "content": style_instruction})
+    )
+    # Extract the grammar and style analysis result
+    grammar_result = grammar_analysis.choices[0].text.strip()
+
+    # Include the grammar and style analysis result in the assistant's messages
+    messages.append({"role": "assistant", "content": grammar_result})
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
