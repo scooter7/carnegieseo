@@ -58,6 +58,34 @@ placeholders = {
     # Add more color and adjective placeholders as needed
 }
 
+def process_messages(messages, max_tokens):
+    if len(messages) <= 4:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=messages,
+            max_tokens=max_tokens,
+            n=1,
+            stop=None,
+            temperature=0.7,
+        )
+        return response.choices[0].message.content.strip()
+
+    partial_messages = messages[:4]
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=partial_messages,
+        max_tokens=max_tokens,
+        n=1,
+        stop=None,
+        temperature=0.7,
+    )
+
+    if response.choices[0].message.content.endswith("..."):
+        return process_messages(messages[2:], max_tokens)
+    else:
+        result = response.choices[0].message.content.strip()
+        return result
+
 def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, placeholders, style_guide):
     if not title:
         return "Error: Title is required."
@@ -119,55 +147,102 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
 
     messages.append({"role": "assistant", "content": style_prompt})
 
-    max_tokens = 4096  # Adjusted for token-to-word conversion
-    response = None
-    for chunk in range(0, len(messages), 4):
-        partial_messages = messages[chunk:chunk+4]
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=partial_messages,
-            max_tokens=max_tokens,
-            n=1,
-            stop=None,
-            temperature=0.7,
+    max_tokens = 4096  # Adjust this value based on your requirements
+
+    try:
+        response = process_messages(messages, max_tokens)
+    except Exception as e:
+        logging.error(f"Error processing messages: {e}")
+        return "Error: An error occurred while generating the content."
+
+    return response
+
+def main():
+    openai.api_key = openai_api_key
+    st.title("Content Generator")
+    st.markdown(
+        """
+        This is a demo of a content generator powered by OpenAI's ChatGPT. It can generate various types of content such as articles, blog posts, essays, and more.
+        """
+    )
+
+    content_type = st.selectbox(
+        "Select content type",
+        [
+            "Article",
+            "Blog Post",
+            "Essay",
+            "News",
+            "Press Release",
+            "Story",
+            "Other",
+        ],
+    )
+
+    keywords = st.text_input("Keywords (comma-separated)")
+
+    writing_styles = st.multiselect(
+        "Writing styles (select one or more)",
+        [
+            "Purple - caring, encouraging",
+            "Green - adventurous, curious",
+            "Maroon - gritty, determined",
+            "Orange - artistic, creative",
+            "Yellow - innovative, intelligent",
+            "Red - entertaining, humorous",
+            "Blue - confident, influential",
+            "Pink - charming, elegant",
+            "Silver - rebellious, daring",
+            "Beige - dedicated, humble",
+        ],
+    )
+
+    style_weights = st.slider(
+        "Style weights",
+        min_value=0.0,
+        max_value=1.0,
+        value=[0.5] * len(writing_styles),
+        step=0.1,
+    )
+
+    audience = st.text_input("Target audience")
+
+    institution = st.text_input("Institution or organization")
+
+    emulate = st.text_area(
+        "Emulate style and grammar (optional)",
+        height=100,
+        help="You can provide a piece of text to emulate its style and grammar.",
+    )
+
+    word_count = st.number_input("Word count", value=500, step=100)
+
+    stats_facts = st.text_area("Statistics or facts (optional)", height=200)
+
+    title = st.text_input("Title")
+
+    style_guide = st.selectbox(
+        "Style guide",
+        ["None", "MLA", "APA", "Chicago"],
+        help="Select a style guide to follow for grammar and citation rules.",
+    )
+
+    if st.button("Generate"):
+        generated_content = generate_article(
+            content_type,
+            keywords,
+            writing_styles,
+            style_weights,
+            audience,
+            institution,
+            emulate,
+            word_count,
+            stats_facts,
+            title,
+            placeholders,
+            style_guide,
         )
+        st.markdown(f"## Generated Content\n\n{generated_content}")
 
-        if response.choices[0].message.content.endswith("..."):
-            break
-
-    result = response.choices[0].message.content.strip()
-
-    return result
-
-# UI layout
-st.title("Carnegie Content Creator")
-
-content_type = st.text_input("Define content type:")
-keywords = st.text_input("Enter keywords (comma-separated):")
-writing_styles = st.multiselect("Select writing styles:", list(placeholders.keys()))
-style_weights = []
-for style in writing_styles:
-    weight = st.number_input(f"Weight for {style} style:", min_value=0.0, max_value=1.0, value=1.0, step=0.01)
-    style_weights.append(weight)
-
-audience = st.text_input("Specify target audience:")
-institution = st.text_input("Specify institution/organization (optional):")
-emulate = st.text_area("Emulate style and grammar of the following content (optional):")
-word_count = st.number_input("Desired word count:", min_value=1, value=100)
-stats_facts = st.text_area("Specific statistics or facts (optional):")
-title = st.text_input("Enter a title for the content:")
-
-style_guide = st.selectbox("Select a style guide:", style_guides)
-
-if st.button("Generate"):
-    if not title:
-        st.error("Please enter a title.")
-    else:
-        result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, placeholders, style_guide)
-        st.markdown(result)
-        st.download_button(
-            label="Download content",
-            data=result,
-            file_name='Content.txt',
-            mime='text/txt',
-        )
+if __name__ == "__main__":
+    main()
