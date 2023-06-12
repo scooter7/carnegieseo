@@ -145,7 +145,10 @@ st.title("Carnegie Content Creator")
 content_type = st.text_input("Define content type:")
 keywords = st.text_input("Enter keywords (comma-separated):")
 writing_styles = st.multiselect("Select writing styles:", list(placeholders.keys()))
-style_weights = st.slider("Set style weights:", min_value=0.0, max_value=1.0, value=[0.5] * len(writing_styles), step=0.1)
+style_weights = []
+for style in writing_styles:
+    weight = st.slider(f"Select weight for {style}:", min_value=1, max_value=10, step=1, value=1)
+    style_weights.append(weight)
 audience = st.text_input("Specify target audience (optional):")
 institution = st.text_input("Specify institution or organization (optional):")
 emulate = st.text_area("Emulate the style and grammar of the following content (optional):")
