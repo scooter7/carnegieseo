@@ -14,7 +14,7 @@ logging.info(f"OPENAI_API_KEY: {openai_api_key}")
 
 st.title("Carnegie Content Creator")
 
-style_guides = ["MLA", "APA", "Chicago"]  # List of available style guides
+style_guides = ["None", "MLA", "APA", "Chicago"]  # List of available style guides
 
 placeholders = {
     "Purple - caring, encouraging": {
@@ -104,18 +104,14 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         {"role": "assistant", "content": "Alright, generating the content..."},
     ])
 
-    if emulate_text:
-        messages.append({"role": "system", "content": "emulate"})
-        messages.append({"role": "user", "content": emulate_text})
-
     if style_guide == "MLA":
-        style_prompt = "generate the content using the MLA style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
-    elif style_guide == "APA":
-        style_prompt = "generate the content using the APA style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
-    elif style_guide == "Chicago":
-        style_prompt = "generate the content using the Chicago style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
-    else:
-        style_prompt = "generate the content."
+    style_prompt = "generate the content using the MLA style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
+elif style_guide == "APA":
+    style_prompt = "generate the content using the APA style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
+elif style_guide == "Chicago":
+    style_prompt = "generate the content using the Chicago style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
+else:
+    style_prompt = "generate the content."
 
     messages.append({"role": "assistant", "content": style_prompt})
 
@@ -160,13 +156,13 @@ emulate_text = st.text_area("Emulate by pasting in up to 3000 words of sample co
 word_count = st.number_input("Desired word count:", min_value=1, value=500)
 stats_facts = st.text_area("Statistics or facts to include (optional):")
 title = st.text_input("Title:")
-style_guide = st.selectbox("Select style guide:", ["MLA", "APA", "Chicago"])
+style_guide = st.selectbox("Select style guide:", style_guides)
 
 if st.button("Generate"):
     if not title:
         st.error("Please enter a title.")
     else:
-        result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate_text, word_count, stats_facts, title, placeholders, style_guide)
+        result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, None, word_count, stats_facts, title, placeholders, style_guide)
         st.markdown(result)
         st.download_button(
             label="Download content",
