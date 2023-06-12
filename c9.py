@@ -14,7 +14,7 @@ logging.info(f"OPENAI_API_KEY: {openai_api_key}")
 
 st.title("Carnegie Content Creator")
 
-style_guides = ["None", "MLA", "APA", "Chicago"]  # List of available style guides
+style_guides = ["MLA", "APA", "Chicago", "None"]  # Added "None" option to style guides
 
 placeholders = {
     "Purple - caring, encouraging": {
@@ -84,7 +84,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
             style_adjectives = placeholders[style]["adjectives"]
             verb = random.choice(style_verbs)
             adjective = random.choice(style_adjectives)
-            verb_instruction = f"The content should include{verb}"
+            verb_instruction = f"The content should include {verb}"
             adjective_instruction = f"The content should include {adjective}"
             messages.append({"role": "user", "content": verb_instruction})
             messages.append({"role": "user", "content": adjective_instruction})
@@ -108,26 +108,24 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         messages.append({"role": "user", "content": "Emulate the style and grammar of the following content:"})
         messages.append({"role": "assistant", "content": emulate})
 
-    if style_guide == "None":
-        style_prompt = "generate the content."
-    elif style_guide == "MLA":
+    if style_guide == "MLA":
         style_prompt = "generate the content using the MLA style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
     elif style_guide == "APA":
         style_prompt = "generate the content using the APA style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
     elif style_guide == "Chicago":
         style_prompt = "generate the content using the Chicago style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
     else:
-        return "Error: Invalid style guide selected."
+        style_prompt = "generate the content."
 
     messages.append({"role": "assistant", "content": style_prompt})
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=messages,
-        max_tokens=word_count,
-        n=1,  # Generate a single response
-        stop=None,  # Stop when max_tokens reached
-        temperature=0.7,  # Adjust temperature as needed
+        max_tokens=word_count * 50,  # Adjusted for token-to-word conversion
+        n=1,
+        stop=None,
+        temperature=0.7,
     )
 
     result = response.choices[0].message.content
@@ -136,31 +134,38 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
     while response.choices[0].message.content.endswith("..."):
         messages[-1]["content"] = response.choices[0].message.content
         response = openai.ChatCompletion.create(
-    model="gpt-3.5-turbo",
-    messages=messages,
-    max_tokens=word_count * 50,  # Adjusted for token-to-word conversion
-    n=1,
-    stop=None,
-    temperature=0.7,
-)
+            model="gpt-3.5-turbo",
+            messages=messages,
+            max_tokens=word_count * 50 - len(result),  # Adjusted to account for token-to-word conversion
+            n=1,
+            stop=None,
+            temperature=0.7,
+        )
         result += response.choices[0].message.content
+
+    result = result.strip()
 
     return result
 
-st.sidebar.title("Settings")
+# UI layout
+st.title("Carnegie Content Creator")
 
-content_type = st.sidebar.selectbox("Content Type", ["Article", "Essay", "Blog Post", "Research Paper"])
-keywords = st.sidebar.text_input("Keywords (comma-separated)", "AI, machine learning, technology")
-writing_styles = st.sidebar.multiselect("Writing Styles", ["Purple", "Green", "Maroon", "Orange", "Yellow", "Red", "Blue", "Pink", "Silver", "Beige"], default=["Purple"])
-style_weights = st.sidebar.slider("Style Weights", min_value=0.0, max_value=1.0, value=[0.5] * len(writing_styles), step=0.1)
-audience = st.sidebar.text_input("Audience", "General")
-institution = st.sidebar.text_input("Institution", "")
-emulate = st.sidebar.text_area("Emulate Style (optional)", "")
-word_count = st.sidebar.number_input("Word Count", min_value=100, max_value=3000, value=500)
-stats_facts = st.sidebar.text_area("Statistics/Facts (optional)", "")
-title = st.sidebar.text_input("Title", "")
+content_type = st.text_input("Define content type:")
+keywords = st.text_input("Enter keywords (comma-separated):")
+writing_styles = st.multiselect("Select writing styles:", list(placeholders.keys()))
+style_weights = []
+for style in writing_styles:
+    weight = st.slider(f"Select weight for {style}:", min_value=1, max_value=10, step=1, value=1)
+    style_weights.append(weight)
+audience = st.text_input("Enter target audience (optional):")
+institution = st.text_input("Enter institution/organization name (optional):")
+stats_facts = st.text_input("Enter specific statistics/facts (optional):")
+word_count = st.slider("Select word count:", 100, 3000, 500, step=100)
+title = st.text_input("Enter title:")
 
-style_guide = st.sidebar.selectbox("Style Guide", style_guides)
+emulate = st.text_area("Emulate style and grammar (optional):", height=100)
+
+style_guide = st.selectbox("Select a style guide:", style_guides)
 
 if st.button("Generate"):
     if not title:
