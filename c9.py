@@ -121,8 +121,8 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
 
     max_tokens = 4096  # Adjusted for token-to-word conversion
     response = None
-    for i in range(0, len(messages), 4):
-        partial_messages = messages[i:i+4]
+    for chunk in range(0, len(messages), 4):
+        partial_messages = messages[chunk:chunk+4]
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=partial_messages,
@@ -147,14 +147,16 @@ keywords = st.text_input("Enter keywords (comma-separated):")
 writing_styles = st.multiselect("Select writing styles:", list(placeholders.keys()))
 style_weights = []
 for style in writing_styles:
-    weight = st.slider(f"Select weight for {style}:", min_value=1, max_value=10, step=1, value=1)
+    weight = st.number_input(f"Weight for {style} style:", min_value=0.0, max_value=1.0, value=1.0, step=0.01)
     style_weights.append(weight)
-audience = st.text_input("Specify target audience (optional):")
-institution = st.text_input("Specify institution or organization (optional):")
-emulate = st.text_area("Emulate the style and grammar of the following content (optional):")
-word_count = st.number_input("Desired word count:", min_value=1, step=1, value=100)
-stats_facts = st.text_area("Specific statistics or facts to include (optional):")
-title = st.text_input("Enter a title:")
+
+audience = st.text_input("Specify target audience:")
+institution = st.text_input("Specify institution/organization (optional):")
+emulate = st.text_area("Emulate style and grammar of the following content (optional):")
+word_count = st.number_input("Desired word count:", min_value=1, value=100)
+stats_facts = st.text_area("Specific statistics or facts (optional):")
+title = st.text_input("Enter a title for the content:")
+
 style_guide = st.selectbox("Select a style guide:", style_guides)
 
 if st.button("Generate"):
