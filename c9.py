@@ -95,8 +95,6 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         {"role": "user", "content": audience},
         {"role": "assistant", "content": "Do you want the content to include references to any specific institution or organization? If yes, please provide the name; otherwise, you can skip this step."},
         {"role": "user", "content": institution},
-        {"role": "assistant", "content": "To generate the content, I need to understand the writing style. You can help by providing some style rules that dictate grammar and mechanics. These rules should solely dictate grammar and mechanics, and should not mention the color names. Please enter the style rules below (optional)."},
-        {"role": "user", "content": style_rules},
         {"role": "assistant", "content": "Please provide any specific statistics or facts that you would like to include in the content (optional)."},
         {"role": "user", "content": stats_facts},
         {"role": "assistant", "content": "Lastly, let me know the desired word count for the content."},
