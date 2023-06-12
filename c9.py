@@ -60,7 +60,7 @@ placeholders = {
     # Add more color and adjective placeholders as needed
 }
 
-def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, style_rules, placeholders, style_guide):
+def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, placeholders, style_guide):
     if not title:
         return "Error: Title is required."
 
@@ -169,7 +169,7 @@ if st.button("Generate"):
     if not title:
         st.error("Please enter a title.")
     else:
-        result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, style_rules, placeholders, style_guide)
+        result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, placeholders, style_guide)
         st.markdown(result)
         st.download_button(
             label="Download content",
