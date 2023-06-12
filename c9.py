@@ -122,7 +122,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=messages,
-        max_tokens=word_count * 50,  # Adjusted for token-to-word conversion
+        max_tokens=4097,  # Adjusted for token-to-word conversion
         n=1,
         stop=None,
         temperature=0.7,
@@ -136,7 +136,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=messages,
-            max_tokens=word_count * 50 - len(result),  # Adjusted to account for token-to-word conversion
+            max_tokens=4097,  # Adjusted to account for token-to-word conversion
             n=1,
             stop=None,
             temperature=0.7,
@@ -160,7 +160,7 @@ for style in writing_styles:
 audience = st.text_input("Enter target audience (optional):")
 institution = st.text_input("Enter institution/organization name (optional):")
 stats_facts = st.text_input("Enter specific statistics/facts (optional):")
-word_count = st.slider("Select word count:", 100, 3000, 500, step=100)
+word_count = st.slider("Select word count:", 100, 2500, 500, step=100)
 title = st.text_input("Enter title:")
 
 emulate = st.text_area("Emulate style and grammar (optional):", height=100)
