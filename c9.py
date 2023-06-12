@@ -104,7 +104,9 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         {"role": "assistant", "content": "Alright, generating the content..."},
     ])
 
-    if style_guide == "MLA":
+    if style_guide == "None":
+        style_prompt = "generate the content."
+    elif style_guide == "MLA":
         style_prompt = "generate the content using the MLA style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
     elif style_guide == "APA":
         style_prompt = "generate the content using the APA style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
@@ -112,8 +114,21 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         style_prompt = "generate the content using the Chicago style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
     else:
         style_prompt = "generate the content."
-
+    
     messages.append({"role": "assistant", "content": style_prompt})
+
+    if emulate_text:
+        grammar_analysis = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=emulate_text,
+            max_tokens=0,
+            temperature=0,
+            n=1,
+            stop=None,
+            log_level="info",
+        )
+        style_instruction = f"The content should have grammar and style similar to the provided text:\n\n{emulate_text}"
+        messages.append({"role": "user", "content": style_instruction})
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
@@ -156,13 +171,13 @@ emulate_text = st.text_area("Emulate by pasting in up to 3000 words of sample co
 word_count = st.number_input("Desired word count:", min_value=1, value=500)
 stats_facts = st.text_area("Statistics or facts to include (optional):")
 title = st.text_input("Title:")
-style_guide = st.selectbox("Select style guide:", style_guides)
+style_guide = st.selectbox("Select style guide:", style_guides, index=0)  # Set "None" as the default option
 
 if st.button("Generate"):
     if not title:
         st.error("Please enter a title.")
     else:
-        result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, None, word_count, stats_facts, title, placeholders, style_guide)
+        result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate_text, word_count, stats_facts, title, placeholders, style_guide)
         st.markdown(result)
         st.download_button(
             label="Download content",
