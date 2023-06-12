@@ -118,19 +118,20 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
     messages.append({"role": "assistant", "content": style_prompt})
 
     if emulate_text:
-        grammar_analysis = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=emulate_text,
-            max_tokens=0,
-            temperature=0,
-            n=1,
-            stop=None,
+    grammar_analysis = openai.Completion.create(
+        engine="text-davinci-003",
+        prompt=emulate_text,
+        max_tokens=1,
+        temperature=0,
+        n=1,
+        stop=None
     )
     # Extract the grammar and style analysis result
     grammar_result = grammar_analysis.choices[0].text.strip()
 
     # Include the grammar and style analysis result in the assistant's messages
     messages.append({"role": "assistant", "content": grammar_result})
+
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
