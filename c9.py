@@ -127,7 +127,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
             stop=None,
     )
     # Extract the grammar and style analysis result
-    grammar_result = grammar_analysis.choices[0].text.strip()
+    grammar_result = grammar_analysis.choices[0].completions[0].text.strip()
 
     # Include the grammar and style analysis result in the assistant's messages
     messages.append({"role": "assistant", "content": grammar_result})
