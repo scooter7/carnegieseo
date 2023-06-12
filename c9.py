@@ -1,4 +1,3 @@
-import streamlit as st
 import openai
 import sys
 import logging
@@ -60,13 +59,13 @@ placeholders = {
     # Add more color and adjective placeholders as needed
 }
 
-def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, placeholders, style_guide):
+def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate_text, word_count, stats_facts, title, placeholders, style_guide):
     if not title:
         return "Error: Title is required."
 
     messages = [
         {"role": "system", "content": "You are a content creator."},
-        {"role": "user", "content": "Generate seo-optimized content."},
+        {"role": "user", "content": "Generate SEO-optimized content."},
         {"role": "assistant", "content": f"Sure! What type of content would you like to generate?"},
         {"role": "user", "content": content_type},
         {"role": "assistant", "content": "Great! Please provide me with some keywords related to the content."},
@@ -84,7 +83,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
             style_adjectives = placeholders[style]["adjectives"]
             verb = random.choice(style_verbs)
             adjective = random.choice(style_adjectives)
-            verb_instruction = f"The content must include{verb}"
+            verb_instruction = f"The content must include {verb}"
             adjective_instruction = f"The content must include {adjective}"
             messages.append({"role": "user", "content": verb_instruction})
             messages.append({"role": "user", "content": adjective_instruction})
@@ -104,9 +103,9 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         {"role": "assistant", "content": "Alright, generating the content..."},
     ])
 
-    if emulate:
+    if emulate_text:
         messages.append({"role": "system", "content": "emulate"})
-        messages.append({"role": "user", "content": emulate})
+        messages.append({"role": "user", "content": emulate_text})
 
     if style_guide == "MLA":
         style_prompt = "generate the content using the MLA style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
@@ -156,7 +155,7 @@ for style in writing_styles:
     style_weights.append(weight)
 audience = st.text_input("Audience (optional):")
 institution = st.text_input("Institution (optional):")
-emulate = st.text_area("Emulate by pasting in up to 3000 words of sample content (optional):")
+emulate_text = st.text_area("Emulate by pasting in up to 3000 words of sample content (optional):")
 word_count = st.number_input("Desired word count:", min_value=1, value=500)
 stats_facts = st.text_area("Statistics or facts to include (optional):")
 title = st.text_input("Title:")
@@ -166,7 +165,7 @@ if st.button("Generate"):
     if not title:
         st.error("Please enter a title.")
     else:
-        result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, placeholders, style_guide)
+        result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate_text, word_count, stats_facts, title, placeholders, style_guide)
         st.markdown(result)
         st.download_button(
             label="Download content",
