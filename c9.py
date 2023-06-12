@@ -173,13 +173,15 @@ def main():
 
 if st.button("Generate"):
 if not title:
-st.error("Please enter a title.")
+    st.error("Please enter a title.")
 else:
-result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, placeholders, style_guide)
-st.markdown(result)
-st.download_button(
-label="Download content",
-data=result,
-file_name='Content.txt',
-mime='text/txt',
+    result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, placeholders, style_guide)
+    st.markdown(result)
+    st.download_button(
+        label="Download content",
+        data=result,
+        file_name='Content.txt',
+        mime='text/txt'
+    )
+
         )
