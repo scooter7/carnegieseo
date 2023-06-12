@@ -124,7 +124,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         max_tokens=1,
         temperature=0,
         n=1,
-        stop=None
+        stop=None,
     )
     # Extract the grammar and style analysis result
     grammar_result = grammar_analysis.choices[0].text.strip()
