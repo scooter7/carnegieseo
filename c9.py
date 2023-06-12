@@ -119,31 +119,23 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
 
     messages.append({"role": "assistant", "content": style_prompt})
 
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=messages,
-        max_tokens=4097,  # Adjusted for token-to-word conversion
-        n=1,
-        stop=None,
-        temperature=0.7,
-    )
-
-    result = response.choices[0].message.content
-
-    # If the response is incomplete, continue generating until completion
-    while response.choices[0].message.content.endswith("..."):
-        messages[-1]["content"] = response.choices[0].message.content
+    max_tokens = 4096  # Adjusted for token-to-word conversion
+    response = None
+    for i in range(0, len(messages), 4):
+        partial_messages = messages[i:i+4]
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
-            messages=messages,
-            max_tokens=4097,  # Adjusted to account for token-to-word conversion
+            messages=partial_messages,
+            max_tokens=max_tokens,
             n=1,
             stop=None,
             temperature=0.7,
         )
-        result += response.choices[0].message.content
 
-    result = result.strip()
+        if response.choices[0].message.content.endswith("..."):
+            break
+
+    result = response.choices[0].message.content.strip()
 
     return result
 
@@ -153,18 +145,13 @@ st.title("Carnegie Content Creator")
 content_type = st.text_input("Define content type:")
 keywords = st.text_input("Enter keywords (comma-separated):")
 writing_styles = st.multiselect("Select writing styles:", list(placeholders.keys()))
-style_weights = []
-for style in writing_styles:
-    weight = st.slider(f"Select weight for {style}:", min_value=1, max_value=10, step=1, value=1)
-    style_weights.append(weight)
-audience = st.text_input("Enter target audience (optional):")
-institution = st.text_input("Enter institution/organization name (optional):")
-stats_facts = st.text_input("Enter specific statistics/facts (optional):")
-word_count = st.slider("Select word count:", 100, 2500, 500, step=100)
-title = st.text_input("Enter title:")
-
-emulate = st.text_area("Emulate style and grammar (optional):", height=100)
-
+style_weights = st.slider("Set style weights:", min_value=0.0, max_value=1.0, value=[0.5] * len(writing_styles), step=0.1)
+audience = st.text_input("Specify target audience (optional):")
+institution = st.text_input("Specify institution or organization (optional):")
+emulate = st.text_area("Emulate the style and grammar of the following content (optional):")
+word_count = st.number_input("Desired word count:", min_value=1, step=1, value=100)
+stats_facts = st.text_area("Specific statistics or facts to include (optional):")
+title = st.text_input("Enter a title:")
 style_guide = st.selectbox("Select a style guide:", style_guides)
 
 if st.button("Generate"):
