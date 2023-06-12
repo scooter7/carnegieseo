@@ -147,102 +147,34 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
 
     messages.append({"role": "assistant", "content": style_prompt})
 
-    max_tokens = 4096  # Adjust this value based on your requirements
-
-    try:
-        response = process_messages(messages, max_tokens)
-    except Exception as e:
-        logging.error(f"Error processing messages: {e}")
-        return "Error: An error occurred while generating the content."
+    max_tokens = 4096  # Adjusted for token-to-word conversion
+    response = process_messages(messages, max_tokens)
 
     return response
 
 def main():
     openai.api_key = openai_api_key
+
     st.title("Content Generator")
-    st.markdown(
-        """
-        This is a demo of a content generator powered by OpenAI's ChatGPT. It can generate various types of content such as articles, blog posts, essays, and more.
-        """
-    )
 
-    content_type = st.selectbox(
-        "Select content type",
-        [
-            "Article",
-            "Blog Post",
-            "Essay",
-            "News",
-            "Press Release",
-            "Story",
-            "Other",
-        ],
-    )
-
-    keywords = st.text_input("Keywords (comma-separated)")
-
-    writing_styles = st.multiselect(
-        "Writing styles (select one or more)",
-        [
-            "Purple - caring, encouraging",
-            "Green - adventurous, curious",
-            "Maroon - gritty, determined",
-            "Orange - artistic, creative",
-            "Yellow - innovative, intelligent",
-            "Red - entertaining, humorous",
-            "Blue - confident, influential",
-            "Pink - charming, elegant",
-            "Silver - rebellious, daring",
-            "Beige - dedicated, humble",
-        ],
-    )
-
-    style_weights = st.slider(
-        "Style weights",
-        min_value=0.0,
-        max_value=1.0,
-        value=[0.5] * len(writing_styles),
-        step=0.1,
-    )
-
-    audience = st.text_input("Target audience")
-
-    institution = st.text_input("Institution or organization")
-
-    emulate = st.text_area(
-        "Emulate style and grammar (optional)",
-        height=100,
-        help="You can provide a piece of text to emulate its style and grammar.",
-    )
-
-    word_count = st.number_input("Word count", value=500, step=100)
-
-    stats_facts = st.text_area("Statistics or facts (optional)", height=200)
-
-    title = st.text_input("Title")
-
-    style_guide = st.selectbox(
-        "Style guide",
-        ["None", "MLA", "APA", "Chicago"],
-        help="Select a style guide to follow for grammar and citation rules.",
-    )
+    content_type = st.text_input("Content Type", "")
+    keywords = st.text_input("Keywords", "")
+    writing_styles = st.multiselect("Writing Styles", ["Purple - caring, encouraging", "Green - adventurous, curious", "Maroon - gritty, determined", "Orange - artistic, creative", "Yellow - innovative, intelligent", "Red - entertaining, humorous", "Blue - confident, influential", "Pink - charming, elegant", "Silver - rebellious, daring", "Beige - dedicated, humble"])
+    style_weights = []
+    for style in writing_styles:
+    weight = st.slider(f"Select weight for {style}:", min_value=1, max_value=10, step=1, value=1)
+    style_weights.append(weight)
+    audience = st.text_input("Target Audience", "")
+    institution = st.text_input("Institution/Organization", "")
+    emulate = st.text_input("Emulate Style/Grammar", "")
+    word_count = st.number_input("Word Count", value=500, step=100)
+    stats_facts = st.text_area("Statistics/Facts", "")
+    title = st.text_input("Title", "")
+    style_guide = st.selectbox("Style Guide", style_guides)
 
     if st.button("Generate"):
-        generated_content = generate_article(
-            content_type,
-            keywords,
-            writing_styles,
-            style_weights,
-            audience,
-            institution,
-            emulate,
-            word_count,
-            stats_facts,
-            title,
-            placeholders,
-            style_guide,
-        )
-        st.markdown(f"## Generated Content\n\n{generated_content}")
+        result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, placeholders, style_guide)
+        st.markdown(result)
 
 if __name__ == "__main__":
     main()
