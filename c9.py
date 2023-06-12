@@ -14,7 +14,7 @@ logging.info(f"OPENAI_API_KEY: {openai_api_key}")
 
 st.title("Carnegie Content Creator")
 
-style_guides = ["MLA", "APA", "Chicago", "None"]  # Added "None" option to style guides
+style_guides = ["MLA", "APA", "Chicago"]  # List of available style guides
 
 placeholders = {
     "Purple - caring, encouraging": {
@@ -60,41 +60,13 @@ placeholders = {
     # Add more color and adjective placeholders as needed
 }
 
-def process_messages(messages, max_tokens):
-    if len(messages) <= 4:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=messages,
-            max_tokens=max_tokens,
-            n=1,
-            stop=None,
-            temperature=0.7,
-        )
-        return response.choices[0].message.content.strip()
-
-    partial_messages = messages[:4]
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=partial_messages,
-        max_tokens=max_tokens,
-        n=1,
-        stop=None,
-        temperature=0.7,
-    )
-
-    if response.choices[0].message.content.endswith("..."):
-        return process_messages(messages[2:], max_tokens)
-    else:
-        result = response.choices[0].message.content.strip()
-        return result
-
 def generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, placeholders, style_guide):
     if not title:
         return "Error: Title is required."
 
     messages = [
         {"role": "system", "content": "You are a content creator."},
-        {"role": "user", "content": "Generate content."},
+        {"role": "user", "content": "Generate seo-optimized content."},
         {"role": "assistant", "content": f"Sure! What type of content would you like to generate?"},
         {"role": "user", "content": content_type},
         {"role": "assistant", "content": "Great! Please provide me with some keywords related to the content."},
@@ -112,8 +84,8 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
             style_adjectives = placeholders[style]["adjectives"]
             verb = random.choice(style_verbs)
             adjective = random.choice(style_adjectives)
-            verb_instruction = f"The content should include {verb}"
-            adjective_instruction = f"The content should include {adjective}"
+            verb_instruction = f"The content must include{verb}"
+            adjective_instruction = f"The content must include {adjective}"
             messages.append({"role": "user", "content": verb_instruction})
             messages.append({"role": "user", "content": adjective_instruction})
 
@@ -133,8 +105,8 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
     ])
 
     if emulate:
-        messages.append({"role": "user", "content": "Emulate the style and grammar of the following content:"})
-        messages.append({"role": "assistant", "content": emulate})
+        messages.append({"role": "system", "content": "emulate"})
+        messages.append({"role": "user", "content": emulate})
 
     if style_guide == "MLA":
         style_prompt = "generate the content using the MLA style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
@@ -142,37 +114,53 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         style_prompt = "generate the content using the APA style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
     elif style_guide == "Chicago":
         style_prompt = "generate the content using the Chicago style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
-    elif style_guide == "None":
-        style_prompt = "generate the content without following any specific style guide."
     else:
         style_prompt = "generate the content."
 
     messages.append({"role": "assistant", "content": style_prompt})
 
-    max_tokens = 4096  # Adjusted for token-to-word conversion
-    response = process_messages(messages, max_tokens)
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=messages,
+        max_tokens=word_count,
+        n=1,  # Generate a single response
+        stop=None,  # Stop when max_tokens reached
+        temperature=0.7,  # Adjust temperature as needed
+    )
 
-    return response
+    result = response.choices[0].message.content
 
-def main():
-    openai.api_key = openai_api_key
+    # If the response is incomplete, continue generating until completion
+    while response.choices[0].message.content.endswith("..."):
+        messages[-1]["content"] = response.choices[0].message.content
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=messages,
+            max_tokens=word_count * 10 - len(result),  # Adjusted to account for token-to-word conversion
+            n=1,
+            stop=None,
+            temperature=0.7,
+        )
+        result += response.choices[0].message.content
 
-    st.title("Content Generator")
+    result = f"# {title}\n\n{result}"  # Prepend title to result
 
-    content_type = st.text_input("Content Type", "")
-    keywords = st.text_input("Keywords", "")
-    writing_styles = st.multiselect("Writing Styles", ["Purple - caring, encouraging", "Green - adventurous, curious", "Maroon - gritty, determined", "Orange - artistic, creative", "Yellow - innovative, intelligent", "Red - entertaining, humorous", "Blue - confident, influential", "Pink - charming, elegant", "Silver - rebellious, daring", "Beige - dedicated, humble"])
-    style_weights = []
-    for style in writing_styles:
-        weight = st.slider(f"Select weight for {style}:", min_value=1, max_value=10, step=1, value=1)
-        style_weights.append(weight)
-    audience = st.text_input("Target Audience", "")
-    institution = st.text_input("Institution/Organization", "")
-    emulate = st.text_input("Emulate Style/Grammar", "")
-    word_count = st.number_input("Word Count", value=500, step=100)
-    stats_facts = st.text_area("Statistics/Facts", "")
-    title = st.text_input("Title", "")
-    style_guide = st.selectbox("Style Guide", style_guides)
+    return result
+
+content_type = st.text_input("Define content type:")
+keywords = st.text_input("Enter comma-separated keywords:")
+writing_styles = st.multiselect("Select writing styles:", list(placeholders.keys()))
+style_weights = []
+for style in writing_styles:
+    weight = st.slider(f"Select weight for {style}:", min_value=1, max_value=10, step=1, value=1)
+    style_weights.append(weight)
+audience = st.text_input("Audience (optional):")
+institution = st.text_input("Institution (optional):")
+emulate = st.text_area("Emulate by pasting in up to 3000 words of sample content (optional):")
+word_count = st.number_input("Desired word count:", min_value=1, value=500)
+stats_facts = st.text_area("Statistics or facts to include (optional):")
+title = st.text_input("Title:")
+style_guide = st.selectbox("Select style guide:", ["MLA", "APA", "Chicago"])
 
 if st.button("Generate"):
     if not title:
@@ -184,6 +172,5 @@ if st.button("Generate"):
             label="Download content",
             data=result,
             file_name='Content.txt',
-            mime='text/txt'
+            mime='text/txt',
         )
-
