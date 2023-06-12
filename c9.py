@@ -1,3 +1,4 @@
+import streamlit as st
 import openai
 import sys
 import logging
@@ -10,6 +11,8 @@ if "OPENAI_API_KEY" not in st.secrets:
 openai_api_key = st.secrets["OPENAI_API_KEY"]
 
 logging.info(f"OPENAI_API_KEY: {openai_api_key}")
+
+st.title("Carnegie Content Creator")
 
 style_guides = ["MLA", "APA", "Chicago", "None"]  # Added "None" option to style guides
 
