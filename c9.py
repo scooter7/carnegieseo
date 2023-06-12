@@ -161,7 +161,7 @@ def main():
     keywords = st.text_input("Keywords", "")
     writing_styles = st.multiselect("Writing Styles", ["Purple - caring, encouraging", "Green - adventurous, curious", "Maroon - gritty, determined", "Orange - artistic, creative", "Yellow - innovative, intelligent", "Red - entertaining, humorous", "Blue - confident, influential", "Pink - charming, elegant", "Silver - rebellious, daring", "Beige - dedicated, humble"])
     style_weights = []
-    for style in writing_styles:
+for style in writing_styles:
     weight = st.slider(f"Select weight for {style}:", min_value=1, max_value=10, step=1, value=1)
     style_weights.append(weight)
     audience = st.text_input("Target Audience", "")
