@@ -1,4 +1,3 @@
-import streamlit as st
 import openai
 import sys
 import logging
@@ -161,9 +160,9 @@ def main():
     keywords = st.text_input("Keywords", "")
     writing_styles = st.multiselect("Writing Styles", ["Purple - caring, encouraging", "Green - adventurous, curious", "Maroon - gritty, determined", "Orange - artistic, creative", "Yellow - innovative, intelligent", "Red - entertaining, humorous", "Blue - confident, influential", "Pink - charming, elegant", "Silver - rebellious, daring", "Beige - dedicated, humble"])
     style_weights = []
-for style in writing_styles:
-    weight = st.slider(f"Select weight for {style}:", min_value=1, max_value=10, step=1, value=1)
-    style_weights.append(weight)
+    for style in writing_styles:
+        weight = st.slider(f"Select weight for {style}:", min_value=1, max_value=10, step=1, value=1)
+        style_weights.append(weight)
     audience = st.text_input("Target Audience", "")
     institution = st.text_input("Institution/Organization", "")
     emulate = st.text_input("Emulate Style/Grammar", "")
@@ -173,8 +172,14 @@ for style in writing_styles:
     style_guide = st.selectbox("Style Guide", style_guides)
 
     if st.button("Generate"):
+    if not title:
+        st.error("Please enter a title.")
+    else:
         result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate, word_count, stats_facts, title, placeholders, style_guide)
         st.markdown(result)
-
-if __name__ == "__main__":
-    main()
+        st.download_button(
+            label="Download content",
+            data=result,
+            file_name='Content.txt',
+            mime='text/txt',
+        )
