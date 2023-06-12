@@ -183,5 +183,3 @@ else:
         file_name='Content.txt',
         mime='text/txt'
     )
-
-        )
