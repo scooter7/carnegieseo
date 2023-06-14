@@ -104,19 +104,6 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         {"role": "assistant", "content": "Alright, generating the content..."},
     ])
 
-    if style_guide == "None":
-        style_prompt = "generate the content."
-    elif style_guide == "MLA":
-        style_prompt = "generate the content using the MLA style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
-    elif style_guide == "APA":
-        style_prompt = "generate the content using the APA style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
-    elif style_guide == "Chicago":
-        style_prompt = "generate the content using the Chicago style guide so that all grammar and citation rules of that style guide are followed and generated in the output."
-    else:
-        style_prompt = "generate the content."
-    
-    messages.append({"role": "assistant", "content": style_prompt})
-
     if emulate_text:
         grammar_analysis = openai.Completion.create(
             engine="text-davinci-003",
@@ -125,15 +112,14 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
             temperature=0,
             n=1,
             stop=None,
-    )
-    # Extract the grammar and style analysis result
-    grammar_result = grammar_analysis.choices[0].text.strip()
+        )
+        # Extract the grammar and style analysis result
+        grammar_result = grammar_analysis.choices[0].text.strip()
 
-    # Include the grammar and style analysis result in the assistant's messages
-    messages.append({"role": "assistant", "content": grammar_result})
+        # Include the grammar and style analysis result in the assistant's messages
+        messages.append({"role": "assistant", "content": grammar_result})
     else:
         grammar_result = ""  # Add this line to assign an empty string if emulate_text is not provided
-
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
