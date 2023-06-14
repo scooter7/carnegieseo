@@ -131,6 +131,8 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
 
     # Include the grammar and style analysis result in the assistant's messages
     messages.append({"role": "assistant", "content": grammar_result})
+    else:
+    grammar_result = ""  # Add this line to assign an empty string if emulate_text is not provided
 
 
     response = openai.ChatCompletion.create(
