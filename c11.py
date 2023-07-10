@@ -110,7 +110,10 @@ with st.beta_container():
     content_type = st.selectbox("Content Type", ["College Academic Program Webpage", "Thought leadership Content Webpage", "College Admissions Webpage"])
     keywords = st.text_input("Keywords (comma-separated)")
     writing_styles = st.multiselect("Writing Styles", ["Purple - caring, encouraging", "Green - adventurous, curious", "Maroon - gritty, determined", "Orange - artistic, creative", "Yellow - innovative, intelligent", "Red - entertaining, humorous", "Blue - confident, influential", "Pink - charming, elegant", "Silver - rebellious, daring", "Beige - dedicated, humble"])
-    style_weights = st.slider("Style Weights", min_value=0.0, max_value=1.0, value=(0.5, 0.5), step=0.1)
+    style_weights = []
+for style in writing_styles:
+    weight = st.slider(f"Select weight for {style}:", min_value=1, max_value=10, step=1, value=1)
+    style_weights.append(weight)
     audience = st.text_input("Target Audience")
     institution = st.text_input("Institution/Organization")
     emulate_text = st.text_input("Emulate Text (optional)")
