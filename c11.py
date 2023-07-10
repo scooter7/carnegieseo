@@ -107,7 +107,7 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
     ])
 
 with st.beta_container():
-    content_type = st.selectbox("Content Type", ["Blog post", "Article", "News report", "Product description"])
+    content_type = st.selectbox("Content Type", ["College Academic Program Webpage", "Thought leadership Content Webpage", "College Admissions Webpage"])
     keywords = st.text_input("Keywords (comma-separated)")
     writing_styles = st.multiselect("Writing Styles", ["Purple - caring, encouraging", "Green - adventurous, curious", "Maroon - gritty, determined", "Orange - artistic, creative", "Yellow - innovative, intelligent", "Red - entertaining, humorous", "Blue - confident, influential", "Pink - charming, elegant", "Silver - rebellious, daring", "Beige - dedicated, humble"])
     style_weights = st.slider("Style Weights", min_value=0.0, max_value=1.0, value=(0.5, 0.5), step=0.1)
