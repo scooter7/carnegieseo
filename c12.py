@@ -151,7 +151,7 @@ def generate_article (content_type, keywords, writing_styles, style_weights, aud
 
     return result
 
-content_type = st.text_input("Define content type:")content_type = st.selectbox("Content Type", ["College Academic Program Webpage", "Thought leadership Content Webpage", "College Admissions Webpage"])
+content_type = st.selectbox("Content Type", ["College Academic Program Webpage", "Thought leadership Content Webpage", "College Admissions Webpage"])
 keywords = st.text_input("Enter comma-separated keywords:")
 writing_styles = st.multiselect("Select writing styles:", list(placeholders.keys()))
 style_weights = []
