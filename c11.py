@@ -80,17 +80,6 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         weight = style_weights[i]
         messages.append({"role": "assistant", "content": f"The content should have {style} style with a weight of {weight * 100:.1f}%"})
 
-        # Include placeholder verbs and adjectives in user instructions
-        if style in placeholders:
-            style_verbs = placeholders[style]["verbs"]
-            style_adjectives = placeholders[style]["adjectives"]
-            verb = random.choice(style_verbs)
-            adjective = random.choice(style_adjectives)
-            verb_instruction = f"The content must include {verb}"
-            adjective_instruction = f"The content must include {adjective}"
-            messages.append({"role": "user", "content": verb_instruction})
-            messages.append({"role": "user", "content": adjective_instruction})
-
     messages.extend([
         {"role": "assistant", "content": f"The content should have {', '.join(writing_styles)} styles"},
         {"role": "assistant", "content": "Please specify the target audience for the content (optional)."},
@@ -105,6 +94,12 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         {"role": "user", "content": title},
         {"role": "assistant", "content": "Alright, generating the content..."},
     ])
+
+    # Generate the content
+    generated_content = "Generated content goes here"
+
+    return generated_content
+
 
 content_type = st.selectbox("Content Type", ["College Academic Program Webpage", "Thought leadership Content Webpage", "College Admissions Webpage"])
 keywords = st.text_input("Keywords (comma-separated)")
