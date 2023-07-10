@@ -131,7 +131,7 @@ if st.button("Generate"):
         st.markdown(result)
         st.download_button(
             label="Download content",
-            data=result,
+            data=result.encode("utf-8"),
             file_name='Content.txt',
-            mime='text/txt',
+            mime='text/plain',
         )
