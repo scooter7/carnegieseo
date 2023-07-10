@@ -124,7 +124,7 @@ def generate_article (content_type, keywords, writing_styles, style_weights, aud
         grammar_result = ""  # Add this line to assign an empty string if emulate_text is not provided
 
     response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",
+        model="gpt-3.5-turbo",
         messages=messages,
         max_tokens=word_count,
         n=1,  # Generate a single response
@@ -138,7 +138,7 @@ def generate_article (content_type, keywords, writing_styles, style_weights, aud
     while response.choices[0].message.content.endswith("..."):
         messages[-1]["content"] = response.choices[0].message.content
         response = openai.ChatCompletion.create(
-            model="gpt-4-turbo",
+            model="gpt-3.5-turbo",
             messages=messages,
             max_tokens=word_count * 10 - len(result),  # Adjusted to account for token-to-word conversion
             n=1,
