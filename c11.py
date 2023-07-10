@@ -106,15 +106,30 @@ def generate_article(content_type, keywords, writing_styles, style_weights, audi
         {"role": "assistant", "content": "Alright, generating the content..."},
     ])
 
-if st.button("Generate"):
-    if not title:
-        st.error("Please enter a title.")
-    else:
-        result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate_text, word_count, stats_facts, title, placeholders, style_guide, include_h1, include_subheadings)
-        st.markdown(result)
-        st.download_button(
-            label="Download content",
-            data=result,
-            file_name='Content.txt',
-            mime='text/txt',
-        )
+with st.beta_container():
+    content_type = st.selectbox("Content Type", ["Blog post", "Article", "News report", "Product description"])
+    keywords = st.text_input("Keywords (comma-separated)")
+    writing_styles = st.multiselect("Writing Styles", ["Purple - caring, encouraging", "Green - adventurous, curious", "Maroon - gritty, determined", "Orange - artistic, creative", "Yellow - innovative, intelligent", "Red - entertaining, humorous", "Blue - confident, influential", "Pink - charming, elegant", "Silver - rebellious, daring", "Beige - dedicated, humble"])
+    style_weights = st.slider("Style Weights", min_value=0.0, max_value=1.0, value=(0.5, 0.5), step=0.1)
+    audience = st.text_input("Target Audience")
+    institution = st.text_input("Institution/Organization")
+    emulate_text = st.text_input("Emulate Text (optional)")
+    word_count = st.number_input("Word Count", min_value=1, step=1)
+    stats_facts = st.text_area("Statistics/Facts (optional)")
+    title = st.text_input("Title")
+    style_guide = st.selectbox("Style Guide", style_guides)
+    include_h1 = st.checkbox("Include H1")
+    include_subheadings = st.checkbox("Include Subheadings")
+
+    if st.button("Generate"):
+        if not title:
+            st.error("Please enter a title.")
+        else:
+            result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate_text, word_count, stats_facts, title, placeholders, style_guide, include_h1, include_subheadings)
+            st.markdown(result)
+            st.download_button(
+                label="Download content",
+                data=result,
+                file_name='Content.txt',
+                mime='text/txt',
+            )
