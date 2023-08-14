@@ -190,16 +190,20 @@ if st.button("Revise"):
         model="gpt-3.5-turbo",
         messages=messages
     )
-    revised_content = response.choices[0].message.content
-    st.markdown(revised_content)
 
 st.button("Generate")
-    if not title:
-        st.error("Please enter a title.")
-    else:
-        result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate_text, word_count, stats_facts, title, placeholders, style_guide, include_h1, include_subheadings)
-        st.markdown(result)
-        st.download_button(
+if not title:
+    st.error("Please enter a title.")
+else:
+    result = generate_article(content_type, keywords, writing_styles, style_weights, audience, institution, emulate_text, word_count, stats_facts, title, placeholders, style_guide, include_h1, include_subheadings)
+    st.markdown(result)
+    st.download_button(
+        label="Download content",
+        data=result,
+        file_name='Content.txt',
+        mime='text/txt',
+    )
+
             label="Download content",
             data=result,
             file_name='Content.txt',
