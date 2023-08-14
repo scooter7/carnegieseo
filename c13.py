@@ -192,6 +192,8 @@ if st.button("Revise"):
     )
 
 st.button("Generate")
+
+
 if not title:
     st.error("Please enter a title.")
 else:
