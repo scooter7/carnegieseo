@@ -168,7 +168,7 @@ style_guide = st.selectbox("Select style guide:", style_guides, index=0)  # Set 
 include_h1 = st.checkbox("Include H1")
 include_subheadings = st.checkbox("Include Subheadings")
 
-st.button("Generate")
+st.button("Generate", key="unique_generate_button_key")
 
 # New Revision Functionality
 st.markdown("---")  # A separator for better UI clarity
@@ -193,7 +193,7 @@ if st.button("Revise"):
         messages=messages
     )
 
-st.button("Generate")
+st.button("Generate", key="unique_generate_button_key")
 
 
 if not title:
