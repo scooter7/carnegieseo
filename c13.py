@@ -204,8 +204,11 @@ else:
         mime='text/txt',
     )
 
-    label="Download content",
-    data=result,
-    file_name='Content.txt',
-    mime='text/txt',
+
+    st.download_button(
+        label="Download content",
+        data=result,
+        file_name='Content.txt',
+        mime='text/txt'
     )
+
