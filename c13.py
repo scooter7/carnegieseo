@@ -168,6 +168,8 @@ style_guide = st.selectbox("Select style guide:", style_guides, index=0)  # Set 
 include_h1 = st.checkbox("Include H1")
 include_subheadings = st.checkbox("Include Subheadings")
 
+st.button("Generate")
+
 # New Revision Functionality
 st.markdown("---")  # A separator for better UI clarity
 st.header("Revision Section")
