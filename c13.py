@@ -209,6 +209,7 @@ else:
         label="Download content",
         data=result,
         file_name='Content.txt',
-        mime='text/txt'
+        mime='text/txt',
+        key="unique_download_button_key"
     )
 
