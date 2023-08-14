@@ -193,7 +193,7 @@ if st.button("Revise"):
     revised_content = response.choices[0].message.content
     st.markdown(revised_content)
 
-st.button("Generate"):
+st.button("Generate")
     if not title:
         st.error("Please enter a title.")
     else:
