@@ -34,8 +34,6 @@ def generate_article(content, writing_styles):
     for i, style in enumerate(writing_styles):
         weight = style_weights[i]
         messages.append({"role": "assistant", "content": f"The content should have {style} style with a weight of {weight * 100:.1f}%"})
-
-        # Include placeholder verbs and adjectives in user instructions
         if style in placeholders:
             style_verbs = placeholders[style]["verbs"]
             style_adjectives = placeholders[style]["adjectives"]
@@ -72,16 +70,6 @@ if st.button("Revise"):
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=revision_messages)
     revised_content = response.choices[0].message["content"]
     st.text(revised_content)
-        if st.button("Revise"):
-        revision_messages = [
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": pasted_content},
-            {"role": "user", "content": revision_requests}
-        ]
-        response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=revision_messages)
-        revised_content = response.choices[0].message["content"]
-        st.text(revised_content)
 
 if __name__ == "__main__":
     main()
-
