@@ -2,26 +2,34 @@ import streamlit as st
 import openai
 import sys
 import logging
-import random
 
 if "OPENAI_API_KEY" not in st.secrets:
     st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
     sys.exit(1)
 
 openai_api_key = st.secrets["OPENAI_API_KEY"]
-
 logging.info(f"OPENAI_API_KEY: {openai_api_key}")
 
 st.title("Carnegie Content Refresher")
 
-style_weights = [0.2, 0.3, 0.1, 0.2, 0.2]
+placeholders = {
+    "Purple - caring, encouraging": {"verbs": ["care", "encourage"], "adjectives": ["caring", "encouraging"]},
+    "Green - adventurous, curious": {"verbs": ["explore", "discover"], "adjectives": ["adventurous", "curious"]},
+    "Maroon - gritty, determined": {"verbs": ["persevere", "strive"], "adjectives": ["gritty", "determined"]},
+    "Orange - artistic, creative": {"verbs": ["create", "express"], "adjectives": ["artistic", "creative"]},
+    "Yellow - innovative, intelligent": {"verbs": ["innovate", "intellect"], "adjectives": ["innovative", "intelligent"]},
+    "Red - entertaining, humorous": {"verbs": ["entertain", "amuse"], "adjectives": ["entertaining", "humorous"]},
+    "Blue - confident, influential": {"verbs": ["inspire", "influence"], "adjectives": ["confident", "influential"]},
+    "Pink - charming, elegant": {"verbs": ["charm", "grace"], "adjectives": ["charming", "elegant"]},
+    "Silver - rebellious, daring": {"verbs": ["rebel", "dare"], "adjectives": ["rebellious", "daring"]},
+    "Beige - dedicated, humble": {"verbs": ["dedicate", "humble"], "adjectives": ["dedicated", "humble"]}
+}
 
 def generate_article(content, writing_styles):
     messages = [{"role": "system", "content": "You are a content creator that changes the tone of user-generated content based on the writing styles listed."}]
     messages.append({"role": "user", "content": content})
-    for i, style in enumerate(writing_styles):
-        weight = style_weights[i]
-        messages.append({"role": "assistant", "content": f"The content should have {style} style with a weight of {weight * 100:.1f}%."})
+    for style in writing_styles:
+        messages.append({"role": "assistant", "content": f"The content should have {style} style."})
     messages.append({"role": "assistant", "content": "Generating the content..."})
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
     return response.choices[0].message["content"]
