@@ -67,6 +67,7 @@ def main():
         response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=revision_messages)
         revised_content = response.choices[0].message["content"].strip()
         st.text(revised_content)
+        st.download_button("Download Revised Content", revised_content, "revised_content_revision.txt")
 
 if __name__ == "__main__":
     main()
