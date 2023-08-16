@@ -2,6 +2,7 @@ import streamlit as st
 import openai
 import sys
 import logging
+import random
 
 if "OPENAI_API_KEY" not in st.secrets:
     st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
@@ -32,8 +33,19 @@ def generate_article(content, writing_styles):
     messages.append({"role": "user", "content": content})
     for i, style in enumerate(writing_styles):
         weight = style_weights[i]
-        messages.append({"role": "assistant", "content": f"The content should have {style} style with a weight of {weight * 100:.1f}%."})
-    messages.append({"role": "assistant", "content": "Generating the content..."})
+        messages.append({"role": "assistant", "content": f"The content should have {style} style with a weight of {weight * 100:.1f}%"})
+
+        # Include placeholder verbs and adjectives in user instructions
+        if style in placeholders:
+            style_verbs = placeholders[style]["verbs"]
+            style_adjectives = placeholders[style]["adjectives"]
+            verb = random.choice(style_verbs)
+            adjective = random.choice(style_adjectives)
+            verb_instruction = f"The content must include {verb}"
+            adjective_instruction = f"The content must include {adjective}"
+            messages.append({"role": "user", "content": verb_instruction})
+            messages.append({"role": "user", "content": adjective_instruction})
+
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
     return response.choices[0].message["content"]
 
@@ -60,7 +72,6 @@ if st.button("Revise"):
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=revision_messages)
     revised_content = response.choices[0].message["content"]
     st.text(revised_content)
-
 
 if __name__ == "__main__":
     main()
