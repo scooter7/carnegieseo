@@ -24,25 +24,28 @@ placeholders = {
     "Beige - dedicated, humble": {"verbs": ["dedicate", "humble"], "adjectives": ["dedicated", "humble"]}
 }
 
-style_weights = [0.2, 0.3, 0.1, 0.2, 0.2]
-
-def generate_article(content, writing_styles):
-    messages = [{"role": "system", "content": "You are a content creator that changes the tone of user-generated content based on the writing styles listed."}]
-    messages.append({"role": "user", "content": content})
+def generate_article(content, writing_styles, style_weights):
+    messages = [{"role": "user", "content": content}]
     for i, style in enumerate(writing_styles):
         weight = style_weights[i]
-        messages.append({"role": "assistant", "content": f"The content should have {style} style with a weight of {weight * 100:.1f}%."})
+        messages.append({"role": "assistant", "content": f"The content should have {style} style with a weight of {weight}%"})
 
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
     return response.choices[0].message["content"]
 
 def main():
     st.title("Carnegie Content Refresher")
+    
     user_content = st.text_area("Paste your content here:")
     writing_styles = st.multiselect("Select Writing Styles:", list(placeholders.keys()))
-
+    
+    style_weights = []
+    for style in writing_styles:
+        weight = st.slider(f"Weight for {style}:", 0, 100, 50)
+        style_weights.append(weight)
+    
     if st.button("Generate Revised Content"):
-        revised_content = generate_article(user_content, writing_styles)
+        revised_content = generate_article(user_content, writing_styles, style_weights)
         st.text(revised_content)
         st.download_button("Download Revised Content", revised_content, "revised_content.txt")
 
@@ -52,7 +55,7 @@ def main():
     pasted_content = st.text_area("Paste Generated Content Here (for further revisions):")
     revision_requests = st.text_area("Specify Revisions Here:")
 
-    if st.button("Revise"):
+    if st.button("Revise Further"):
         revision_messages = [
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": pasted_content},
