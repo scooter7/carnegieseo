@@ -14,22 +14,10 @@ logging.info(f"OPENAI_API_KEY: {openai_api_key}")
 
 st.title("Carnegie Content Refresher")
 
-placeholders = {
-    "Purple - caring, encouraging": {"verbs": ["care", "encourage"], "adjectives": ["caring", "encouraging"]},
-    "Green - adventurous, curious": {"verbs": ["explore", "discover"], "adjectives": ["adventurous", "curious"]},
-    "Maroon - gritty, determined": {"verbs": ["persevere", "strive"], "adjectives": ["gritty", "determined"]},
-    "Orange - artistic, creative": {"verbs": ["create", "express"], "adjectives": ["artistic", "creative"]},
-    "Yellow - innovative, intelligent": {"verbs": ["innovate", "intellect"], "adjectives": ["innovative", "intelligent"]},
-    "Red - entertaining, humorous": {"verbs": ["entertain", "amuse"], "adjectives": ["entertaining", "humorous"]},
-    "Blue - confident, influential": {"verbs": ["inspire", "influence"], "adjectives": ["confident", "influential"]},
-    "Pink - charming, elegant": {"verbs": ["charm", "grace"], "adjectives": ["charming", "elegant"]},
-    "Silver - rebellious, daring": {"verbs": ["rebel", "dare"], "adjectives": ["rebellious", "daring"]},
-    "Beige - dedicated, humble": {"verbs": ["dedicate", "humble"], "adjectives": ["dedicated", "humble"]}
-}
-
+style_weights = [0.2, 0.3, 0.1, 0.2, 0.2]
 
 def generate_article(content, writing_styles):
-    messages = [{"role": "system", "content": "You are a content creator that changes the tone of user-generated content based on the placeholder writing styles listed."}]
+    messages = [{"role": "system", "content": "You are a content creator that changes the tone of user-generated content based on the writing styles listed."}]
     messages.append({"role": "user", "content": content})
     for i, style in enumerate(writing_styles):
         weight = style_weights[i]
@@ -39,12 +27,10 @@ def generate_article(content, writing_styles):
     return response.choices[0].message["content"]
 
 def main():
-    st.title("Writing Style Generator")
-    
     user_content = st.text_area("Paste your content here:")
+    writing_styles = st.multiselect("Select Writing Styles:", list(placeholders.keys()))
     
     if st.button("Generate Revised Content"):
-        writing_styles = st.multiselect("Select Writing Styles:", list(placeholders.keys()))
         revised_content = generate_article(user_content, writing_styles)
         st.text(revised_content)
         st.download_button("Download Revised Content", revised_content, "revised_content.txt")
