@@ -11,6 +11,8 @@ if "OPENAI_API_KEY" not in st.secrets:
 openai_api_key = st.secrets["OPENAI_API_KEY"]
 logging.info(f"OPENAI_API_KEY: {openai_api_key}")
 
+st.title("Carnegie Content Refresher")
+
 placeholders = {
     "Purple - caring, encouraging": {"verbs": ["care", "encourage"], "adjectives": ["caring", "encouraging"]},
     "Green - adventurous, curious": {"verbs": ["explore", "discover"], "adjectives": ["adventurous", "curious"]},
@@ -25,18 +27,14 @@ placeholders = {
 }
 
 def generate_article(content, writing_styles, style_weights):
-    instructions = []
+    messages = [{"role": "system", "content": "You are a content creator that changes the tone of user-generated content based on the writing styles listed."}]
+    messages.append({"role": "user", "content": content})
     for i, style in enumerate(writing_styles):
         weight = style_weights[i]
-        instructions.append(f"Modify {weight}% of the content in a {style.split(' - ')[1]} manner.")
-    full_instruction = " ".join(instructions)
-    
-    response = openai.Completion.create(
-        model="gpt-3.5-turbo", 
-        prompt=f"Given the content: '{content}', {full_instruction}",
-        max_tokens=500
-    )
-    return response.choices[0].text.strip()
+        messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style.split(' - ')[1]} manner."})
+
+    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
+    return response.choices[0].message["content"].strip()
 
 def main():
     st.title("Carnegie Content Refresher")
@@ -67,7 +65,7 @@ def main():
             {"role": "user", "content": revision_requests}
         ]
         response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=revision_messages)
-        revised_content = response.choices[0].message["content"]
+        revised_content = response.choices[0].message["content"].strip()
         st.text(revised_content)
 
 if __name__ == "__main__":
