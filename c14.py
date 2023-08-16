@@ -25,13 +25,18 @@ placeholders = {
 }
 
 def generate_article(content, writing_styles, style_weights):
-    messages = [{"role": "user", "content": content}]
+    instructions = []
     for i, style in enumerate(writing_styles):
         weight = style_weights[i]
-        messages.append({"role": "assistant", "content": f"The content should have {style} style with a weight of {weight}%"})
-
-    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
-    return response.choices[0].message["content"]
+        instructions.append(f"Modify {weight}% of the content in a {style.split(' - ')[1]} manner.")
+    full_instruction = " ".join(instructions)
+    
+    response = openai.Completion.create(
+        model="gpt-3.5-turbo", 
+        prompt=f"Given the content: '{content}', {full_instruction}",
+        max_tokens=500
+    )
+    return response.choices[0].text.strip()
 
 def main():
     st.title("Carnegie Content Refresher")
