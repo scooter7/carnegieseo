@@ -11,8 +11,6 @@ if "OPENAI_API_KEY" not in st.secrets:
 openai_api_key = st.secrets["OPENAI_API_KEY"]
 logging.info(f"OPENAI_API_KEY: {openai_api_key}")
 
-st.title("Carnegie Content Refresher")
-
 placeholders = {
     "Purple - caring, encouraging": {"verbs": ["care", "encourage"], "adjectives": ["caring", "encouraging"]},
     "Green - adventurous, curious": {"verbs": ["explore", "discover"], "adjectives": ["adventurous", "curious"]},
