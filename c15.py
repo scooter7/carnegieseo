@@ -9,14 +9,11 @@ keywords = st.text_area("Optional: Specify specific keywords to be used:", "")
 audience = st.text_input("Optional: Define the audience for the generated content:", "")
 specific_facts_stats = st.text_area("Optional: Add specific facts or stats to be included:", "")
 
-
-
 if "OPENAI_API_KEY" not in st.secrets:
     st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
     sys.exit(1)
 
 openai_api_key = st.secrets["OPENAI_API_KEY"]
-logging.info(f"OPENAI_API_KEY: {openai_api_key}")
 
 placeholders = {
     "Purple - caring, encouraging": {"verbs": ["care", "encourage"], "adjectives": ["caring", "encouraging"]},
@@ -32,15 +29,6 @@ placeholders = {
 }
 
 def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats):
-# Construct the full prompt with additional information
-    full_prompt = user_prompt
-    if keywords:
-        full_prompt += f"\nKeywords: {keywords}"
-    if audience:
-        full_prompt += f"\nAudience: {audience}"
-    if specific_facts_stats:
-        full_prompt += f"\nFacts/Stats: {specific_facts_stats}"
-        # Construct the full prompt with additional information
     full_prompt = user_prompt
     if keywords:
         full_prompt += f"\nKeywords: {keywords}"
@@ -49,7 +37,7 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
     if specific_facts_stats:
         full_prompt += f"\nFacts/Stats: {specific_facts_stats}"
 
-    messages = [{"role": "system", "content": "You are a content creator that changes the tone of user-generated content based on the writing styles listed."}]
+    messages = [{"role": "system", "content": full_prompt}]
     messages.append({"role": "user", "content": content})
     for i, style in enumerate(writing_styles):
         weight = style_weights[i]
