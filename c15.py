@@ -24,7 +24,7 @@ placeholders = {
     "Beige - dedicated, humble": {"verbs": ["dedicate", "humble"], "adjectives": ["dedicated", "humble"]}
 }
 
-def generate_article(*args, **kwargs):
+def generate_article(content, writing_styles, style_weights):
     user_prompt = st.text_area("Specify a prompt about the type of content you want produced:", "")
     keywords = st.text_area("Optional: Specify specific keywords to be used:", "")
     audience = st.text_input("Optional: Define the audience for the generated content:", "")
@@ -38,7 +38,7 @@ def generate_article(*args, **kwargs):
         full_prompt += f"\nAudience: {audience}"
     if specific_facts_stats:
         full_prompt += f"\nFacts/Stats: {specific_facts_stats}"
-(content, writing_styles, style_weights):
+
     messages = [{"role": "system", "content": "You are a content creator that changes the tone of user-generated content based on the writing styles listed."}]
     messages.append({"role": "user", "content": content})
     for i, style in enumerate(writing_styles):
