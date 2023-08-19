@@ -32,7 +32,15 @@ placeholders = {
 }
 
 def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats):
-    # Construct the full prompt with additional information
+# Construct the full prompt with additional information
+    full_prompt = user_prompt
+    if keywords:
+        full_prompt += f"\nKeywords: {keywords}"
+    if audience:
+        full_prompt += f"\nAudience: {audience}"
+    if specific_facts_stats:
+        full_prompt += f"\nFacts/Stats: {specific_facts_stats}"
+        # Construct the full prompt with additional information
     full_prompt = user_prompt
     if keywords:
         full_prompt += f"\nKeywords: {keywords}"
