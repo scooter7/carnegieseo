@@ -4,6 +4,13 @@ import sys
 import logging
 import random
 
+user_prompt = st.text_area("Specify a prompt about the type of content you want produced:", "")
+keywords = st.text_area("Optional: Specify specific keywords to be used:", "")
+audience = st.text_input("Optional: Define the audience for the generated content:", "")
+specific_facts_stats = st.text_area("Optional: Add specific facts or stats to be included:", "")
+
+
+
 if "OPENAI_API_KEY" not in st.secrets:
     st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
     sys.exit(1)
@@ -25,11 +32,6 @@ placeholders = {
 }
 
 def generate_article(content, writing_styles, style_weights):
-    user_prompt = st.text_area("Specify a prompt about the type of content you want produced:", "")
-    keywords = st.text_area("Optional: Specify specific keywords to be used:", "")
-    audience = st.text_input("Optional: Define the audience for the generated content:", "")
-    specific_facts_stats = st.text_area("Optional: Add specific facts or stats to be included:", "")
-    
     # Construct the full prompt with additional information
     full_prompt = user_prompt
     if keywords:
