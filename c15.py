@@ -31,7 +31,7 @@ placeholders = {
     "Beige - dedicated, humble": {"verbs": ["dedicate", "humble"], "adjectives": ["dedicated", "humble"]}
 }
 
-def generate_article(content, writing_styles, style_weights):
+def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats):
     # Construct the full prompt with additional information
     full_prompt = user_prompt
     if keywords:
@@ -62,7 +62,7 @@ def main():
         style_weights.append(weight)
     
     if st.button("Generate Revised Content"):
-        revised_content = generate_article(user_content, writing_styles, style_weights)
+        revised_content = generate_article(user_content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats)
         st.text(revised_content)
         st.download_button("Download Revised Content", revised_content, "revised_content.txt")
 
