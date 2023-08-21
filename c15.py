@@ -47,7 +47,6 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
     return response.choices[0].message["content"].strip()
 
 def main():
-    st.title("Carnegie Content Refresher")
     
     user_content = st.text_area("Paste your content here:")
     writing_styles = st.multiselect("Select Writing Styles:", list(placeholders.keys()))
