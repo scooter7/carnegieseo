@@ -45,6 +45,8 @@ def generate_pdf(fig, top_colors, examples, user_content):
     pdf.set_font("Arial", size=12)
     pdf.cell(200, 10, "Color Personality Analysis", ln=1, align='C')
     
+    # Save the pie chart image to a file
+    fig.savefig("chart.png")
     pdf.image("chart.png", x=10, y=pdf.get_y(), w=190)
     pdf.ln(65)
     
