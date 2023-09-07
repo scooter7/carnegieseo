@@ -1,60 +1,59 @@
 import streamlit as st
 import re
 import matplotlib.pyplot as plt
-import base64
+from collections import Counter
 import openai
 import sys
 import logging
-from collections import Counter
+import pandas as pd
 from fpdf import FPDF
+import base64
 
 def analyze_text(text, color_keywords):
     text = text.lower()
     words = re.findall(r'\b\w+\b', text)
     color_counts = Counter()
+    
     for color, keywords in color_keywords.items():
         color_counts[color] = sum(words.count(k.lower()) for k in keywords)
+        
     return color_counts
 
 def draw_pie_chart(labels, sizes):
-    fig, ax = plt.subplots()
-    ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
-    ax.axis('equal')
-    return fig
+    fig1, ax1 = plt.subplots()
+    ax1.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
+    ax1.axis('equal')
+    return fig1
 
 def extract_examples(text, color_keywords, top_colors):
     text = text.lower()
     examples = {}
     sentences = re.split(r'[.!?]', text)
+    
     for color in top_colors:
         examples[color] = []
         for keyword in color_keywords[color]:
             keyword = keyword.lower()
-            matching_sentences = [sentence.strip() for sentence in sentences if keyword in sentence]
-            examples[color].extend(matching_sentences[:3])
-        examples[color] = list(set(examples[color]))[:3]  # Limit to 3 unique sentences
+            for sentence in sentences:
+                if keyword in sentence:
+                    examples[color].append(sentence.strip() + '.')
     return examples
 
-def generate_pdf(fig, top_colors, examples, text):
+def generate_pdf(fig, top_colors, examples, user_content):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
     pdf.cell(200, 10, "Color Personality Analysis", ln=1, align='C')
-
-    pdf.image("chart.png", x=10, w=190)
+    
+    pdf.image("chart.png", x=10, y=pdf.get_y(), w=190)
     pdf.ln(65)
-
+    
     for color in top_colors:
-        pdf.cell(200, 10, f"Examples for {color}:", ln=1)
-        pdf.multi_cell(0, 10, "\n".join(examples[color]))
-
-    pdf.add_page()  # Add a new page for the original text
-
-    # Encode text to bytes before adding to the PDF
-    pdf.set_font("Arial", size=12)
+        pdf.cell(200, 10, f"Top Color: {color}", ln=1)
+        pdf.multi_cell(0, 10, "\n".join(examples[color][:3]))
+    
     pdf.cell(200, 10, "Original Text:", ln=1)
-    text_bytes = text.encode('latin1', 'replace')  # Encode to Latin-1 with character replacement
-    pdf.multi_cell(0, 10, text_bytes.decode('latin1'))  # Decode and add to the PDF
+    pdf.multi_cell(0, 10, user_content.encode('latin-1', 'replace').decode('latin-1'))
 
     pdf_file_path = "report.pdf"
     pdf.output(name=pdf_file_path, dest='F')
@@ -105,14 +104,14 @@ def main():
         sizes = [v for v in color_counts.values() if v > 0]
 
         fig = draw_pie_chart(labels, sizes)
+        st.pyplot(fig)
         
         examples = extract_examples(user_content, color_keywords, top_colors)
-
+        
         for color in top_colors:
             st.write(f"Examples for {color}:")
             st.write(", ".join(examples[color]))
 
-        fig.savefig("chart.png")
         pdf_file_path = generate_pdf(fig, top_colors, examples, user_content)
         download_file(pdf_file_path)
 
