@@ -43,12 +43,13 @@ def generate_pdf(text, fig, top_colors, examples):
     pdf.cell(200, 10, "Color Personality Analysis", ln=1, align='C')
     pdf.cell(200, 10, "Original Text:", ln=1)
     pdf.multi_cell(0, 10, text)
+    pdf.ln(10)
     pdf.add_page()
     pdf.image("chart.png", x=10, y=10, w=190)
     pdf.ln(65)
     for color in top_colors:
         pdf.cell(200, 10, f"Top Color: {color}", ln=1)
-        pdf.multi_cell(0, 10, "\n".join(examples[color]))
+        pdf.multi_cell(0, 10, "\n".join(examples[color][:3]))
     pdf_file_path = "report.pdf"
     pdf.output(name=pdf_file_path, dest='F').encode('latin1')
     return pdf_file_path
@@ -77,7 +78,6 @@ def main():
         'Orange': ['Compose', 'Conceptualize', 'Conceive', 'Craft', 'Create', 'Design', 'Dream', 'Envision', 'Express', 'Fashion', 'Form', 'Imagine', 'Interpret', 'Make', 'Originate', 'Paint', 'Perform', 'Portray', 'Realize', 'Shape'],
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine']
     }
-
     user_content = st.text_area("Paste your content here:")
     if st.button('Analyze'):
         color_counts = analyze_text(user_content, color_keywords)
@@ -98,5 +98,4 @@ def main():
         fig.savefig("chart.png")
         pdf_file_path = generate_pdf(user_content, fig, top_colors, examples)
         download_file(pdf_file_path)
-
 main()
