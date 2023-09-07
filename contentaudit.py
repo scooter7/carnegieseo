@@ -36,6 +36,7 @@ def extract_examples(text, color_keywords, top_colors):
         examples[color] = examples[color][:3]
     return examples
 
+def generate_pdf(text, fig, top_colors, examples):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
