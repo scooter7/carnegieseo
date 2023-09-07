@@ -28,13 +28,15 @@ def draw_pie_chart(labels, sizes):
 def extract_examples(text, color_keywords, top_colors):
     text = text.lower()
     examples = {}
+    sentences = re.split(r'[.!?]', text)
+    
     for color in top_colors:
         examples[color] = []
         for keyword in color_keywords[color]:
-            for match in re.finditer(r'\b' + re.escape(keyword.lower()) + r'\b', text):
-                start, end = match.span()
-                surrounding_text = text[max(0, start - 30):min(len(text), end + 30)]
-                examples[color].append('...' + surrounding_text + '...')
+            keyword = keyword.lower()
+            for sentence in sentences:
+                if keyword in sentence:
+                    examples[color].append(sentence.strip() + '.')
     return examples
 
 def generate_pdf(text, fig, top_colors, examples):
