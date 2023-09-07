@@ -49,7 +49,7 @@ def generate_pdf(fig, top_colors, examples, text):
         pdf.multi_cell(0, 10, "\n".join(examples[color]))
 
     pdf.cell(200, 10, "Original Text:", ln=1)
-    pdf.multi_cell(0, 10, text.encode('utf-8'))  # Encode text to UTF-8
+    pdf.multi_cell(0, 10, text.encode('utf-8'))  # Encode text to bytes
 
     pdf_file_path = "report.pdf"
     pdf.output(name=pdf_file_path, dest='F')
@@ -100,7 +100,6 @@ def main():
         sizes = [v for v in color_counts.values() if v > 0]
 
         fig = draw_pie_chart(labels, sizes)
-        st.pyplot(fig)
         
         examples = extract_examples(user_content, color_keywords, top_colors)
 
