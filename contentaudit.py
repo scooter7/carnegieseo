@@ -36,20 +36,22 @@ def extract_examples(text, color_keywords, top_colors):
                     examples[color].append(sentence.strip() + '.')
     return examples
 
-def generate_pdf(text, fig, top_colors, examples):
+def generate_pdf(fig, top_colors, examples, text):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
     pdf.cell(200, 10, "Color Personality Analysis", ln=1, align='C')
-    pdf.cell(200, 10, "Original Text:", ln=1)
-    pdf.multi_cell(0, 10, text)
-    pdf.ln(10)
-    pdf.add_page()
-    pdf.image("chart.png", x=10, y=10, w=190)
-    pdf.ln(65)
+
+    pdf.image("chart.png", x=10, y=pdf.get_y(), w=190)
+    pdf.ln(65)  # Move below the image
+
     for color in top_colors:
         pdf.cell(200, 10, f"Top Color: {color}", ln=1)
-        pdf.multi_cell(0, 10, "\n".join(examples[color][:3]))
+        pdf.multi_cell(0, 10, "\n".join(examples[color]))
+
+    pdf.cell(200, 10, "Original Text:", ln=1)
+    pdf.multi_cell(0, 10, text)
+
     pdf_file_path = "report.pdf"
     pdf.output(name=pdf_file_path, dest='F').encode('latin1')
     return pdf_file_path
