@@ -36,8 +36,7 @@ def extract_examples(text, color_keywords, top_colors):
             keyword = keyword.lower()
             for sentence in sentences:
                 if keyword in sentence:
-                    bold_sentence = sentence.replace(keyword, f"<b>{keyword}</b>")
-                    examples[color].append(bold_sentence.strip() + '.')
+                    examples[color].append(sentence.strip() + '.')
     return examples
 
 def generate_pdf(text, fig, top_colors, examples):
