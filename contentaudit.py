@@ -13,10 +13,8 @@ def analyze_text(text, color_keywords):
     text = text.lower()
     words = re.findall(r'\b\w+\b', text)
     color_counts = Counter()
-    
     for color, keywords in color_keywords.items():
         color_counts[color] = sum(words.count(k.lower()) for k in keywords)
-        
     return color_counts
 
 def draw_pie_chart(labels, sizes):
@@ -29,14 +27,13 @@ def extract_examples(text, color_keywords, top_colors):
     text = text.lower()
     examples = {}
     sentences = re.split(r'[.!?]', text)
-    
     for color in top_colors:
         examples[color] = []
         for keyword in color_keywords[color]:
             keyword = keyword.lower()
-            for sentence in sentences:
-                if keyword in sentence:
-                    examples[color].append(sentence.strip() + '.')
+            keyword_sentences = [s.strip() + '.' for s in sentences if keyword in s]
+            examples[color].extend(keyword_sentences)
+        examples[color] = examples[color][:3]
     return examples
 
 def generate_pdf(text, fig, top_colors, examples):
@@ -44,17 +41,14 @@ def generate_pdf(text, fig, top_colors, examples):
     pdf.add_page()
     pdf.set_font("Arial", size=12)
     pdf.cell(200, 10, "Color Personality Analysis", ln=1, align='C')
-
     pdf.cell(200, 10, "Original Text:", ln=1)
     pdf.multi_cell(0, 10, text)
-
+    pdf.ln(10)
     pdf.image("chart.png", x=10, y=pdf.get_y(), w=190)
     pdf.ln(65)
-
     for color in top_colors:
         pdf.cell(200, 10, f"Top Color: {color}", ln=1)
         pdf.multi_cell(0, 10, "\n".join(examples[color]))
-
     pdf_file_path = "report.pdf"
     pdf.output(name=pdf_file_path, dest='F').encode('latin1')
     return pdf_file_path
@@ -68,13 +62,10 @@ def download_file(file_path):
 
 def main():
     st.title("Color Personality Analysis")
-
     if "OPENAI_API_KEY" not in st.secrets:
         st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
         sys.exit(1)
-
     openai_api_key = st.secrets["OPENAI_API_KEY"]
-
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
         'Silver': ['Activate', 'Campaign', 'Challenge', 'Commit', 'Confront', 'Dare', 'Defy', 'Disrupting', 'Drive', 'Excite', 'Face', 'Ignite', 'Incite', 'Influence', 'Inspire', 'Inspirit', 'Motivate', 'Move', 'Push', 'Rebel', 'Reimagine', 'Revolutionize', 'Rise', 'Spark', 'Stir', 'Fight', 'Free', 'Aggressive', 'Bold', 'Brazen', 'Committed', 'Courageous', 'Daring', 'Disruptive', 'Driven', 'Fearless', 'Free', 'Gutsy', 'Independent', 'Inspired', 'Motivated', 'Rebellious', 'Revolutionary', 'Unafraid', 'Unconventional'],
@@ -86,34 +77,24 @@ def main():
         'Orange': ['Compose', 'Conceptualize', 'Conceive', 'Craft', 'Create', 'Design', 'Dream', 'Envision', 'Express', 'Fashion', 'Form', 'Imagine', 'Interpret', 'Make', 'Originate', 'Paint', 'Perform', 'Portray', 'Realize', 'Shape', 'Abstract', 'Artistic', 'Avant-garde', 'Colorful', 'Conceptual', 'Contemporary', 'Creative', 'Decorative', 'Eccentric', 'Eclectic', 'Evocative', 'Expressive', 'Imaginative', 'Interpretive', 'Offbeat', 'One-of-a-kind', 'Original', 'Uncommon', 'Unconventional', 'Unexpected', 'Unique', 'Vibrant', 'Whimsical'],
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
-
     user_content = st.text_area("Paste your content here:")
-
     if st.button('Analyze'):
         color_counts = analyze_text(user_content, color_keywords)
         total_counts = sum(color_counts.values())
-        
         if total_counts == 0:
             st.write("No relevant keywords found.")
             return
-
         sorted_colors = sorted(color_counts.items(), key=lambda x: x[1], reverse=True)
         top_colors = [color for color, _ in sorted_colors[:3]]
-
         labels = [k for k, v in color_counts.items() if v > 0]
         sizes = [v for v in color_counts.values() if v > 0]
-
         fig = draw_pie_chart(labels, sizes)
         st.pyplot(fig)
-        
         examples = extract_examples(user_content, color_keywords, top_colors)
-        
         for color in top_colors:
             st.write(f"Examples for {color}:")
             st.write(", ".join(examples[color]))
-
         fig.savefig("chart.png")
         pdf_file_path = generate_pdf(user_content, fig, top_colors, examples)
         download_file(pdf_file_path)
-
 main()
