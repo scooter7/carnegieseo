@@ -40,16 +40,21 @@ def generate_pdf(fig, top_colors, examples, text):
     pdf.add_page()
     pdf.set_font("Arial", size=12)
     pdf.cell(200, 10, "Color Personality Analysis", ln=1, align='C')
-    
-    pdf.image("chart.png", x=10, y=pdf.get_y(), w=190)
+
+    pdf.image("chart.png", x=10, w=190)
     pdf.ln(65)
 
     for color in top_colors:
         pdf.cell(200, 10, f"Examples for {color}:", ln=1)
         pdf.multi_cell(0, 10, "\n".join(examples[color]))
 
+    pdf.add_page()  # Add a new page for the original text
+
+    # Encode text to bytes before adding to the PDF
+    pdf.set_font("Arial", size=12)
     pdf.cell(200, 10, "Original Text:", ln=1)
-    pdf.multi_cell(0, 10, text.encode('utf-8'))  # Encode text to bytes
+    text_bytes = text.encode('latin1', 'replace')  # Encode to Latin-1 with character replacement
+    pdf.multi_cell(0, 10, text_bytes.decode('latin1'))  # Decode and add to the PDF
 
     pdf_file_path = "report.pdf"
     pdf.output(name=pdf_file_path, dest='F')
