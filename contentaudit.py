@@ -29,14 +29,13 @@ def extract_examples(text, color_keywords, top_colors):
     text = text.lower()
     examples = {}
     sentences = re.split(r'[.!?]', text)
-    
     for color in top_colors:
         examples[color] = []
         for keyword in color_keywords[color]:
             keyword = keyword.lower()
-            for sentence in sentences:
-                if keyword in sentence:
-                    examples[color].append(sentence.strip() + '.')
+            matching_sentences = [sentence.strip() for sentence in sentences if keyword in sentence]
+            examples[color].extend(matching_sentences[:3])
+        examples[color] = list(set(examples[color]))[:3]  # Limit to 3 unique sentences
     return examples
 
 def generate_pdf(fig, top_colors, examples, user_content):
