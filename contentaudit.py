@@ -39,35 +39,26 @@ def extract_examples(text, color_keywords, top_colors):
         examples[color] = list(set(examples[color]))  # Remove duplicates
     return examples
 
-def generate_pdf(fig, top_colors, examples, user_content):
-    pdf_file_path = "report.pdf"
-    
-    c = canvas.Canvas(pdf_file_path, pagesize=letter)
-    width, height = letter
-    c.setFont("Helvetica", 12)
-    c.drawString(100, height - 50, "Color Personality Analysis")
-    
-    y_position = height - 100
-    
-    for color in top_colors:
-        c.drawString(100, y_position, f"Top Color: {color}")
-        y_position -= 20
-        for example in examples[color]:
-            c.drawString(100, y_position, example)
-            y_position -= 15
-    
-    c.drawString(100, y_position, "Original Text:")
-    y_position -= 20
-    user_content = user_content.encode('latin-1', 'replace').decode('latin-1')
-    c.drawString(100, y_position, user_content)
-    
+def generate_pdf(text, fig, top_colors, examples):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, "Color Personality Analysis", ln=1, align='C')
+
     # Add the pie chart to the PDF
-    fig.savefig("chart.png")
-    c.drawImage("chart.png", 100, 100, width=400, height=300)
-    
-    c.showPage()
-    c.save()
-    
+    pdf.image("chart.png", x=10, y=pdf.get_y(), w=190)
+
+    for color in top_colors:
+        pdf.add_page()  # Add a new page for each color
+        pdf.cell(200, 10, f"Top Color: {color}", ln=1)
+        pdf.multi_cell(0, 10, "\n".join(examples[color]))
+
+    pdf.add_page()  # Add a new page for the original text
+    pdf.cell(200, 10, "Original Text:", ln=1)
+    pdf.multi_cell(0, 10, text)
+
+    pdf_file_path = "report.pdf"
+    pdf.output(name=pdf_file_path, dest='F').encode('latin1')
     return pdf_file_path
 
 def download_file(file_path):
@@ -82,7 +73,7 @@ def main():
 
     if "OPENAI_API_KEY" not in st.secrets:
         st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
-        return
+        sys.exit(1)
 
     openai_api_key = st.secrets["OPENAI_API_KEY"]
 
@@ -103,7 +94,7 @@ def main():
     if st.button('Analyze'):
         color_counts = analyze_text(user_content, color_keywords)
         total_counts = sum(color_counts.values())
-        
+
         if total_counts == 0:
             st.write("No relevant keywords found.")
             return
@@ -116,11 +107,16 @@ def main():
 
         fig = draw_pie_chart(labels, sizes)
         st.pyplot(fig)
-        
+
         examples = extract_examples(user_content, color_keywords, top_colors)
-        
-        pdf_file_path = generate_pdf(fig, top_colors, examples, user_content)
+
+        for color in top_colors:
+            st.write(f"Examples for {color}:")
+            st.write("\n".join(examples[color]))
+
+        pdf_file_path = generate_pdf(user_content, fig, top_colors, examples)
         download_file(pdf_file_path)
 
 if __name__ == "__main__":
     main()
+
