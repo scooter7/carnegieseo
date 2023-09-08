@@ -15,8 +15,8 @@ def analyze_text(text, color_keywords):
         
     return color_counts
 
-def draw_pie_chart(labels, sizes):
-    fig = px.pie(values=sizes, names=labels)
+def draw_column_chart(labels, sizes):
+    fig = px.bar(x=labels, y=sizes)
     return fig
 
 def extract_examples(text, color_keywords, top_colors):
@@ -34,16 +34,14 @@ def extract_examples(text, color_keywords, top_colors):
         examples[color] = list(examples[color])[:3]
     return examples
 
-def generate_pdf(fig, top_colors, examples, user_content):
+def generate_pdf(top_colors, examples, user_content):
     pdf_file_path = "report.pdf"
     c = canvas.Canvas(pdf_file_path)
     width, height = c._pagesize
     
     c.drawString(100, height - 50, "Color Personality Analysis")
-    fig.write_image("chart.png", width=600, height=400)
-    c.drawImage("chart.png", 100, height - 450, width=300, height=300)
     
-    y_position = height - 800
+    y_position = height - 100
     
     for color in top_colors:
         c.drawString(100, y_position, f"Top Color: {color}")
@@ -79,6 +77,7 @@ def main():
     openai_api_key = st.secrets["OPENAI_API_KEY"]
     
     color_keywords = {
+    color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
         'Silver': ['Activate', 'Campaign', 'Challenge', 'Commit', 'Confront', 'Dare', 'Defy', 'Disrupting', 'Drive', 'Excite', 'Face', 'Ignite', 'Incite', 'Influence', 'Inspire', 'Inspirit', 'Motivate', 'Move', 'Push', 'Rebel', 'Reimagine', 'Revolutionize', 'Rise', 'Spark', 'Stir', 'Fight', 'Free', 'Aggressive', 'Bold', 'Brazen', 'Committed', 'Courageous', 'Daring', 'Disruptive', 'Driven', 'Fearless', 'Free', 'Gutsy', 'Independent', 'Inspired', 'Motivated', 'Rebellious', 'Revolutionary', 'Unafraid', 'Unconventional'],
         'Blue': ['Accomplish', 'Achieve', 'Affect', 'Assert', 'Cause', 'Command', 'Determine', 'Direct', 'Dominate', 'Drive', 'Empower', 'Establish', 'Guide', 'Impact', 'Impress', 'Influence', 'Inspire', 'Lead', 'Outpace', 'Outshine', 'Realize', 'Shape', 'Succeed', 'Transform', 'Win', 'Accomplished', 'Assertive', 'Authoritative', 'Commanding', 'Confident', 'Decisive', 'Distinguished', 'Dominant', 'Elite', 'Eminent', 'Established', 'Exceptional', 'Expert', 'First-class', 'First-rate', 'Impressive', 'Influential', 'Leading', 'Magnetic', 'Managerial', 'Masterful', 'Noble', 'Premier', 'Prestigious', 'Prominent', 'Proud', 'Strong'],
@@ -106,7 +105,7 @@ def main():
         labels = [k for k, v in color_counts.items() if v > 0]
         sizes = [v for v in color_counts.values() if v > 0]
 
-        fig = draw_pie_chart(labels, sizes)
+        fig = draw_column_chart(labels, sizes)
         st.plotly_chart(fig)
         
         examples = extract_examples(user_content, color_keywords, top_colors)
@@ -115,7 +114,7 @@ def main():
             st.write(f"Examples for {color}:")
             st.write(", ".join(examples[color]))
 
-        pdf_file_path = generate_pdf(fig, top_colors, examples, user_content)
+        pdf_file_path = generate_pdf(top_colors, examples, user_content)
         download_file(pdf_file_path)
 
 main()
