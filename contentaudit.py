@@ -1,11 +1,7 @@
 import streamlit as st
 import re
-import matplotlib.pyplot as plt
+import plotly.express as px
 from collections import Counter
-import openai
-import sys
-import logging
-import pandas as pd
 from reportlab.pdfgen import canvas
 import base64
 
@@ -20,49 +16,46 @@ def analyze_text(text, color_keywords):
     return color_counts
 
 def draw_pie_chart(labels, sizes):
-    fig1, ax1 = plt.subplots()
-    ax1.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
-    ax1.axis('equal')
-    return fig1
+    fig = px.pie(values=sizes, names=labels)
+    return fig
 
 def extract_examples(text, color_keywords, top_colors):
     text = text.lower()
     examples = {}
-    sentences = re.split(r'[.!?]', text)
+    sentences = list(set(re.split(r'[.!?]', text)))
     
     for color in top_colors:
-        examples[color] = []
+        examples[color] = set()
         for keyword in color_keywords[color]:
             keyword = keyword.lower()
             for sentence in sentences:
                 if keyword in sentence:
-                    examples[color].append(sentence.strip() + '.')
+                    examples[color].add(sentence.strip() + '.')
+        examples[color] = list(examples[color])[:3]
     return examples
 
 def generate_pdf(fig, top_colors, examples, user_content):
     pdf_file_path = "report.pdf"
-    
     c = canvas.Canvas(pdf_file_path)
     width, height = c._pagesize
+    
     c.drawString(100, height - 50, "Color Personality Analysis")
+    fig.write_image("chart.png", width=600, height=400)
+    c.drawImage("chart.png", 100, height - 450, width=300, height=300)
     
-    # Save the pie chart image to a file
-    fig.savefig("chart.png")
-    c.drawImage("chart.png", 100, height - 100, width=300, height=200)
-    
-    y_position = height - 350
+    y_position = height - 800
     
     for color in top_colors:
         c.drawString(100, y_position, f"Top Color: {color}")
         y_position -= 20
-        for example in examples[color][:3]:
+        for example in examples[color]:
             c.drawString(100, y_position, example)
             y_position -= 15
-    
+            
     c.drawString(100, y_position, "Original Text:")
     y_position -= 20
     user_content = user_content.encode('latin-1', 'replace').decode('latin-1')
-    c.drawString(100, y_position, user_content)
+    c.drawString(100, y_position, user_content[:50] + "...")
     
     c.showPage()
     c.save()
@@ -81,10 +74,10 @@ def main():
 
     if "OPENAI_API_KEY" not in st.secrets:
         st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
-        sys.exit(1)
+        return
 
     openai_api_key = st.secrets["OPENAI_API_KEY"]
-
+    
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
         'Silver': ['Activate', 'Campaign', 'Challenge', 'Commit', 'Confront', 'Dare', 'Defy', 'Disrupting', 'Drive', 'Excite', 'Face', 'Ignite', 'Incite', 'Influence', 'Inspire', 'Inspirit', 'Motivate', 'Move', 'Push', 'Rebel', 'Reimagine', 'Revolutionize', 'Rise', 'Spark', 'Stir', 'Fight', 'Free', 'Aggressive', 'Bold', 'Brazen', 'Committed', 'Courageous', 'Daring', 'Disruptive', 'Driven', 'Fearless', 'Free', 'Gutsy', 'Independent', 'Inspired', 'Motivated', 'Rebellious', 'Revolutionary', 'Unafraid', 'Unconventional'],
@@ -98,7 +91,7 @@ def main():
     }
 
     user_content = st.text_area("Paste your content here:")
-
+    
     if st.button('Analyze'):
         color_counts = analyze_text(user_content, color_keywords)
         total_counts = sum(color_counts.values())
@@ -114,7 +107,7 @@ def main():
         sizes = [v for v in color_counts.values() if v > 0]
 
         fig = draw_pie_chart(labels, sizes)
-        st.pyplot(fig)
+        st.plotly_chart(fig)
         
         examples = extract_examples(user_content, color_keywords, top_colors)
         
