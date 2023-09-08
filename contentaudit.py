@@ -1,103 +1,80 @@
 import streamlit as st
 import re
 import matplotlib.pyplot as plt
+from collections import Counter
 import openai
 import sys
-from io import BytesIO
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
-from reportlab.platypus.tables import Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet
+import logging
+import pandas as pd
+from reportlab.pdfgen import canvas
+import base64
 
 def analyze_text(text, color_keywords):
-    color_counts = {color: 0 for color in color_keywords}
+    text = text.lower()
+    words = re.findall(r'\b\w+\b', text)
+    color_counts = Counter()
     
     for color, keywords in color_keywords.items():
-        for keyword in keywords:
-            count = len(re.findall(fr'\b{re.escape(keyword)}\b', text, flags=re.IGNORECASE))
-            color_counts[color] += count
-            
+        color_counts[color] = sum(words.count(k.lower()) for k in keywords)
+        
     return color_counts
 
 def draw_pie_chart(labels, sizes):
-    fig, ax = plt.subplots()
-    ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
-    ax.axis('equal')
-    return fig
+    fig1, ax1 = plt.subplots()
+    ax1.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
+    ax1.axis('equal')
+    return fig1
 
 def extract_examples(text, color_keywords, top_colors):
-    examples = {color: [] for color in top_colors}
-    sentences = re.split(r'(?<=[.!?])\s+', text)
+    text = text.lower()
+    examples = {}
+    sentences = re.split(r'[.!?]', text)
     
-    for sentence in sentences:
-        for color, keywords in color_keywords.items():
-            for keyword in keywords:
-                if re.search(fr'\b{re.escape(keyword)}\b', sentence, flags=re.IGNORECASE):
-                    if len(examples[color]) < 3 and sentence not in examples[color]:
-                        examples[color].append(sentence)
-    
+    for color in top_colors:
+        examples[color] = []
+        for keyword in color_keywords[color]:
+            keyword = keyword.lower()
+            for sentence in sentences:
+                if keyword in sentence:
+                    examples[color].append(sentence.strip() + '.')
     return examples
 
-def generate_pdf(text, fig, top_colors, examples):
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
-    styles = getSampleStyleSheet()
+def generate_pdf(fig, top_colors, examples, user_content):
+    pdf_file_path = "report.pdf"
     
-    # Title
-    title = "Color Personality Analysis"
-    title_style = styles['Title']
-    title_paragraph = Paragraph(title, title_style)
+    c = canvas.Canvas(pdf_file_path)
+    width, height = c._pagesize
+    c.drawString(100, height - 50, "Color Personality Analysis")
     
-    # Original Text
-    original_text_text = "Original Text:"
-    original_text_style = styles['Heading2']
-    original_text_paragraph = Paragraph(original_text_text, original_text_style)
+    # Save the pie chart image to a file
+    fig.savefig("chart.png")
+    c.drawImage("chart.png", 100, height - 100, width=300, height=200)
     
-    original_text = Paragraph(text, styles['Normal'])
+    y_position = height - 350
     
-    # Top Colors
-    top_colors_text = "Top Colors in the Text:"
-    top_colors_style = styles['Heading2']
-    top_colors_paragraph = Paragraph(top_colors_text, top_colors_style)
+    for color in top_colors:
+        c.drawString(100, y_position, f"Top Color: {color}")
+        y_position -= 20
+        for example in examples[color][:3]:
+            c.drawString(100, y_position, example)
+            y_position -= 15
     
-    top_colors_list = ", ".join(top_colors)
+    c.drawString(100, y_position, "Original Text:")
+    y_position -= 20
+    user_content = user_content.encode('latin-1', 'replace').decode('latin-1')
+    c.drawString(100, y_position, user_content)
     
-    # Pie Chart
-    img = Image(fig, width=400, height=400)
+    c.showPage()
+    c.save()
     
-    # Color Examples
-    color_examples_text = "Examples:"
-    color_examples_style = styles['Heading2']
-    color_examples_paragraph = Paragraph(color_examples_text, color_examples_style)
-    
-    examples_text = []
-    for color, color_examples in examples.items():
-        color_examples_text = f"{color} Examples:"
-        examples_text.append(Paragraph(color_examples_text, color_examples_style))
-        for example in color_examples:
-            examples_text.append(Paragraph(f"- {example}", styles['Normal']))
-    
-    # Build PDF content
-    content = [title_paragraph, Spacer(1, 12)]
-    content.extend([original_text_paragraph, original_text, Spacer(1, 12)])
-    content.extend([top_colors_paragraph, Paragraph(top_colors_list, styles['Normal']), Spacer(1, 12)])
-    content.extend([Paragraph("Color Distribution:", styles['Heading2']), img, Spacer(1, 12)])
-    content.append(color_examples_paragraph)
-    content.extend(examples_text)
-    
-    doc.build(content)
-    pdf_data = buffer.getvalue()
-    buffer.close()
-    
-    return pdf_data
+    return pdf_file_path
 
-def download_file(pdf_data):
-    st.download_button(
-        "Download PDF Report",
-        pdf_data,
-        file_name="report.pdf",
-        key="pdf-download"
-    )
+def download_file(file_path):
+    with open(file_path, "rb") as f:
+        pdf_file = f.read()
+    b64_pdf = base64.b64encode(pdf_file).decode("utf-8")
+    href = f'<a href="data:application/octet-stream;base64,{b64_pdf}" download="report.pdf">Download PDF Report</a>'
+    st.markdown(href, unsafe_allow_html=True)
 
 def main():
     st.title("Color Personality Analysis")
@@ -120,46 +97,32 @@ def main():
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
 
-    user_content = st.text_area("Paste or type the text you want to analyze:", height=200)
-    if not user_content:
-        st.warning("Please enter text to analyze.")
-        st.stop()
-    
-    if st.button("Analyze"):
-        st.write("Analyzing the provided text...")
-        try:
-            top_colors = []
-            color_counts = analyze_text(user_content, color_keywords)
-            sorted_colors = sorted(color_counts.items(), key=lambda x: x[1], reverse=True)
-            for color, _ in sorted_colors[:3]:
-                top_colors.append(color)
+    user_content = st.text_area("Paste your content here:")
 
-            st.write("Top Colors in the Text:")
-            st.write(", ".join(top_colors))
+    if st.button('Analyze'):
+        color_counts = analyze_text(user_content, color_keywords)
+        total_counts = sum(color_counts.values())
+        
+        if total_counts == 0:
+            st.write("No relevant keywords found.")
+            return
 
-            color_sizes = [color_counts[color] for color in top_colors]
-            color_labels = [f"{color} ({count})" for color, count in zip(top_colors, color_sizes)]
+        sorted_colors = sorted(color_counts.items(), key=lambda x: x[1], reverse=True)
+        top_colors = [color for color, _ in sorted_colors[:3]]
 
-            st.write("Creating a pie chart to visualize color distribution...")
-            pie_chart = draw_pie_chart(color_labels, color_sizes)
-            st.pyplot(pie_chart)
+        labels = [k for k, v in color_counts.items() if v > 0]
+        sizes = [v for v in color_counts.values() if v > 0]
 
-            st.write("Extracting examples of text related to the top colors...")
-            color_examples = extract_examples(user_content, color_keywords, top_colors)
-            st.write("Examples:")
+        fig = draw_pie_chart(labels, sizes)
+        st.pyplot(fig)
+        
+        examples = extract_examples(user_content, color_keywords, top_colors)
+        
+        for color in top_colors:
+            st.write(f"Examples for {color}:")
+            st.write(", ".join(examples[color]))
 
-            for color, examples in color_examples.items():
-                st.subheader(f"{color} Examples:")
-                for example in examples:
-                    st.write(f"- {example}")
+        pdf_file_path = generate_pdf(fig, top_colors, examples, user_content)
+        download_file(pdf_file_path)
 
-            st.write("Generating a PDF report...")
-            pdf_data = generate_pdf(user_content, pie_chart, top_colors, color_examples)
-            st.success("PDF report generated successfully!")
-
-            download_file(pdf_data)
-        except Exception as e:
-            st.error(f"An error occurred: {str(e)}")
-
-if __name__ == "__main__":
-    main()
+main()
