@@ -47,7 +47,7 @@ def generate_pdf(fig, top_colors, examples, user_content):
     # Save the pie chart image to a file
     fig.savefig("chart.png")
     pdf.image("chart.png", x=10, y=pdf.get_y(), w=190)
-    pdf.ln(65)
+    pdf.ln(165)
     
     for color in top_colors:
         pdf.cell(200, 10, f"Top Color: {color}", ln=1)
