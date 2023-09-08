@@ -34,7 +34,9 @@ def extract_examples(text, color_keywords, top_colors):
             for sentence in sentences:
                 if keyword in sentence:
                     examples[color].append(sentence.strip() + '.')
-                    break  # Only add one example per keyword
+                    if len(examples[color]) >= 3:
+                        break  # Limit to 3 examples per color
+        examples[color] = list(set(examples[color]))  # Remove duplicates
     return examples
 
 def generate_pdf(fig, top_colors, examples, user_content):
@@ -42,6 +44,7 @@ def generate_pdf(fig, top_colors, examples, user_content):
     
     c = canvas.Canvas(pdf_file_path, pagesize=letter)
     width, height = letter
+    c.setFont("Helvetica", 12)
     c.drawString(100, height - 50, "Color Personality Analysis")
     
     y_position = height - 100
@@ -49,7 +52,7 @@ def generate_pdf(fig, top_colors, examples, user_content):
     for color in top_colors:
         c.drawString(100, y_position, f"Top Color: {color}")
         y_position -= 20
-        for example in examples[color][:3]:
+        for example in examples[color]:
             c.drawString(100, y_position, example)
             y_position -= 15
     
@@ -116,10 +119,6 @@ def main():
         
         examples = extract_examples(user_content, color_keywords, top_colors)
         
-        for color in top_colors:
-            st.write(f"Examples for {color}:")
-            st.write(", ".join(examples[color]))
-
         pdf_file_path = generate_pdf(fig, top_colors, examples, user_content)
         download_file(pdf_file_path)
 
