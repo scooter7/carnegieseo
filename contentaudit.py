@@ -6,7 +6,7 @@ import openai
 import sys
 import logging
 import pandas as pd
-from fpdf import FPDF
+from reportlab.pdfgen import canvas
 import base64
 
 def analyze_text(text, color_keywords):
@@ -29,35 +29,44 @@ def extract_examples(text, color_keywords, top_colors):
     text = text.lower()
     examples = {}
     sentences = re.split(r'[.!?]', text)
+    
     for color in top_colors:
         examples[color] = []
         for keyword in color_keywords[color]:
             keyword = keyword.lower()
-            matching_sentences = [sentence.strip() for sentence in sentences if keyword in sentence]
-            examples[color].extend(matching_sentences[:3])
-        examples[color] = list(set(examples[color]))[:3]  # Limit to 3 unique sentences
+            for sentence in sentences:
+                if keyword in sentence:
+                    examples[color].append(sentence.strip() + '.')
     return examples
 
 def generate_pdf(fig, top_colors, examples, user_content):
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, "Color Personality Analysis", ln=1, align='C')
+    pdf_file_path = "report.pdf"
+    
+    c = canvas.Canvas(pdf_file_path)
+    width, height = c._pagesize
+    c.drawString(100, height - 50, "Color Personality Analysis")
     
     # Save the pie chart image to a file
     fig.savefig("chart.png")
-    pdf.image("chart.png", x=10, y=pdf.get_y(), w=190)
-    pdf.ln(165)
+    c.drawImage("chart.png", 100, height - 100, width=300, height=200)
+    
+    y_position = height - 350
     
     for color in top_colors:
-        pdf.cell(200, 10, f"Top Color: {color}", ln=1)
-        pdf.multi_cell(0, 10, "\n".join(examples[color][:3]))
+        c.drawString(100, y_position, f"Top Color: {color}")
+        y_position -= 20
+        for example in examples[color][:3]:
+            c.drawString(100, y_position, example)
+            y_position -= 15
     
-    pdf.cell(200, 10, "Original Text:", ln=1)
-    pdf.multi_cell(0, 10, user_content.encode('latin-1', 'replace').decode('latin-1'))
-
-    pdf_file_path = "report.pdf"
-    pdf.output(name=pdf_file_path, dest='F')
+    c.drawString(100, y_position, "Original Text:")
+    y_position -= 20
+    user_content = user_content.encode('latin-1', 'replace').decode('latin-1')
+    c.drawString(100, y_position, user_content)
+    
+    c.showPage()
+    c.save()
+    
     return pdf_file_path
 
 def download_file(file_path):
