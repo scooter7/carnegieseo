@@ -2,8 +2,9 @@ import streamlit as st
 import re
 import plotly.express as px
 from collections import Counter
-from reportlab.pdfgen import canvas
 import base64
+from docx import Document
+from docx.shared import Inches
 
 def analyze_text(text, color_keywords):
     text = text.lower()
@@ -17,6 +18,7 @@ def analyze_text(text, color_keywords):
 
 def draw_column_chart(labels, sizes):
     fig = px.bar(x=labels, y=sizes)
+    fig.write_image("chart.png")
     return fig
 
 def extract_examples(text, color_keywords, top_colors):
@@ -34,47 +36,34 @@ def extract_examples(text, color_keywords, top_colors):
         examples[color] = list(examples[color])[:3]
     return examples
 
-def generate_pdf(top_colors, examples, user_content):
-    pdf_file_path = "report.pdf"
-    c = canvas.Canvas(pdf_file_path)
-    width, height = c._pagesize
+def generate_word_doc(top_colors, examples, user_content):
+    doc = Document()
+    doc.add_heading('Color Personality Analysis', 0)
     
-    c.drawString(100, height - 50, "Color Personality Analysis")
-    
-    y_position = height - 100
+    doc.add_picture('chart.png', width=Inches(4.0))
     
     for color in top_colors:
-        c.drawString(100, y_position, f"Top Color: {color}")
-        y_position -= 20
+        doc.add_heading(f'Top Color: {color}', level=1)
         for example in examples[color]:
-            c.drawString(100, y_position, example)
-            y_position -= 15
+            doc.add_paragraph(example)
             
-    c.drawString(100, y_position, "Original Text:")
-    y_position -= 20
-    user_content = user_content.encode('latin-1', 'replace').decode('latin-1')
-    c.drawString(100, y_position, user_content[:50] + "...")
+    doc.add_heading('Original Text:', level=1)
+    doc.add_paragraph(user_content)
     
-    c.showPage()
-    c.save()
+    word_file_path = "report.docx"
+    doc.save(word_file_path)
     
-    return pdf_file_path
+    return word_file_path
 
 def download_file(file_path):
     with open(file_path, "rb") as f:
-        pdf_file = f.read()
-    b64_pdf = base64.b64encode(pdf_file).decode("utf-8")
-    href = f'<a href="data:application/octet-stream;base64,{b64_pdf}" download="report.pdf">Download PDF Report</a>'
+        file_data = f.read()
+    b64_file = base64.b64encode(file_data).decode("utf-8")
+    href = f'<a href="data:application/octet-stream;base64,{b64_file}" download="report.docx">Download Word Report</a>'
     st.markdown(href, unsafe_allow_html=True)
 
 def main():
     st.title("Color Personality Analysis")
-
-    if "OPENAI_API_KEY" not in st.secrets:
-        st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
-        return
-
-    openai_api_key = st.secrets["OPENAI_API_KEY"]
     
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
@@ -91,6 +80,9 @@ def main():
     user_content = st.text_area("Paste your content here:")
     
     if st.button('Analyze'):
+        st.write("Original Text:")
+        st.write(user_content)
+        
         color_counts = analyze_text(user_content, color_keywords)
         total_counts = sum(color_counts.values())
         
@@ -113,7 +105,7 @@ def main():
             st.write(f"Examples for {color}:")
             st.write(", ".join(examples[color]))
 
-        pdf_file_path = generate_pdf(top_colors, examples, user_content)
-        download_file(pdf_file_path)
+        word_file_path = generate_word_doc(top_colors, examples, user_content)
+        download_file(word_file_path)
 
 main()
