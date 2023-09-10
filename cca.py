@@ -8,6 +8,7 @@ from docx import Document
 from docx.shared import Inches
 import openai
 import io
+import matplotlib.pyplot as plt
 
 def analyze_text(text, color_keywords):
     text = text.lower()
@@ -17,19 +18,10 @@ def analyze_text(text, color_keywords):
         color_counts[color] = sum(words.count(k.lower()) for k in keywords)
     return color_counts
 
-def draw_donut_chart(labels, sizes):
-    colors = {
-        'Red': 'red',
-        'Silver': 'silver',
-        'Blue': 'blue',
-        'Yellow': 'yellow',
-        'Green': 'green',
-        'Purple': 'purple',
-        'Maroon': 'maroon',
-        'Orange': 'orange',
-        'Pink': 'pink'
-    }
-    fig = go.Figure(data=[go.Pie(labels=labels, values=sizes, hole=.3, marker=dict(colors=[colors[label] for label in labels]))])
+def draw_donut_chart(color_counts, color_keywords):
+    labels = list(color_keywords.keys())
+    sizes = [color_counts.get(color, 0) for color in labels]
+    fig = go.Figure(data=[go.Pie(labels=labels, values=sizes, hole=.3)])
     return fig
 
 def extract_examples(text, color_keywords, top_colors):
@@ -69,41 +61,8 @@ def analyze_tone(text):
     for tone, keywords in tone_keywords.items():
         tone_counts[tone] = sum(words.count(k.lower()) for k in keywords)
     total_count = sum(tone_counts.values())
-    if total_count == 0:
-        tone_scores = {tone: 0 for tone in tone_keywords.keys()}
-    else:
-        tone_scores = {tone: (count / total_count) * 100 for tone, count in tone_counts.items()}
+    tone_scores = {tone: (count / total_count) * 100 for tone, count in tone_counts.items()}
     return tone_scores
-
-def generate_word_doc(top_colors, examples, user_content, gpt3_analysis, tone_scores):
-    doc = Document()
-    doc.add_heading('Color Personality Analysis', 0)
-    
-    fig = draw_donut_chart([color for color, _ in top_colors], [count for color, count in top_colors])
-    image_stream = io.BytesIO()
-    fig.write_image(image_stream, format='png')
-    image_stream.seek(0)
-    doc.add_picture(image_stream, width=Inches(4.0))
-    image_stream.close()
-
-    doc.add_heading('Tone Analysis:', level=1)
-    for tone, score in tone_scores.items():
-        doc.add_paragraph(f"{tone}: {score}%")
-
-    for color, count in top_colors:
-        doc.add_heading(f'Top Color: {color}', level=1)
-        for example in examples[color]:
-            doc.add_paragraph(example)
-
-    doc.add_heading('Original Text:', level=1)
-    doc.add_paragraph(user_content)
-
-    doc.add_heading('GPT-3 Analysis:', level=1)
-    doc.add_paragraph(gpt3_analysis)
-    
-    word_file_path = "Color_Personality_Analysis_Report.docx"
-    doc.save(word_file_path)
-    return word_file_path
 
 def get_word_file_download_link(file_path, filename):
     with open(file_path, "rb") as f:
@@ -112,12 +71,44 @@ def get_word_file_download_link(file_path, filename):
     href = f'<a href="data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,{b64_file}" download="{filename}">Download Word Report</a>'
     return href
 
+def plot_tone_analysis(tone_scores):
+    fig, ax = plt.subplots()
+    ax.bar(tone_scores.keys(), tone_scores.values())
+    plt.xticks(rotation=45)
+    buf = io.BytesIO()
+    plt.savefig(buf, format="png")
+    buf.seek(0)
+    return buf
+
+def generate_word_doc(color_counts, examples, user_content, gpt3_analysis, tone_scores):
+    doc = Document()
+    doc.add_heading('Color Personality Analysis', 0)
+    fig = draw_donut_chart(color_counts, color_keywords)
+    image_stream = io.BytesIO(fig.to_image(format="png"))
+    doc.add_picture(image_stream, width=Inches(4.0))
+    image_stream.close()
+    tone_buf = plot_tone_analysis(tone_scores)
+    doc.add_picture(tone_buf, width=Inches(4.0))
+    tone_buf.close()
+    for tone, score in tone_scores.items():
+        doc.add_paragraph(f"{tone}: {score}%")
+    for color, example_sentences in examples.items():
+        doc.add_heading(f'Top Color: {color}', level=1)
+        for example in example_sentences:
+            doc.add_paragraph(example)
+    doc.add_heading('Original Text:', level=1)
+    doc.add_paragraph(user_content)
+    doc.add_heading('GPT-3 Analysis:', level=1)
+    doc.add_paragraph(gpt3_analysis)
+    word_file_path = "Color_Personality_Analysis_Report.docx"
+    doc.save(word_file_path)
+    return word_file_path
+
 def main():
     st.title('Color Personality Analysis')
     if 'OPENAI_API_KEY' not in st.secrets:
         st.error('Please set the OPENAI_API_KEY secret on the Streamlit dashboard.')
         return
-
     openai_api_key = st.secrets['OPENAI_API_KEY']
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
@@ -130,36 +121,29 @@ def main():
         'Orange': ['Compose', 'Conceptualize', 'Conceive', 'Craft', 'Create', 'Design', 'Dream', 'Envision', 'Express', 'Fashion', 'Form', 'Imagine', 'Interpret', 'Make', 'Originate', 'Paint', 'Perform', 'Portray', 'Realize', 'Shape', 'Abstract', 'Artistic', 'Avant-garde', 'Colorful', 'Conceptual', 'Contemporary', 'Creative', 'Decorative', 'Eccentric', 'Eclectic', 'Evocative', 'Expressive', 'Imaginative', 'Interpretive', 'Offbeat', 'One-of-a-kind', 'Original', 'Uncommon', 'Unconventional', 'Unexpected', 'Unique', 'Vibrant', 'Whimsical'],
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
-
     user_content = st.text_area('Paste your content here:')
-
     if st.button('Analyze'):
         color_counts = analyze_text(user_content, color_keywords)
         total_counts = sum(color_counts.values())
         if total_counts == 0:
             st.write('No relevant keywords found.')
             return
-
-        sorted_colors = sorted(color_counts.items(), key=lambda x: x[1], reverse=True)
-        top_colors = sorted_colors[:3]
-        fig = draw_donut_chart([color for color, _ in top_colors], [count for color, count in top_colors])
+        fig = draw_donut_chart(color_counts, color_keywords)
         st.plotly_chart(fig)
-
-        examples = extract_examples(user_content, color_keywords, [color for color, _ in top_colors])
-        for color, count in top_colors:
+        sorted_colors = sorted(color_counts.items(), key=lambda x: x[1], reverse=True)
+        top_colors = [color for color, _ in sorted_colors[:3]]
+        examples = extract_examples(user_content, color_keywords, top_colors)
+        for color in top_colors:
             st.write(f'Examples for {color}:')
             st.write(', '.join(examples[color]))
-
         gpt3_analysis = analyze_with_gpt3(user_content, openai_api_key)
         st.write('GPT-3 Analysis:')
         st.write(gpt3_analysis)
-
         tone_scores = analyze_tone(user_content)
         st.subheader("Tone Analysis")
         st.write("The text exhibits the following tones:")
         st.bar_chart(tone_scores)
-
-        word_file_path = generate_word_doc(top_colors, examples, user_content, gpt3_analysis, tone_scores)
+        word_file_path = generate_word_doc(color_counts, examples, user_content, gpt3_analysis, tone_scores)
         download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
         st.markdown(download_link, unsafe_allow_html=True)
 
