@@ -17,7 +17,6 @@ def analyze_text(text, color_keywords):
     return color_counts
 
 def draw_donut_chart(labels, sizes):
-    # Colors matching the labels
     colors = {
         'Red': 'red',
         'Silver': 'silver',
@@ -29,11 +28,7 @@ def draw_donut_chart(labels, sizes):
         'Orange': 'orange',
         'Pink': 'pink'
     }
-    
-    fig = go.Figure(data=[go.Pie(labels=labels,
-                                 values=sizes,
-                                 hole=.3,
-                                 marker=dict(colors=[colors[label] for label in labels]))])
+    fig = go.Figure(data=[go.Pie(labels=labels, values=sizes, hole=.3, marker=dict(colors=[colors[label] for label in labels]))])
     return fig
 
 def extract_examples(text, color_keywords, top_colors):
@@ -79,14 +74,11 @@ def analyze_tone(text):
         tone_scores = {tone: (count / total_count) * 100 for tone, count in tone_counts.items()}
     return tone_scores
 
-def generate_word_report(tone_scores):
+def generate_word_doc(top_colors, examples, user_content, gpt3_analysis, tone_scores):
     doc = Document()
-    doc.add_heading('Tone Analysis Report', 0)
-    
-    for tone, score in tone_scores.items():
-        doc.add_paragraph(f"{tone}: {score}%")
-    
-    doc.save("Tone_Analysis_Report.docx")
+    doc.add_heading('Color Personality Analysis', 0)
+    doc.save("Color_Personality_Analysis_Report.docx")
+    return "Color_Personality_Analysis_Report.docx"
 
 def get_word_file_download_link(file_path, filename):
     with open(file_path, "rb") as f:
@@ -94,43 +86,7 @@ def get_word_file_download_link(file_path, filename):
     b64_file = base64.b64encode(file_data).decode()
     href = f'<a href="data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,{b64_file}" download="{filename}">Download Word Report</a>'
     return href
-    
-def generate_word_doc(top_colors, examples, user_content, gpt3_analysis, tone_scores):
-    doc = Document()
-    doc.add_heading('Color Personality Analysis', 0)
 
-    # Save the donut chart as PNG
-    fig = draw_donut_chart(top_colors, [count for _, count in top_colors])
-    image_stream = io.BytesIO(to_image(fig, format="png"))
-    
-    # Add chart to the Word document
-    doc.add_picture(image_stream, width=Inches(4.0))
-    image_stream.close()
-
-    # Add Tone Analysis
-    doc.add_heading('Tone Analysis:', level=1)
-    for tone, score in tone_scores.items():
-        doc.add_paragraph(f"{tone}: {score}%")
-
-    # Add top color examples
-    for color in top_colors:
-        doc.add_heading(f'Top Color: {color}', level=1)
-        for example in examples[color]:
-            doc.add_paragraph(example)
-
-    # Add Original Text
-    doc.add_heading('Original Text:', level=1)
-    doc.add_paragraph(user_content)
-
-    # Add GPT-3 Analysis
-    doc.add_heading('GPT-3 Analysis:', level=1)
-    doc.add_paragraph(gpt3_analysis)
-    
-    word_file_path = "Color_Personality_Analysis_Report.docx"
-    doc.save(word_file_path)
-
-    return word_file_path
-    
 def main():
     st.title('Color Personality Analysis')
     if 'OPENAI_API_KEY' not in st.secrets:
@@ -183,5 +139,6 @@ def main():
         word_file_path = generate_word_doc(top_colors, examples, user_content, gpt3_analysis, tone_scores)
         download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
         st.markdown(download_link, unsafe_allow_html=True)
+
 if __name__ == '__main__':
     main()
