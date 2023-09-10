@@ -62,12 +62,21 @@ def analyze_with_gpt3(text, api_key):
         max_tokens=50,
         temperature=0.5
     )
-    # Assuming GPT-3 returns tone scores in the format "Relaxed: 7\nAssertive: 5\nIntroverted: 3\nExtroverted: 6"
+    
+    # Debugging: Log GPT-3 Response
+    print("GPT-3 Response:", response.choices[0].text.strip())
+    
     tone_scores = {}
-    score_lines = response.choices[0].text.strip().split('\n')
-    for line in score_lines:
-        key, value = line.split(': ')
+    score_pairs = response.choices[0].text.strip().split(', ')
+    
+    for pair in score_pairs:
+        # Error Handling: Skip lines that can't be split into key and value
+        if ': ' not in pair:
+            continue
+        
+        key, value = pair.split(': ')
         tone_scores[key.strip()] = int(value.strip())
+    
     return tone_scores
 
 def generate_word_doc(top_colors, examples, user_content, general_analysis, tone_scores, new_tone_scores):
