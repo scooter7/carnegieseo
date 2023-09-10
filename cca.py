@@ -138,7 +138,7 @@ def main():
         'Orange': ['Compose', 'Conceptualize', 'Conceive', 'Craft', 'Create', 'Design', 'Dream', 'Envision', 'Express', 'Fashion', 'Form', 'Imagine', 'Interpret', 'Make', 'Originate', 'Paint', 'Perform', 'Portray', 'Realize', 'Shape', 'Abstract', 'Artistic', 'Avant-garde', 'Colorful', 'Conceptual', 'Contemporary', 'Creative', 'Decorative', 'Eccentric', 'Eclectic', 'Evocative', 'Expressive', 'Imaginative', 'Interpretive', 'Offbeat', 'One-of-a-kind', 'Original', 'Uncommon', 'Unconventional', 'Unexpected', 'Unique', 'Vibrant', 'Whimsical'],
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
-
+    
     user_content = st.text_area('Paste your content here:')
 
     if st.button('Analyze'):
@@ -147,29 +147,25 @@ def main():
         if total_counts == 0:
             st.write('No relevant keywords found.')
             return
+
         sorted_colors = sorted(color_counts.items(), key=lambda x: x[1], reverse=True)
         top_colors = [color for color, _ in sorted_colors[:3]]
         labels = [k for k, v in color_counts.items() if v > 0]
         sizes = [v for v in color_counts.values() if v > 0]
+        
         fig = draw_donut_chart(labels, sizes)
         st.plotly_chart(fig)
+
         examples = extract_examples(user_content, color_keywords, top_colors)
         for color in top_colors:
             st.write(f'Examples for {color}:')
             st.write(', '.join(examples[color]))
 
-        general_analysis = analyze_with_gpt3(user_content, openai_api_key, "Assess the text for its general tone and identify what audience would find it compelling.")
-        st.write('GPT-3 Analysis:')
-        st.write(general_analysis)
-
-        tone_analysis_prompt = "Assess the text for tone based on the following definitions and provide scores between 0 to 10: Relaxed: Calm, laid-back, stress-free. Assertive: Self-assured, confident, direct. Introverted: Reserved, reflective, solitary. Extroverted: Outgoing, sociable, expressive."
+        tone_analysis_prompt = 'Assess the text for tone based on the definitions: relaxed (calm, laid-back), assertive (confident, self-assured), introverted (reserved, solitary), and extroverted (sociable, outgoing). Provide scores from 1 to 10 for each trait.'
         tone_scores = analyze_with_gpt3(user_content, openai_api_key, tone_analysis_prompt)
 
-        additional_tone_prompt = "Assess the text for additional tone based on the following definitions and provide scores between 0 to 10: Conservative: Traditional, resistant to change. Progressive: Innovative, open to change. Emotive: Expressive of emotions, passionate. Informative: Factual, logical, analytical."
+        additional_tone_prompt = 'Assess the text for additional tone based on the definitions: conservative (traditional, resistant to change), progressive (forward-thinking, open to change), emotive (expressing emotion), and informative (providing information). Provide scores from 1 to 10 for each trait.'
         new_tone_scores = analyze_with_gpt3(user_content, openai_api_key, additional_tone_prompt)
-
-        tone_scores = {k: int(v) for k, v in tone_scores.items()}
-        new_tone_scores = {k: int(v) for k, v in new_tone_scores.items()}
 
         fig1 = draw_quadrant_chart(tone_scores, 'Tone Quadrant Chart', ['Relaxed', 'Assertive'], ['Extroverted', 'Introverted'])
         fig2 = draw_quadrant_chart(new_tone_scores, 'Additional Tone Quadrant Chart', ['Conservative', 'Progressive'], ['Emotive', 'Informative'])
@@ -177,8 +173,13 @@ def main():
         st.plotly_chart(fig1)
         st.plotly_chart(fig2)
 
+        general_analysis = 'Your text was analyzed by GPT-3 to determine the following traits based on your tone: ' + ', '.join([f"{k}: {v}" for k, v in {**tone_scores, **new_tone_scores}.items()])
+        st.write('GPT-3 Analysis:')
+        st.write(general_analysis)
+
         word_file_path = generate_word_doc(top_colors, examples, user_content, general_analysis, tone_scores, new_tone_scores)
         download_file(word_file_path)
+
 
 if __name__ == '__main__':
     main()
