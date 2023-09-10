@@ -26,15 +26,12 @@ def draw_quadrant_chart(tone_analysis, title):
     x_axis = list(tone_analysis.keys())
     y_axis = list(tone_analysis.values())
     fig.add_trace(go.Scatter(x=x_axis, y=y_axis, mode='markers', name='Tone'))
-
     fig.add_shape(type='line', x0=5, x1=5, y0=0, y1=10, line=dict(color='Grey', width=1, dash='dash'))
     fig.add_shape(type='line', x0=0, x1=10, y0=5, y1=5, line=dict(color='Grey', width=1, dash='dash'))
-    
     fig.update_xaxes(range=[0, 10], tickvals=list(range(0, 11)), ticktext=['', '', '', '', '', '', '', '', '', '', ''])
     fig.update_yaxes(range=[0, 10], tickvals=list(range(0, 11)), ticktext=['', '', '', '', '', '', '', '', '', '', ''])
-    
     fig.update_layout(title=title)
-    fig.write_image(title + ".png")
+    fig.write_image(title + '.png')
     return fig
 
 def extract_examples(text, color_keywords, top_colors):
@@ -50,13 +47,13 @@ def extract_examples(text, color_keywords, top_colors):
                     examples[color].add(sentence.strip() + '.')
         examples[color] = list(examples[color])[:3]
     return examples
-
+    
 def analyze_with_gpt3(text, api_key, prompt):
     openai.api_key = api_key
     response = openai.Completion.create(engine='text-davinci-002', prompt=prompt, max_tokens=50)
     return response.choices[0].text.strip()
 
-def generate_word_doc(top_colors, examples, user_content, general_analysis, tone_scores, new_tone_scores):
+def generate_word_doc(top_colors, examples, user_content, general_analysis, tone_analysis, additional_tone_analysis):
     doc = Document()
     doc.add_heading('Color Personality Analysis', 0)
     doc.add_picture('donut_chart.png', width=Inches(4.0))
@@ -67,43 +64,33 @@ def generate_word_doc(top_colors, examples, user_content, general_analysis, tone
             doc.add_paragraph(example, style='ListBullet')
     doc.add_heading('Original Content', level=1)
     doc.add_paragraph(user_content)
-    doc.add_heading('GPT-3 Analysis', level=1)
+    doc.add_heading('General Analysis', level=1)
     doc.add_paragraph(general_analysis)
+
     doc.add_heading('Tone Analysis', level=1)
-    doc.add_paragraph(', '.join(f'{k}: {v}' for k, v in tone_scores.items()))
-    doc.add_picture('Tone Quadrant Chart.png', width=Inches(4.0))
+    doc.add_picture('Tone Quadrant.png', width=Inches(4.0))
     doc.add_heading('Additional Tone Analysis', level=1)
-    doc.add_paragraph(', '.join(f'{k}: {v}' for k, v in new_tone_scores.items()))
-    doc.add_picture('Additional Tone Quadrant Chart.png', width=Inches(4.0))
-    word_file_path = 'report.docx'
-    doc.save(word_file_path)
-    return word_file_path
+    doc.add_picture('Additional Tone Quadrant.png', width=Inches(4.0))
+
+    doc.save('Color_Personality_Analysis.docx')
 
 def download_file(file_path):
     with open(file_path, 'rb') as f:
         file_data = f.read()
-    b64_file = base64.b64encode(file_data).decode('utf-8')
-    st.markdown(f'<a href="data:application/octet-stream;base64,{b64_file}" download="{file_path}">Download {file_path}</a>', unsafe_allow_html=True)
+    b64_file = base64.b64encode(file_data).decode()
+    st.download_button(label='Download Report', data=b64_file, file_name='Color_Personality_Analysis.docx', mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
 
 def main():
     st.title('Color Personality Analysis')
-    if 'OPENAI_API_KEY' not in st.secrets:
+     if 'OPENAI_API_KEY' not in st.secrets:
         st.error('Please set the OPENAI_API_KEY secret on the Streamlit dashboard.')
         return
 
     openai_api_key = st.secrets['OPENAI_API_KEY']
+    general_prompt = 'Who would find this text compelling?'
 
-    color_keywords = {
-        'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
-        'Silver': ['Activate', 'Campaign', 'Challenge', 'Commit', 'Confront', 'Dare', 'Defy', 'Disrupting', 'Drive', 'Excite', 'Face', 'Ignite', 'Incite', 'Influence', 'Inspire', 'Inspirit', 'Motivate', 'Move', 'Push', 'Rebel', 'Reimagine', 'Revolutionize', 'Rise', 'Spark', 'Stir', 'Fight', 'Free', 'Aggressive', 'Bold', 'Brazen', 'Committed', 'Courageous', 'Daring', 'Disruptive', 'Driven', 'Fearless', 'Free', 'Gutsy', 'Independent', 'Inspired', 'Motivated', 'Rebellious', 'Revolutionary', 'Unafraid', 'Unconventional'],
-        'Blue': ['Accomplish', 'Achieve', 'Affect', 'Assert', 'Cause', 'Command', 'Determine', 'Direct', 'Dominate', 'Drive', 'Empower', 'Establish', 'Guide', 'Impact', 'Impress', 'Influence', 'Inspire', 'Lead', 'Outpace', 'Outshine', 'Realize', 'Shape', 'Succeed', 'Transform', 'Win', 'Accomplished', 'Assertive', 'Authoritative', 'Commanding', 'Confident', 'Decisive', 'Distinguished', 'Dominant', 'Elite', 'Eminent', 'Established', 'Exceptional', 'Expert', 'First-class', 'First-rate', 'Impressive', 'Influential', 'Leading', 'Magnetic', 'Managerial', 'Masterful', 'Noble', 'Premier', 'Prestigious', 'Prominent', 'Proud', 'Strong'],
-        'Yellow': ['Accelerate', 'Advance', 'Change', 'Conceive', 'Create', 'Engineer', 'Envision', 'Experiment', 'Dream', 'Ignite', 'Illuminate', 'Imagine', 'Innovate', 'Inspire', 'Invent', 'Pioneer', 'Progress', 'Shape', 'Spark', 'Solve', 'Transform', 'Unleash', 'Unlock', 'Advanced', 'Brilliant', 'Conceptual', 'Enterprising', 'Expert', 'Extraordinary', 'Forward-looking', 'Forward-thinking', 'Fresh', 'Future-minded', 'Future-thinking', 'Ingenious', 'Intelligent', 'Inventive', 'Leading-edge', 'Luminous', 'New', 'Pioneering', 'Reforming', 'Rising', 'Transformative', 'Visionary', 'World-changing', 'World-class'],
-        'Green': ['Analyze', 'Discover', 'Examine', 'Expand', 'Explore', 'Extend', 'Inquire', 'Journey', 'Launch', 'Move', 'Pioneer', 'Pursue', 'Question', 'Reach', 'Search', 'Uncover', 'Venture', 'Wonder', 'Adventurous', 'Analytical', 'Curious', 'Discerning', 'Experiential', 'Exploratory', 'Fearless', 'Inquisitive', 'Intriguing', 'Investigative', 'Journeying', 'Mysterious', 'Philosophical', 'Pioneering', 'Questioning', 'Unbound', 'Unexpected'],
-        'Purple': ['Accommodate', 'Assist', 'Befriend', 'Care', 'Collaborate', 'Connect', 'Embrace', 'Empower', 'Encourage', 'Foster', 'Give', 'Help', 'Nourish', 'Nurture', 'Promote', 'Protect', 'Provide', 'Serve', 'Share', 'Shepherd', 'Steward', 'Tend', 'Uplift', 'Value', 'Welcome', 'Affectionate', 'Attentive', 'Beneficial', 'Benevolent', 'Big-hearted', 'Caring', 'Charitable', 'Compassionate', 'Considerate', 'Encouraging', 'Friendly', 'Generous', 'Gentle', 'Helpful', 'Hospitable', 'Inclusive', 'Kind-hearted', 'Merciful', 'Missional', 'Neighborly', 'Nurturing', 'Protective', 'Responsible', 'Selfless', 'Supportive', 'Sympathetic', 'Thoughtful', 'Uplifting', 'Vocational', 'Warm'],
-        'Maroon': ['Accomplish', 'Achieve', 'Build', 'Challenge', 'Commit', 'Compete', 'Contend', 'Dedicate', 'Defend', 'Devote', 'Drive', 'Endeavor', 'Entrust', 'Endure', 'Fight', 'Grapple', 'Grow', 'Improve', 'Increase', 'Overcome', 'Persevere', 'Persist', 'Press on', 'Pursue', 'Resolve', 'Tackle', 'Ambitious', 'Brave', 'Committed', 'Competitive', 'Consistent', 'Constant', 'Continuous', 'Courageous', 'Dedicated', 'Determined', 'Earnest', 'Industrious', 'Loyal', 'Persevering', 'Persistent', 'Proud', 'Purposeful', 'Relentless', 'Reliable', 'Resilient', 'Resolute', 'Steadfast', 'Strong', 'Tenacious', 'Tireless', 'Tough'],
-        'Orange': ['Compose', 'Conceptualize', 'Conceive', 'Craft', 'Create', 'Design', 'Dream', 'Envision', 'Express', 'Fashion', 'Form', 'Imagine', 'Interpret', 'Make', 'Originate', 'Paint', 'Perform', 'Portray', 'Realize', 'Shape', 'Abstract', 'Artistic', 'Avant-garde', 'Colorful', 'Conceptual', 'Contemporary', 'Creative', 'Decorative', 'Eccentric', 'Eclectic', 'Evocative', 'Expressive', 'Imaginative', 'Interpretive', 'Offbeat', 'One-of-a-kind', 'Original', 'Uncommon', 'Unconventional', 'Unexpected', 'Unique', 'Vibrant', 'Whimsical'],
-        'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
-    }
+    color_keywords = { ... }  # The same color_keywords as in your previous code
+
     user_content = st.text_area('Paste your content here:')
 
     if st.button('Analyze'):
@@ -123,25 +110,17 @@ def main():
         for color in top_colors:
             st.write(f'Examples for {color}:')
             st.write(', '.join(examples[color]))
-
-        general_prompt = 'Who would find the following text compelling?\\n\\n' + user_content[:500]
         general_analysis = analyze_with_gpt3(user_content, openai_api_key, general_prompt)
-        st.write('GPT-3 Analysis:')
+        st.write('General Analysis:')
         st.write(general_analysis)
-
-        tone_scores = {'Extroverted': 7, 'Introverted': 3, 'Relaxed': 6, 'Assertive': 4}
-        new_tone_scores = {'Emotive': 5, 'Informative': 5, 'Conservative': 3, 'Progressive': 7}
-
-        fig1 = draw_quadrant_chart(tone_scores, 'Tone Quadrant Chart')
-        fig2 = draw_quadrant_chart(new_tone_scores, 'Additional Tone Quadrant Chart')
-
+        tone_analysis = { ... }  # Your code for tone analysis
+        additional_tone_analysis = { ... }  # Your code for additional tone analysis
+        fig1 = draw_quadrant_chart(tone_analysis, 'Tone Quadrant')
+        fig2 = draw_quadrant_chart(additional_tone_analysis, 'Additional Tone Quadrant')
         st.plotly_chart(fig1)
         st.plotly_chart(fig2)
-
-        word_file_path = generate_word_doc(top_colors, examples, user_content, general_analysis, tone_scores, new_tone_scores)
-        download_file(word_file_path)
+        generate_word_doc(top_colors, examples, user_content, general_analysis, tone_analysis, additional_tone_analysis)
+        download_file('Color_Personality_Analysis.docx')
 
 if __name__ == '__main__':
     main()
-
-
