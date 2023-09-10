@@ -5,79 +5,39 @@ import base64
 from docx import Document
 from docx.shared import Inches
 import plotly.graph_objects as go
-import plotly.express as px
 import openai
 
-def analyze_text(text, color_keywords):
-    text = text.lower()
-    words = re.findall(r'\b\w+\b', text)
-    color_counts = Counter()
-    for color, keywords in color_keywords.items():
-        color_counts[color] = sum(words.count(k.lower()) for k in keywords)
-    return color_counts
-
-def draw_donut_chart(labels, sizes):
-    colors = labels
-    fig = go.Figure(data=[go.Pie(labels=labels, values=sizes, hole=.3, marker=dict(colors=colors))])
-    return fig
-
-def extract_examples(text, color_keywords, top_colors):
-    text = text.lower()
-    examples = {}
-    sentences = list(set(re.split(r'[.!?]', text)))
-    for color in top_colors:
-        examples[color] = set()
-        for keyword in color_keywords[color]:
-            keyword = keyword.lower()
-            for sentence in sentences:
-                if keyword in sentence:
-                    examples[color].add(sentence.strip() + '.')
-        examples[color] = list(examples[color])[:3]
-    return examples
-
-def analyze_with_gpt3(text, api_key, prompt):
-    openai.api_key = api_key
-    response = openai.Completion.create(engine="text-davinci-002", prompt=prompt, max_tokens=50)
-    return response.choices[0].text.strip()
-
 def draw_quadrant_chart(tone_analysis, title):
-    fig = px.scatter(x=[tone_analysis.get('Extroverted', 0), tone_analysis.get('Introverted', 0)],
-                     y=[tone_analysis.get('Relaxed', 0), tone_analysis.get('Assertive', 0)],
-                     labels={'x':'Extroverted-Introverted', 'y':'Relaxed-Assertive'},
-                     title=title,
-                     text=['Extroverted', 'Introverted'])
-    fig.update_xaxes(range=[0, 10])
-    fig.update_yaxes(range=[0, 10])
+    fig = go.Figure()
+
+    # Add data points
+    for label, value in tone_analysis.items():
+        fig.add_trace(go.Scatter(x=[label], y=[value], mode='markers', name=label))
+
+    # Add quadrant lines
+    fig.add_shape(
+        type='line',
+        x0=5,
+        x1=5,
+        y0=0,
+        y1=10,
+        line=dict(color='Grey', width=1, dash='dash')
+    )
+    fig.add_shape(
+        type='line',
+        x0=0,
+        x1=10,
+        y0=5,
+        y1=5,
+        line=dict(color='Grey', width=1, dash='dash')
+    )
+
+    # Update chart layout
+    fig.update_xaxes(range=[0, 10], tickvals=list(range(0, 11)), ticktext=['Introverted', '', '', '', '', '', '', '', '', '', 'Extroverted'])
+    fig.update_yaxes(range=[0, 10], tickvals=list(range(0, 11)), ticktext=['', '', '', '', '', 'Assertive', '', '', '', '', 'Relaxed'])
+    fig.update_layout(title=title)
+
     return fig
-
-def generate_word_doc(top_colors, examples, user_content, general_analysis, tone_analysis, new_tone_analysis):
-    doc = Document()
-    doc.add_heading('Color Personality Analysis', 0)
-    doc.add_picture('donut_chart.png', width=Inches(4.0))
-    for color in top_colors:
-        doc.add_heading(f'Top Color: {color}', level=1)
-        for example in examples[color]:
-            doc.add_paragraph(example)
-    doc.add_heading('Original Text:', level=1)
-    doc.add_paragraph(user_content)
-    doc.add_heading('GPT-3 General Analysis:', level=1)
-    doc.add_paragraph(general_analysis)
-    doc.add_heading('Tone Analysis:', level=1)
-    doc.add_paragraph(f"Extroverted: {tone_analysis['Extroverted']}, Introverted: {tone_analysis['Introverted']}, Relaxed: {tone_analysis['Relaxed']}, Assertive: {tone_analysis['Assertive']}")
-    doc.add_heading('Additional Tone Analysis:', level=1)
-    doc.add_paragraph(f"Emotive: {new_tone_analysis['Emotive']}, Informative: {new_tone_analysis['Informative']}, Conservative: {new_tone_analysis['Conservative']}, Progressive: {new_tone_analysis['Progressive']}")
-    doc.add_picture('quadrant_chart1.png', width=Inches(4.0))
-    doc.add_picture('quadrant_chart2.png', width=Inches(4.0))
-    word_file_path = "report.docx"
-    doc.save(word_file_path)
-    return word_file_path
-
-def download_file(file_path):
-    with open(file_path, "rb") as f:
-        file_data = f.read()
-    b64_file = base64.b64encode(file_data).decode("utf-8")
-    href = f'<a href="data:application/octet-stream;base64,{b64_file}" download="report.docx">Download Word Report</a>'
-    st.markdown(href, unsafe_allow_html=True)
 
 def main():
     st.title("Color Personality Analysis")
@@ -92,6 +52,7 @@ def main():
         'Orange': ['Compose', 'Conceptualize', 'Conceive', 'Craft', 'Create', 'Design', 'Dream', 'Envision', 'Express', 'Fashion', 'Form', 'Imagine', 'Interpret', 'Make', 'Originate', 'Paint', 'Perform', 'Portray', 'Realize', 'Shape', 'Abstract', 'Artistic', 'Avant-garde', 'Colorful', 'Conceptual', 'Contemporary', 'Creative', 'Decorative', 'Eccentric', 'Eclectic', 'Evocative', 'Expressive', 'Imaginative', 'Interpretive', 'Offbeat', 'One-of-a-kind', 'Original', 'Uncommon', 'Unconventional', 'Unexpected', 'Unique', 'Vibrant', 'Whimsical'],
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
+    
     user_content = st.text_area("Paste your content here:")
     if "OPENAI_API_KEY" not in st.secrets:
         st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
@@ -109,8 +70,7 @@ def main():
         top_colors = [color for color, _ in sorted_colors[:3]]
         labels = [k for k, v in color_counts.items() if v > 0]
         sizes = [v for v in color_counts.values() if v > 0]
-        fig1 = draw_donut_chart(labels, sizes)
-        fig1.write_image("donut_chart.png")
+        fig1 = draw_quadrant_chart(labels, sizes)
         st.plotly_chart(fig1)
         examples = extract_examples(user_content, color_keywords, top_colors)
         for color in top_colors:
@@ -129,28 +89,18 @@ def main():
         tone_analysis = {}
         for tone, prompt in tone_prompts.items():
             tone_analysis[tone] = analyze_with_gpt3(user_content, openai_api_key, prompt)
-        fig2 = draw_quadrant_chart(tone_analysis, "Tone Analysis: Extroverted-Introverted vs Relaxed-Assertive")
-        fig2.write_image("quadrant_chart1.png")
-        st.plotly_chart(fig2)
-        
         new_tone_prompts = {
             'Emotive': f"How emotive is the tone of the following text?\n\n{user_content}\n\nRate from 0 to 10:",
             'Informative': f"How informative is the tone of the following text?\n\n{user_content}\n\nRate from 0 to 10:",
             'Conservative': f"How conservative is the tone of the following text?\n\n{user_content}\n\nRate from 0 to 10:",
             'Progressive': f"How progressive is the tone of the following text?\n\n{user_content}\n\nRate from 0 to 10:"
         }
-        
         new_tone_analysis = {}
         for tone, prompt in new_tone_prompts.items():
             new_tone_analysis[tone] = analyze_with_gpt3(user_content, openai_api_key, prompt)
         
-        fig3 = draw_quadrant_chart(new_tone_analysis, "Additional Tone Analysis: Emotive-Informative vs Conservative-Progressive")
-        fig3.write_image("quadrant_chart2.png")
-        st.plotly_chart(fig3)
-        
         word_file_path = generate_word_doc(top_colors, examples, user_content, general_analysis, tone_analysis, new_tone_analysis)
         download_file(word_file_path)
 
-main()
-
-
+if __name__ == "__main__":
+    main()
