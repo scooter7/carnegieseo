@@ -71,7 +71,7 @@ def main():
     user_content = st.text_area('Paste your content here:')
     
     if st.button('Analyze'):
-        # Analyze the initial content
+        # Analyze the initial content only when the Analyze button is clicked
         scored_sentences = analyze_sentences_by_color(user_content, color_keywords)
         st.subheader("Scored Sentences")
         for sentence, color in scored_sentences:
