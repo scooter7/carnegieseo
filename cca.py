@@ -88,6 +88,13 @@ def generate_word_report(tone_scores):
     
     doc.save("Tone_Analysis_Report.docx")
 
+def get_word_file_download_link(file_path, filename):
+    with open(file_path, "rb") as f:
+        file_data = f.read()
+    b64_file = base64.b64encode(file_data).decode()
+    href = f'<a href="data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,{b64_file}" download="{filename}">Download Word Report</a>'
+    return href
+    
 def main():
     st.title('Color Personality Analysis')
     if 'OPENAI_API_KEY' not in st.secrets:
@@ -137,11 +144,9 @@ def main():
         st.write("The text exhibits the following tones:")
         st.bar_chart(tone_scores)
 
-        generate_word_report(tone_scores)
-        st.markdown(
-            f'<a href="Tone_Analysis_Report.docx" download="Tone_Analysis_Report.docx">Download Tone Analysis Report</a>',
-            unsafe_allow_html=True
-        )
+        word_file_path = generate_word_doc(top_colors, examples, user_content, general_analysis)  # Assuming this function returns the path to the generated Word doc
+        download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
+        st.markdown(download_link, unsafe_allow_html=True)
 
 if __name__ == '__main__':
     main()
