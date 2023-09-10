@@ -1,4 +1,3 @@
-
 import streamlit as st
 import re
 import plotly.graph_objects as go
@@ -65,10 +64,6 @@ def analyze_tone(text):
     tone_scores = {tone: (count / total_count) * 100 for tone, count in tone_counts.items()}
     return tone_scores
 
-# ... (rest of the code including main function)
-
-# Existing imports and function definitions remain the same
-
 def main():
     if 'OPENAI_API_KEY' not in st.secrets:
         st.error('Please set the OPENAI_API_KEY secret on the Streamlit dashboard.')
@@ -88,14 +83,15 @@ def main():
     user_content = st.text_area('Paste your content here:')
     
     if st.button('Analyze'):
-        # ... (Existing Analysis Code)
-        
+        pass  # Your existing analysis code here
+    
     if user_content:
-        scored_sentences = analyze_sentences_by_color(user_content, color_keywords)
-        st.subheader("Scored Sentences")
-        for sentence, color in scored_sentences:
-            st.write(f"{sentence} ({color})")
-
+        pass  # Your existing analysis code here
+        tone_scores = analyze_tone(user_content)
+        st.subheader("Tone Analysis")
+        st.write("The text exhibits the following tones:")
+        st.bar_chart(tone_scores)
+    
     st.subheader("Revision Field")
     revision_input = st.text_area("Paste scored sentences here for revision:")
     
