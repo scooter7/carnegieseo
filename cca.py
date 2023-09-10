@@ -98,26 +98,37 @@ def get_word_file_download_link(file_path, filename):
 def generate_word_doc(top_colors, examples, user_content, gpt3_analysis, tone_scores):
     doc = Document()
     doc.add_heading('Color Personality Analysis', 0)
-    doc.add_picture('chart.png', width=Inches(4.0))
+
+    # Save the donut chart as PNG
+    fig = draw_donut_chart(top_colors, [count for _, count in top_colors])
+    image_stream = io.BytesIO(to_image(fig, format="png"))
+    
+    # Add chart to the Word document
+    doc.add_picture(image_stream, width=Inches(4.0))
+    image_stream.close()
+
+    # Add Tone Analysis
     doc.add_heading('Tone Analysis:', level=1)
     for tone, score in tone_scores.items():
         doc.add_paragraph(f"{tone}: {score}%")
-        word_file_path = "Color_Personality_Analysis_Report.docx"
-    doc.save(word_file_path)
-    return word_file_path
-    
+
+    # Add top color examples
     for color in top_colors:
         doc.add_heading(f'Top Color: {color}', level=1)
         for example in examples[color]:
             doc.add_paragraph(example)
-            
+
+    # Add Original Text
     doc.add_heading('Original Text:', level=1)
     doc.add_paragraph(user_content)
+
+    # Add GPT-3 Analysis
     doc.add_heading('GPT-3 Analysis:', level=1)
     doc.add_paragraph(gpt3_analysis)
     
     word_file_path = "Color_Personality_Analysis_Report.docx"
     doc.save(word_file_path)
+
     return word_file_path
     
 def main():
