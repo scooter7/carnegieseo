@@ -71,7 +71,9 @@ def main():
     user_content = ""
     assigned_colors = {}
     
-    if st.button('Analyze'):
+    analyze_button_key = "analyze_button"
+    
+    if st.button('Analyze', key=analyze_button_key):
         color_counts = analyze_text(user_content, color_keywords)
         st.subheader("Color Analysis")
         donut_chart = draw_donut_chart(color_counts, color_keywords)
@@ -83,7 +85,8 @@ def main():
     user_content = st.text_area('Paste your content here:')
     
     if user_content:
-        if st.button('Analyze'):
+        analyze_button_key = "analyze_button_new_content"  # Assign a new key when content is provided
+        if st.button('Analyze', key=analyze_button_key):
             assigned_colors = {}
             # Remove the existing colors
             user_content = re.sub(r'\([^\)]+\)', '', user_content)
