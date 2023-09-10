@@ -33,15 +33,15 @@ def draw_quadrant_chart(tone_analysis, title, x_axis_labels, y_axis_labels):
     fig.add_shape(type='line', x0=5, x1=5, y0=0, y1=10, line=dict(color='Grey', width=1, dash='dash'))
     fig.add_shape(type='line', x0=0, x1=10, y0=5, y1=5, line=dict(color='Grey', width=1, dash='dash'))
     
-    fig.update_xaxes(range=[0, 10], tickvals=list(range(0, 11)), ticktext=['', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'])
-    fig.update_yaxes(range=[0, 10], tickvals=list(range(0, 11)), ticktext=['', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'])
+    fig.update_xaxes(range=[0, 10], tickvals=list(range(0, 11)), ticktext=list(range(0, 11)))
+    fig.update_yaxes(range=[0, 10], tickvals=list(range(0, 11)), ticktext=list(range(0, 11)))
     
     annotations = []
-    annotations.append(dict(x=5, y=9, xref='x', yref='y', text=x_axis_labels[0], showarrow=False, xanchor='center'))
-    annotations.append(dict(x=5, y=1, xref='x', yref='y', text=x_axis_labels[1], showarrow=False, xanchor='center'))
-    annotations.append(dict(x=1, y=5, xref='x', yref='y', text=y_axis_labels[0], showarrow=False, xanchor='center'))
-    annotations.append(dict(x=9, y=5, xref='x', yref='y', text=y_axis_labels[1], showarrow=False, xanchor='center'))
-
+    annotations.append(dict(x=5, y=9, xref='x', yref='y', text=x_axis_labels[0], showarrow=False, ha='center'))
+    annotations.append(dict(x=5, y=1, xref='x', yref='y', text=x_axis_labels[1], showarrow=False, ha='center'))
+    annotations.append(dict(x=1, y=5, xref='x', yref='y', text=y_axis_labels[0], showarrow=False, ha='center'))
+    annotations.append(dict(x=9, y=5, xref='x', yref='y', text=y_axis_labels[1], showarrow=False, ha='center'))
+    
     fig.update_layout(title=title, annotations=annotations)
     fig.write_image(title + ".png")
     return fig
@@ -60,40 +60,29 @@ def extract_examples(text, color_keywords, top_colors):
         examples[color] = list(examples[color])[:3]
     return examples
 
-def analyze_with_gpt3(text, api_key):
+def analyze_with_gpt3(text, api_key, prompt_for_analysis):
     openai.api_key = api_key
     response = openai.Completion.create(
         engine='text-davinci-002',
-        prompt=text,
+        prompt=prompt_for_analysis,
         max_tokens=50,
         temperature=0.5
     )
     
-    # Debugging: Log GPT-3 Response
-    print("GPT-3 Response:", response.choices[0].text.strip())
-    
     tone_scores = {}
     score_pairs = response.choices[0].text.strip().split(', ')
     
-    # Debugging: Log the parsed score pairs
-    print("Parsed score pairs:", score_pairs)
-    
     for pair in score_pairs:
-        # Error Handling: Skip lines that can't be split into key and value
         if ': ' not in pair:
             continue
         
         key, value = pair.split(': ')
         
-        # Check if value can be converted to an integer
         try:
             value = int(value.strip())
             tone_scores[key.strip()] = value
         except ValueError:
-            print(f"Skipping invalid key-value pair: {key}: {value}")
-    
-    # Debugging: Log the final tone scores
-    print("Final tone scores:", tone_scores)
+            continue
     
     return tone_scores
 
@@ -144,7 +133,6 @@ def main():
         'Orange': ['Compose', 'Conceptualize', 'Conceive', 'Craft', 'Create', 'Design', 'Dream', 'Envision', 'Express', 'Fashion', 'Form', 'Imagine', 'Interpret', 'Make', 'Originate', 'Paint', 'Perform', 'Portray', 'Realize', 'Shape', 'Abstract', 'Artistic', 'Avant-garde', 'Colorful', 'Conceptual', 'Contemporary', 'Creative', 'Decorative', 'Eccentric', 'Eclectic', 'Evocative', 'Expressive', 'Imaginative', 'Interpretive', 'Offbeat', 'One-of-a-kind', 'Original', 'Uncommon', 'Unconventional', 'Unexpected', 'Unique', 'Vibrant', 'Whimsical'],
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
-
     user_content = st.text_area('Paste your content here:')
 
     if st.button('Analyze'):
@@ -165,20 +153,16 @@ def main():
             st.write(f'Examples for {color}:')
             st.write(', '.join(examples[color]))
 
-        general_analysis = analyze_with_gpt3(user_content, openai_api_key)
+        general_analysis_prompt = "Provide a general analysis of the text."
+        general_analysis = analyze_with_gpt3(user_content, openai_api_key, general_analysis_prompt)
         st.write('GPT-3 Analysis:')
         st.write(general_analysis)
 
-        # Analyze tone with GPT-3
-        tone_analysis_prompt = 'Assess the text for tone. Provide scores for the following four traits: relaxed, assertive, introverted, extroverted.'
-        tone_scores = analyze_with_gpt3(user_content, openai_api_key)
+        tone_prompt = "Assess the text for tone. Provide scores for the following four traits: relaxed, assertive, introverted, extroverted."
+        tone_scores = analyze_with_gpt3(user_content, openai_api_key, tone_prompt)
 
-        # Analyze additional tone with GPT-3
-        additional_tone_prompt = 'Assess the text for additional tone. Provide scores for the following four traits: conservative, progressive, emotive, informative.'
-        new_tone_scores = analyze_with_gpt3(user_content, openai_api_key)
-
-        tone_scores = {k: int(v) for k, v in tone_scores.items()}
-        new_tone_scores = {k: int(v) for k, v in new_tone_scores.items()}
+        additional_tone_prompt = "Assess the text for additional tone. Provide scores for the following four traits: conservative, progressive, emotive, informative."
+        new_tone_scores = analyze_with_gpt3(user_content, openai_api_key, additional_tone_prompt)
 
         fig1 = draw_quadrant_chart(tone_scores, 'Tone Quadrant Chart', ['Relaxed', 'Assertive'], ['Extroverted', 'Introverted'])
         fig2 = draw_quadrant_chart(new_tone_scores, 'Additional Tone Quadrant Chart', ['Conservative', 'Progressive'], ['Emotive', 'Informative'])
