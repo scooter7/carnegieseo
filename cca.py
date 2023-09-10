@@ -37,10 +37,10 @@ def draw_quadrant_chart(tone_analysis, title, x_axis_labels, y_axis_labels):
     fig.update_yaxes(range=[0, 10], tickvals=list(range(0, 11)), ticktext=['', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'])
     
     annotations = []
-    annotations.append(dict(x=5, y=9, xref='x', yref='y', text=x_axis_labels[0], showarrow=False, ha='center'))
-    annotations.append(dict(x=5, y=1, xref='x', yref='y', text=x_axis_labels[1], showarrow=False, ha='center'))
-    annotations.append(dict(x=1, y=5, xref='x', yref='y', text=y_axis_labels[0], showarrow=False, ha='center'))
-    annotations.append(dict(x=9, y=5, xref='x', yref='y', text=y_axis_labels[1], showarrow=False, ha='center'))
+    annotations.append(dict(x=5, y=9, xref='x', yref='y', text=x_axis_labels[0], showarrow=False, xanchor='center'))
+    annotations.append(dict(x=5, y=1, xref='x', yref='y', text=x_axis_labels[1], showarrow=False, xanchor='center'))
+    annotations.append(dict(x=1, y=5, xref='x', yref='y', text=y_axis_labels[0], showarrow=False, xanchor='center'))
+    annotations.append(dict(x=9, y=5, xref='x', yref='y', text=y_axis_labels[1], showarrow=False, xanchor='center'))
     
     fig.update_layout(title=title, annotations=annotations)
     fig.write_image(title + ".png")
