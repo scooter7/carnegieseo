@@ -2,12 +2,7 @@ import streamlit as st
 import re
 import plotly.graph_objects as go
 from collections import Counter
-import base64
-from docx import Document
-from docx.shared import Inches
 import openai
-import io
-import matplotlib.pyplot as plt
 
 def analyze_text(text, color_keywords):
     text = text.lower()
@@ -37,12 +32,6 @@ def extract_examples(text, color_keywords, top_colors):
                     examples[color].add(sentence.strip() + '.')
         examples[color] = list(examples[color])[:3]
     return examples
-
-def analyze_with_gpt3(text, api_key):
-    openai.api_key = api_key
-    prompt = f"Please evaluate the following text and score it based on these tonal definitions: Relaxed, Assertive, Introverted, Extroverted, Conservative, Progressive, Emotive, Informative.\n\nText:\n{text}"
-    response = openai.Completion.create(engine="text-davinci-002", prompt=prompt, max_tokens=100)
-    return response.choices[0].text.strip()
 
 def analyze_tone(text):
     tone_keywords = {
@@ -83,14 +72,19 @@ def main():
     user_content = st.text_area('Paste your content here:')
     
     if st.button('Analyze'):
-        pass  # Your existing analysis code here
-    
-    if user_content:
-        pass  # Your existing analysis code here
+        color_counts = analyze_text(user_content, color_keywords)
+        st.subheader("Color Analysis")
+        st.plotly_chart(draw_donut_chart(color_counts, color_keywords))
         tone_scores = analyze_tone(user_content)
         st.subheader("Tone Analysis")
         st.write("The text exhibits the following tones:")
         st.bar_chart(tone_scores)
+    
+    if user_content:
+        scored_sentences = analyze_sentences_by_color(user_content, color_keywords)
+        st.subheader("Scored Sentences")
+        for sentence, color in scored_sentences:
+            st.write(f"{sentence} ({color})")
     
     st.subheader("Revision Field")
     revision_input = st.text_area("Paste scored sentences here for revision:")
