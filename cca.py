@@ -26,6 +26,14 @@ def analyze_with_gpt3(text, prompt):
         st.error(f"GPT-3 API Error: {e}")
         return ""
 
+def analyze_text(text, color_keywords):
+    text = text.lower()
+    words = re.findall(r'\b\w+\b', text)
+    color_counts = Counter()
+    for color, keywords in color_keywords.items():
+        color_counts[color] = sum(words.count(k.lower()) for k in keywords)
+    return color_counts
+
 # Modify the main() function
 def main():
     st.title('Color Personality Analysis')
