@@ -1,6 +1,5 @@
 import streamlit as st
 import re
-import plotly.express as px
 import plotly.graph_objects as go
 from collections import Counter
 import base64
@@ -21,7 +20,8 @@ def analyze_text(text, color_keywords):
 def draw_donut_chart(color_counts, color_keywords):
     labels = list(color_keywords.keys())
     sizes = [color_counts.get(color, 0) for color in labels]
-    fig = go.Figure(data=[go.Pie(labels=labels, values=sizes, hole=.3)])
+    colors = {label: label.lower() for label in labels}
+    fig = go.Figure(data=[go.Pie(labels=labels, values=sizes, hole=.3, marker=dict(colors=[colors[label] for label in labels]))])
     return fig
 
 def extract_examples(text, color_keywords, top_colors):
@@ -80,7 +80,7 @@ def plot_tone_analysis(tone_scores):
     buf.seek(0)
     return buf
 
-def generate_word_doc(color_counts, examples, user_content, gpt3_analysis, tone_scores):
+def generate_word_doc(color_counts, examples, user_content, gpt3_analysis, tone_scores, color_keywords):
     doc = Document()
     doc.add_heading('Color Personality Analysis', 0)
     fig = draw_donut_chart(color_counts, color_keywords)
@@ -143,7 +143,7 @@ def main():
         st.subheader("Tone Analysis")
         st.write("The text exhibits the following tones:")
         st.bar_chart(tone_scores)
-        word_file_path = generate_word_doc(color_counts, examples, user_content, gpt3_analysis, tone_scores)
+        word_file_path = generate_word_doc(color_counts, examples, user_content, gpt3_analysis, tone_scores, color_keywords)
         download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
         st.markdown(download_link, unsafe_allow_html=True)
 
