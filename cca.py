@@ -5,6 +5,7 @@ import base64
 from docx import Document
 from docx.shared import Inches
 import plotly.graph_objects as go
+import plotly.express as px
 import openai
 
 def analyze_text(text, color_keywords):
@@ -16,7 +17,7 @@ def analyze_text(text, color_keywords):
     return color_counts
 
 def draw_donut_chart(labels, sizes):
-    colors = labels  # Assign the color name to the corresponding data
+    colors = labels
     fig = go.Figure(data=[go.Pie(labels=labels, values=sizes, hole=.3, marker=dict(colors=colors))])
     return fig
 
@@ -39,6 +40,16 @@ def analyze_with_gpt3(text, api_key, prompt):
     response = openai.Completion.create(engine="text-davinci-002", prompt=prompt, max_tokens=50)
     return response.choices[0].text.strip()
 
+def draw_quadrant_chart(tone_analysis, title):
+    fig = px.scatter(x=[tone_analysis.get('Extroverted', 0), tone_analysis.get('Introverted', 0)],
+                     y=[tone_analysis.get('Relaxed', 0), tone_analysis.get('Assertive', 0)],
+                     labels={'x':'Extroverted-Introverted', 'y':'Relaxed-Assertive'},
+                     title=title,
+                     text=['Extroverted', 'Introverted'])
+    fig.update_xaxes(range=[0, 10])
+    fig.update_yaxes(range=[0, 10])
+    return fig
+
 def generate_word_doc(top_colors, examples, user_content, general_analysis, tone_analysis, new_tone_analysis):
     doc = Document()
     doc.add_heading('Color Personality Analysis', 0)
@@ -55,6 +66,8 @@ def generate_word_doc(top_colors, examples, user_content, general_analysis, tone
     doc.add_paragraph(f"Extroverted: {tone_analysis['Extroverted']}, Introverted: {tone_analysis['Introverted']}, Relaxed: {tone_analysis['Relaxed']}, Assertive: {tone_analysis['Assertive']}")
     doc.add_heading('Additional Tone Analysis:', level=1)
     doc.add_paragraph(f"Emotive: {new_tone_analysis['Emotive']}, Informative: {new_tone_analysis['Informative']}, Conservative: {new_tone_analysis['Conservative']}, Progressive: {new_tone_analysis['Progressive']}")
+    doc.add_picture('quadrant_chart1.png', width=Inches(4.0))
+    doc.add_picture('quadrant_chart2.png', width=Inches(4.0))
     word_file_path = "report.docx"
     doc.save(word_file_path)
     return word_file_path
@@ -116,18 +129,28 @@ def main():
         tone_analysis = {}
         for tone, prompt in tone_prompts.items():
             tone_analysis[tone] = analyze_with_gpt3(user_content, openai_api_key, prompt)
+        fig2 = draw_quadrant_chart(tone_analysis, "Tone Analysis: Extroverted-Introverted vs Relaxed-Assertive")
+        fig2.write_image("quadrant_chart1.png")
+        st.plotly_chart(fig2)
+        
         new_tone_prompts = {
             'Emotive': f"How emotive is the tone of the following text?\n\n{user_content}\n\nRate from 0 to 10:",
             'Informative': f"How informative is the tone of the following text?\n\n{user_content}\n\nRate from 0 to 10:",
             'Conservative': f"How conservative is the tone of the following text?\n\n{user_content}\n\nRate from 0 to 10:",
             'Progressive': f"How progressive is the tone of the following text?\n\n{user_content}\n\nRate from 0 to 10:"
         }
+        
         new_tone_analysis = {}
         for tone, prompt in new_tone_prompts.items():
             new_tone_analysis[tone] = analyze_with_gpt3(user_content, openai_api_key, prompt)
         
+        fig3 = draw_quadrant_chart(new_tone_analysis, "Additional Tone Analysis: Emotive-Informative vs Conservative-Progressive")
+        fig3.write_image("quadrant_chart2.png")
+        st.plotly_chart(fig3)
+        
         word_file_path = generate_word_doc(top_colors, examples, user_content, general_analysis, tone_analysis, new_tone_analysis)
         download_file(word_file_path)
 
-if __name__ == "__main__":
-    main()
+main()
+
+
