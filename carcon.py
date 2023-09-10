@@ -121,5 +121,6 @@ def main():
         for sentence, color in scored_sentences:
             st.write(f"{sentence} ({color})")
 
+
 if __name__ == '__main__':
     main()
