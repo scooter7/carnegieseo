@@ -21,7 +21,7 @@ def draw_donut_chart(labels, sizes):
     fig.write_image("donut_chart.png")
     return fig
 
-def draw_quadrant_chart(tone_analysis, title):
+def draw_quadrant_chart(tone_analysis, title, x_axis_labels, y_axis_labels):
     fig = go.Figure()
     x_axis = list(tone_analysis.keys())
     y_axis = list(tone_analysis.values())
@@ -36,7 +36,13 @@ def draw_quadrant_chart(tone_analysis, title):
     fig.update_xaxes(range=[0, 10], tickvals=list(range(0, 11)), ticktext=['', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'])
     fig.update_yaxes(range=[0, 10], tickvals=list(range(0, 11)), ticktext=['', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'])
     
-    fig.update_layout(title=title)
+    annotations = []
+    annotations.append(dict(x=2, y=9, xref='x', yref='y', text=x_axis_labels[0], showarrow=False))
+    annotations.append(dict(x=2, y=1, xref='x', yref='y', text=x_axis_labels[1], showarrow=False))
+    annotations.append(dict(x=9, y=9, xref='x', yref='y', text=y_axis_labels[0], showarrow=False))
+    annotations.append(dict(x=9, y=1, xref='x', yref='y', text=y_axis_labels[1], showarrow=False))
+    
+    fig.update_layout(title=title, annotations=annotations)
     fig.write_image(title + ".png")
     return fig
 
@@ -162,8 +168,8 @@ def main():
         tone_scores = {k: int(v) for k, v in tone_scores.items()}
         new_tone_scores = {k: int(v) for k, v in new_tone_scores.items()}
 
-        fig1 = draw_quadrant_chart(tone_scores, 'Tone Quadrant Chart')
-        fig2 = draw_quadrant_chart(new_tone_scores, 'Additional Tone Quadrant Chart')
+        fig1 = draw_quadrant_chart(tone_scores, 'Tone Quadrant Chart', ['Relaxed', 'Assertive'], ['Extroverted', 'Introverted'])
+        fig2 = draw_quadrant_chart(new_tone_scores, 'Additional Tone Quadrant Chart', ['Conservative', 'Progressive'], ['Emotive', 'Informative'])
 
         st.plotly_chart(fig1)
         st.plotly_chart(fig2)
