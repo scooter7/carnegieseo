@@ -52,20 +52,20 @@ def extract_examples(text, color_keywords, top_colors):
 
 def analyze_with_gpt3(text, api_key):
     openai.api_key = api_key
-    prompt = f"Please analyze the following text and identify who would likely find it compelling:\n\n{text}"
+    prompt = f"Please evaluate the following text and score it based on these tonal definitions: Relaxed, Assertive, Introverted, Extroverted, Conservative, Progressive, Emotive, Informative.\n\nText:\n{text}"
     response = openai.Completion.create(engine="text-davinci-002", prompt=prompt, max_tokens=100)
     return response.choices[0].text.strip()
 
 def analyze_tone(text):
     tone_keywords = {
-        "Relaxed": ["calm", "peaceful", "relaxed"],
-        "Assertive": ["assertive", "confident"],
-        "Introverted": ["quiet", "reserved"],
-        "Extroverted": ["social", "outgoing"],
-        "Conservative": ["traditional", "conservative"],
-        "Progressive": ["innovative", "progressive"],
-        "Emotive": ["emotional", "passionate"],
-        "Informative": ["inform", "explain"]
+        "Relaxed": ["calm", "peaceful", "easygoing", "informal"],
+        "Assertive": ["confident", "aggressive", "self-assured", "dogmatic"],
+        "Introverted": ["calm", "solitude", "introspective", "reserved"],
+        "Extroverted": ["social", "energetic", "outgoing"],
+        "Conservative": ["traditional", "status quo", "orthodox"],
+        "Progressive": ["reform", "liberal", "innovative"],
+        "Emotive": ["emotional", "passionate", "intense"],
+        "Informative": ["inform", "disclose", "instructive"]
     }
     text = text.lower()
     words = re.findall(r'\b\w+\b', text)
@@ -95,10 +95,16 @@ def get_word_file_download_link(file_path, filename):
     href = f'<a href="data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,{b64_file}" download="{filename}">Download Word Report</a>'
     return href
     
-def generate_word_doc(top_colors, examples, user_content, gpt3_analysis):
+def generate_word_doc(top_colors, examples, user_content, gpt3_analysis, tone_scores):
     doc = Document()
     doc.add_heading('Color Personality Analysis', 0)
     doc.add_picture('chart.png', width=Inches(4.0))
+    doc.add_heading('Tone Analysis:', level=1)
+    for tone, score in tone_scores.items():
+        doc.add_paragraph(f"{tone}: {score}%")
+        word_file_path = "Color_Personality_Analysis_Report.docx"
+    doc.save(word_file_path)
+    return word_file_path
     
     for color in top_colors:
         doc.add_heading(f'Top Color: {color}', level=1)
@@ -158,12 +164,12 @@ def main():
         st.write('GPT-3 Analysis:')
         st.write(general_analysis)
 
-        tone_scores = analyze_tone(user_content)
+         tone_scores = analyze_tone(user_content)
         st.subheader("Tone Analysis")
         st.write("The text exhibits the following tones:")
         st.bar_chart(tone_scores)
-
-        word_file_path = generate_word_doc(top_colors, examples, user_content, general_analysis)  # Assuming this function returns the path to the generated Word doc
+        
+        word_file_path = generate_word_doc(top_colors, examples, user_content, gpt3_analysis, tone_scores)
         download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
         st.markdown(download_link, unsafe_allow_html=True)
 
