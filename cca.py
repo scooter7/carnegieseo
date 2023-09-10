@@ -77,7 +77,7 @@ def main():
         top_colors = [color for color, _ in sorted_colors[:3]]
         labels = [k for k, v in color_counts.items() if v > 0]
         sizes = [v for v in color_counts.values() if v > 0]
-        fig1 = draw_quadrant_chart({label: size for label, size in zip(labels, sizes)})
+        fig1 = draw_quadrant_chart({label: size for label, size in zip(labels, sizes)}, "Tone Analysis")
         st.plotly_chart(fig1)
         examples = extract_examples(user_content, color_keywords, top_colors)
         for color in top_colors:
