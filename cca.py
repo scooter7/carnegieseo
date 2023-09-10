@@ -66,10 +66,10 @@ def generate_word_doc(top_colors, examples, user_content, general_analysis, tone
 
 def main():
     st.title('Color Personality Analysis')
-    
-    if not OPENAI_API_KEY:
-        st.error('Please set the OPENAI_API_KEY variable with your OpenAI API key.')
+    if 'OPENAI_API_KEY' not in st.secrets:
+        st.error('Please set the OPENAI_API_KEY secret on the Streamlit dashboard.')
         return
+    openai_api_key = st.secrets['OPENAI_API_KEY']
 
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
