@@ -162,7 +162,7 @@ def main():
 
         gpt3_analysis = analyze_with_gpt3(user_content, openai_api_key)
         st.write('GPT-3 Analysis:')
-        st.write(general_analysis)
+        st.write(gpt3_analysis)
 
         tone_scores = analyze_tone(user_content)
         st.subheader("Tone Analysis")
