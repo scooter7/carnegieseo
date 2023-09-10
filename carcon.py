@@ -89,9 +89,11 @@ def main():
     
     if st.button("Submit Revision"):
         if revision_input:
-            revised_sentences = re.findall(r"(.+?)\s*\(([^\)]+)\)", user_content)
-            revised_sentences.append((revision_input.strip(), revised_color))
-            user_content = " ".join([f"{sentence} ({color})" for sentence, color in revised_sentences])
+            # Remove the original sentence from the user content
+            user_content = re.sub(re.escape(revision_input), '', user_content)
+            # Append the revised sentence with the new color
+            revised_sentence = f"{revision_input.strip()} ({revised_color})"
+            user_content = f"{user_content} {revised_sentence}"
             color_counts = analyze_text(user_content, color_keywords)
             donut_chart = draw_donut_chart(color_counts, color_keywords)
             st.plotly_chart(donut_chart)
