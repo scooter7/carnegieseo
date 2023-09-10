@@ -26,6 +26,12 @@ def analyze_with_gpt3(text, prompt):
         st.error(f"GPT-3 API Error: {e}")
         return ""
 
+def draw_donut_chart(labels, sizes):
+    colors = labels
+    fig = go.Figure(data=[go.Pie(labels=labels, values=sizes, hole=.3, marker=dict(colors=colors))])
+    fig.write_image("donut_chart.png")
+    return fig
+
 def analyze_text(text, color_keywords):
     text = text.lower()
     words = re.findall(r'\b\w+\b', text)
