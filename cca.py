@@ -123,6 +123,7 @@ def main():
 
     openai_api_key = st.secrets['OPENAI_API_KEY']
     color_keywords = {
+    color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
         'Silver': ['Activate', 'Campaign', 'Challenge', 'Commit', 'Confront', 'Dare', 'Defy', 'Disrupting', 'Drive', 'Excite', 'Face', 'Ignite', 'Incite', 'Influence', 'Inspire', 'Inspirit', 'Motivate', 'Move', 'Push', 'Rebel', 'Reimagine', 'Revolutionize', 'Rise', 'Spark', 'Stir', 'Fight', 'Free', 'Aggressive', 'Bold', 'Brazen', 'Committed', 'Courageous', 'Daring', 'Disruptive', 'Driven', 'Fearless', 'Free', 'Gutsy', 'Independent', 'Inspired', 'Motivated', 'Rebellious', 'Revolutionary', 'Unafraid', 'Unconventional'],
         'Blue': ['Accomplish', 'Achieve', 'Affect', 'Assert', 'Cause', 'Command', 'Determine', 'Direct', 'Dominate', 'Drive', 'Empower', 'Establish', 'Guide', 'Impact', 'Impress', 'Influence', 'Inspire', 'Lead', 'Outpace', 'Outshine', 'Realize', 'Shape', 'Succeed', 'Transform', 'Win', 'Accomplished', 'Assertive', 'Authoritative', 'Commanding', 'Confident', 'Decisive', 'Distinguished', 'Dominant', 'Elite', 'Eminent', 'Established', 'Exceptional', 'Expert', 'First-class', 'First-rate', 'Impressive', 'Influential', 'Leading', 'Magnetic', 'Managerial', 'Masterful', 'Noble', 'Premier', 'Prestigious', 'Prominent', 'Proud', 'Strong'],
@@ -133,6 +134,7 @@ def main():
         'Orange': ['Compose', 'Conceptualize', 'Conceive', 'Craft', 'Create', 'Design', 'Dream', 'Envision', 'Express', 'Fashion', 'Form', 'Imagine', 'Interpret', 'Make', 'Originate', 'Paint', 'Perform', 'Portray', 'Realize', 'Shape', 'Abstract', 'Artistic', 'Avant-garde', 'Colorful', 'Conceptual', 'Contemporary', 'Creative', 'Decorative', 'Eccentric', 'Eclectic', 'Evocative', 'Expressive', 'Imaginative', 'Interpretive', 'Offbeat', 'One-of-a-kind', 'Original', 'Uncommon', 'Unconventional', 'Unexpected', 'Unique', 'Vibrant', 'Whimsical'],
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
+
     user_content = st.text_area('Paste your content here:')
 
     if st.button('Analyze'):
@@ -141,7 +143,6 @@ def main():
         if total_counts == 0:
             st.write('No relevant keywords found.')
             return
-
         sorted_colors = sorted(color_counts.items(), key=lambda x: x[1], reverse=True)
         top_colors = [color for color, _ in sorted_colors[:3]]
         labels = [k for k, v in color_counts.items() if v > 0]
@@ -153,16 +154,18 @@ def main():
             st.write(f'Examples for {color}:')
             st.write(', '.join(examples[color]))
 
-        general_analysis_prompt = "Provide a general analysis of the text."
-        general_analysis = analyze_with_gpt3(user_content, openai_api_key, general_analysis_prompt)
+        general_analysis = analyze_with_gpt3(user_content, openai_api_key, "Assess the text for its general tone and identify what audience would find it compelling.")
         st.write('GPT-3 Analysis:')
         st.write(general_analysis)
 
-        tone_prompt = "Assess the text for tone. Provide scores for the following four traits: relaxed, assertive, introverted, extroverted."
-        tone_scores = analyze_with_gpt3(user_content, openai_api_key, tone_prompt)
+        tone_analysis_prompt = "Assess the text for tone based on the following definitions and provide scores between 0 to 10: Relaxed: Calm, laid-back, stress-free. Assertive: Self-assured, confident, direct. Introverted: Reserved, reflective, solitary. Extroverted: Outgoing, sociable, expressive."
+        tone_scores = analyze_with_gpt3(user_content, openai_api_key, tone_analysis_prompt)
 
-        additional_tone_prompt = "Assess the text for additional tone. Provide scores for the following four traits: conservative, progressive, emotive, informative."
+        additional_tone_prompt = "Assess the text for additional tone based on the following definitions and provide scores between 0 to 10: Conservative: Traditional, resistant to change. Progressive: Innovative, open to change. Emotive: Expressive of emotions, passionate. Informative: Factual, logical, analytical."
         new_tone_scores = analyze_with_gpt3(user_content, openai_api_key, additional_tone_prompt)
+
+        tone_scores = {k: int(v) for k, v in tone_scores.items()}
+        new_tone_scores = {k: int(v) for k, v in new_tone_scores.items()}
 
         fig1 = draw_quadrant_chart(tone_scores, 'Tone Quadrant Chart', ['Relaxed', 'Assertive'], ['Extroverted', 'Introverted'])
         fig2 = draw_quadrant_chart(new_tone_scores, 'Additional Tone Quadrant Chart', ['Conservative', 'Progressive'], ['Emotive', 'Informative'])
