@@ -62,11 +62,11 @@ def analyze_with_gpt3(text, api_key):
         max_tokens=50,
         temperature=0.5
     )
-    # Assuming GPT-3 returns tone scores in the format "Relaxed: 7, Assertive: 5, Introverted: 3, Extroverted: 6"
+    # Assuming GPT-3 returns tone scores in the format "Relaxed: 7\nAssertive: 5\nIntroverted: 3\nExtroverted: 6"
     tone_scores = {}
-    score_pairs = response.choices[0].text.strip().split(', ')
-    for pair in score_pairs:
-        key, value = pair.split(': ')
+    score_lines = response.choices[0].text.strip().split('\n')
+    for line in score_lines:
+        key, value = line.split(': ')
         tone_scores[key.strip()] = int(value.strip())
     return tone_scores
 
