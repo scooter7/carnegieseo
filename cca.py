@@ -15,9 +15,8 @@ def analyze_text(text, color_keywords):
         color_counts[color] = sum(words.count(k.lower()) for k in keywords)
     return color_counts
 
-def draw_column_chart(labels, sizes):
-    fig = px.bar(x=labels, y=sizes)
-    fig.write_image("chart.png")
+def draw_donut_chart(labels, sizes):
+    fig = px.pie(values=sizes, names=labels, hole=0.3)
     return fig
 
 def extract_examples(text, color_keywords, top_colors):
@@ -42,53 +41,26 @@ def analyze_with_gpt3(text, api_key):
 
 def analyze_tone(text):
     tone_keywords = {
-        "Relaxed": ["calm", "peaceful", "relaxed", "easygoing", "laid-back"],
-        "Assertive": ["assertive", "confident", "decisive", "forceful"],
-        "Introverted": ["quiet", "reserved", "solitude", "introspective"],
-        "Extroverted": ["social", "outgoing", "extroverted", "energetic"],
-        "Conservative": ["traditional", "conservative", "orthodox", "status quo"],
-        "Progressive": ["innovative", "progressive", "reform", "change"],
-        "Emotive": ["emotional", "passionate", "intense", "feeling"],
-        "Informative": ["inform", "explain", "data", "facts"]
+        "Relaxed": ["calm", "peaceful", "relaxed"],
+        "Assertive": ["assertive", "confident"],
+        "Introverted": ["quiet", "reserved"],
+        "Extroverted": ["social", "outgoing"],
+        "Conservative": ["traditional", "conservative"],
+        "Progressive": ["innovative", "progressive"],
+        "Emotive": ["emotional", "passionate"],
+        "Informative": ["inform", "explain"]
     }
-    
     text = text.lower()
     words = re.findall(r'\b\w+\b', text)
-    
     tone_counts = Counter()
     for tone, keywords in tone_keywords.items():
         tone_counts[tone] = sum(words.count(k.lower()) for k in keywords)
-        
     total_count = sum(tone_counts.values())
     if total_count == 0:
         tone_scores = {tone: 0 for tone in tone_keywords.keys()}
     else:
         tone_scores = {tone: (count / total_count) * 100 for tone, count in tone_counts.items()}
-    
     return tone_scores
-    
-def generate_word_doc(top_colors, examples, user_content, gpt3_analysis):
-    doc = Document()
-    doc.add_heading('Color Personality Analysis', 0)
-    doc.add_picture('chart.png', width=Inches(4.0))
-    for color in top_colors:
-        doc.add_heading(f'Top Color: {color}', level=1)
-        for example in examples[color]:
-            doc.add_paragraph(example)
-    doc.add_heading('Original Text:', level=1)
-    doc.add_paragraph(user_content)
-    doc.add_heading('GPT-3 Analysis:', level=1)
-    doc.add_paragraph(gpt3_analysis)
-    word_file_path = "report.docx"
-    doc.save(word_file_path)
-    return word_file_path
-
-def download_file(file_path):
-    with open(file_path, "rb") as f:
-        file_data = f.read()
-    b64_file = base64.b64encode(file_data).decode("utf-8")
-    href = f'<a href="data:application/octet-stream;base64,{b64_file}" download="report.docx">Download Word Report</a>'
-    st.markdown(href, unsafe_allow_html=True)
 
 def main():
     st.title('Color Personality Analysis')
@@ -118,15 +90,26 @@ def main():
             st.write('No relevant keywords found.')
             return
 
-        # Existing code for color analysis, GPT-3 analysis, etc.
+        labels = [k for k, v in color_counts.items() if v > 0]
+        sizes = [v for v in color_counts.values() if v > 0]
+        fig = draw_donut_chart(labels, sizes)
+        st.plotly_chart(fig)
 
-        # Tone Analysis using analyze_tone function
+        sorted_colors = sorted(color_counts.items(), key=lambda x: x[1], reverse=True)
+        top_colors = [color for color, _ in sorted_colors[:3]]
+        examples = extract_examples(user_content, color_keywords, top_colors)
+        for color in top_colors:
+            st.write(f'Examples for {color}:')
+            st.write(', '.join(examples[color]))
+
+        general_analysis = analyze_with_gpt3(user_content, openai_api_key)
+        st.write('GPT-3 Analysis:')
+        st.write(general_analysis)
+
         tone_scores = analyze_tone(user_content)
         st.subheader("Tone Analysis")
         st.write("The text exhibits the following tones:")
         st.bar_chart(tone_scores)
-
-        # Rest of your existing code
 
 if __name__ == '__main__':
     main()
