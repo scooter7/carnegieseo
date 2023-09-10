@@ -40,6 +40,20 @@ def analyze_text(text, color_keywords):
         color_counts[color] = sum(words.count(k.lower()) for k in keywords)
     return color_counts
 
+def extract_examples(text, color_keywords, top_colors):
+    text = text.lower()
+    examples = {}
+    sentences = list(set(re.split(r'[.!?]', text)))
+    for color in top_colors:
+        examples[color] = set()
+        for keyword in color_keywords[color]:
+            keyword = keyword.lower()
+            for sentence in sentences:
+                if keyword in sentence:
+                    examples[color].add(sentence.strip() + '.')
+        examples[color] = list(examples[color])[:3]
+    return examples
+
 # Modify the main() function
 def main():
     st.title('Color Personality Analysis')
