@@ -94,9 +94,18 @@ def main():
             # Append the revised sentence with the new color
             revised_sentence = f"{revision_input.strip()} ({revised_color})"
             user_content = f"{user_content} {revised_sentence}"
+            
+            # Recalculate the color counts and update the donut chart
             color_counts = analyze_text(user_content, color_keywords)
             donut_chart = draw_donut_chart(color_counts, color_keywords)
             st.plotly_chart(donut_chart)
+            
+            # Recalculate and update the scored sentences
+            scored_sentences = analyze_sentences_by_color(user_content, color_keywords)
+            st.subheader("Scored Sentences")
+            for sentence, color in scored_sentences:
+                st.write(f"{sentence} ({color})")
+            
             st.success("Sentence revised and color updated.")
     
 if __name__ == '__main__':
