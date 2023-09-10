@@ -65,29 +65,25 @@ def analyze_with_gpt3(text, api_key, prompt):
     try:
         response = openai.Completion.create(
             engine='text-davinci-002',
-            prompt=prompt,
+            prompt=f"{prompt}\n\n{text}",
             max_tokens=50,
             temperature=0.5
         )
     except Exception as e:
-        print("GPT-3 API error:", e)
+        print(f"GPT-3 API Error: {e}")
         return {}
-    
-    response_text = response.choices[0].text.strip()
-    
-    # Log for debugging
-    print("GPT-3 Response:", response_text)
-    
+
     tone_scores = {}
-    score_pairs = response_text.split(', ')
-    
-    for pair in score_pairs:
-        try:
+    try:
+        score_pairs = response.choices[0].text.strip().split(', ')
+        for pair in score_pairs:
+            if ': ' not in pair:
+                continue
             key, value = pair.split(': ')
             tone_scores[key.strip()] = int(value.strip())
-        except Exception as e:
-            print("Error parsing GPT-3 response:", e)
-    
+    except Exception as e:
+        print(f"Error while parsing GPT-3 response: {e}")
+        
     return tone_scores
 
 def generate_word_doc(top_colors, examples, user_content, general_analysis, tone_scores, new_tone_scores):
