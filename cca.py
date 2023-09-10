@@ -95,6 +95,25 @@ def get_word_file_download_link(file_path, filename):
     href = f'<a href="data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,{b64_file}" download="{filename}">Download Word Report</a>'
     return href
     
+def generate_word_doc(top_colors, examples, user_content, gpt3_analysis):
+    doc = Document()
+    doc.add_heading('Color Personality Analysis', 0)
+    doc.add_picture('chart.png', width=Inches(4.0))
+    
+    for color in top_colors:
+        doc.add_heading(f'Top Color: {color}', level=1)
+        for example in examples[color]:
+            doc.add_paragraph(example)
+            
+    doc.add_heading('Original Text:', level=1)
+    doc.add_paragraph(user_content)
+    doc.add_heading('GPT-3 Analysis:', level=1)
+    doc.add_paragraph(gpt3_analysis)
+    
+    word_file_path = "Color_Personality_Analysis_Report.docx"
+    doc.save(word_file_path)
+    return word_file_path
+    
 def main():
     st.title('Color Personality Analysis')
     if 'OPENAI_API_KEY' not in st.secrets:
