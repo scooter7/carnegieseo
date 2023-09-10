@@ -138,12 +138,13 @@ def main():
 
         # Analyze tone with GPT-3
         tone_analysis_prompt = 'Assess the text for tone. Provide scores for the following four traits: relaxed, assertive, introverted, extroverted.'
-        tone_scores = analyze_with_gpt3(user_content, openai_api_key, tone_analysis_prompt)
-        tone_scores = {k: int(v) for k, v in tone_scores.items()}
+        tone_scores = analyze_with_gpt3(user_content, openai_api_key)
 
         # Analyze additional tone with GPT-3
         additional_tone_prompt = 'Assess the text for additional tone. Provide scores for the following four traits: conservative, progressive, emotive, informative.'
-        new_tone_scores = analyze_with_gpt3(user_content, openai_api_key, additional_tone_prompt)
+        new_tone_scores = analyze_with_gpt3(user_content, openai_api_key)
+
+        tone_scores = {k: int(v) for k, v in tone_scores.items()}
         new_tone_scores = {k: int(v) for k, v in new_tone_scores.items()}
 
         fig1 = draw_quadrant_chart(tone_scores, 'Tone Quadrant Chart')
