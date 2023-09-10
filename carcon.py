@@ -100,10 +100,8 @@ def main():
     if st.button("Submit Revision"):
         if revision_input:
             # Remove the original sentence from the user content
-            user_content = user_content.replace(revision_input, '')
-            # Append the revised sentence with the new color
             revised_sentence = f"{revision_input.strip()} ({revised_color})"
-            user_content = f"{user_content} {revised_sentence}"
+            user_content = re.sub(rf"\b{re.escape(revision_input.strip())}\b", revised_sentence, user_content)
             
             # Recalculate the color counts and update the donut chart
             color_counts = analyze_text(user_content, color_keywords)
