@@ -54,11 +54,11 @@ def extract_examples(text, color_keywords, top_colors):
         examples[color] = list(examples[color])[:3]
     return examples
 
-def analyze_with_gpt3(text, api_key, prompt):
+def analyze_with_gpt3(text, api_key):
     openai.api_key = api_key
     response = openai.Completion.create(
         engine='text-davinci-002',
-        prompt=prompt,
+        prompt=text,
         max_tokens=50,
         temperature=0.5
     )
