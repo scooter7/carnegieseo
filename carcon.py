@@ -38,12 +38,8 @@ def draw_donut_chart(color_counts, color_keywords):
     return fig
 
 def main():
-    if 'OPENAI_API_KEY' not in st.secrets:
-        st.error('Please set the OPENAI_API_KEY secret on the Streamlit dashboard.')
-        return
-    openai_api_key = st.secrets['OPENAI_API_KEY']
-
     st.title("Content Analysis and Revision Tool")
+
     user_content = st.text_area("Paste your text here:")
 
     if not user_content:
@@ -61,17 +57,20 @@ def main():
         st.subheader("Color Distribution Chart")
         st.plotly_chart(fig)
 
-    if st.button("Submit Revision"):
-        revision_text = st.text_area("Enter the revised sentence:")
-        if not revision_text:
-            st.warning("Please enter the revised sentence.")
-        else:
+    # Revision functionality
+    st.subheader("Revision")
+
+    revision_text = st.text_area("Enter the revised sentence:")
+
+    if revision_text:
+        selected_color = st.selectbox("Select Color:", list(color_keywords.keys()))
+        if st.button("Revise"):
             # Implement revision logic here
             # Update the user_content and display it
             st.text_area("Revised Text:", value=updated_user_content)
             st.success("Revision submitted successfully!")
 
-    # Additional revision functionality can be added here
-
 if __name__ == "__main__":
     main()
+
+
