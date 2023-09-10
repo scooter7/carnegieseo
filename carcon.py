@@ -1,3 +1,4 @@
+
 import streamlit as st
 import re
 import plotly.graph_objects as go
@@ -64,80 +65,11 @@ def analyze_tone(text):
     tone_scores = {tone: (count / total_count) * 100 for tone, count in tone_counts.items()}
     return tone_scores
 
-def get_word_file_download_link(file_path, filename):
-    with open(file_path, "rb") as f:
-        file_data = f.read()
-    b64_file = base64.b64encode(file_data).decode()
-    href = f'<a href="data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,{b64_file}" download="{filename}">Download Word Report</a>'
-    return href
+# ... (rest of the code including main function)
 
-def plot_tone_analysis(tone_scores):
-    fig, ax = plt.subplots()
-    ax.bar(tone_scores.keys(), tone_scores.values())
-    plt.xticks(rotation=45)
-    buf = io.BytesIO()
-    plt.savefig(buf, format="png")
-    buf.seek(0)
-    return buf
-
-def generate_word_doc(color_counts, examples, user_content, gpt3_analysis, tone_scores, color_keywords):
-    doc = Document()
-    doc.add_heading('Color Personality Analysis', 0)
-    fig = draw_donut_chart(color_counts, color_keywords)
-    image_stream = io.BytesIO(fig.to_image(format="png"))
-    doc.add_picture(image_stream, width=Inches(4.0))
-    image_stream.close()
-    tone_buf = plot_tone_analysis(tone_scores)
-    doc.add_picture(tone_buf, width=Inches(4.0))
-    tone_buf.close()
-    for tone, score in tone_scores.items():
-        doc.add_paragraph(f"{tone}: {score}%")
-    for color, example_sentences in examples.items():
-        doc.add_heading(f'Top Color: {color}', level=1)
-        for example in example_sentences:
-            doc.add_paragraph(example)
-    doc.add_heading('Original Text:', level=1)
-    doc.add_paragraph(user_content)
-    doc.add_heading('GPT-3 Analysis:', level=1)
-    doc.add_paragraph(gpt3_analysis)
-    word_file_path = "Color_Personality_Analysis_Report.docx"
-    doc.save(word_file_path)
-    return word_file_path
+# Existing imports and function definitions remain the same
 
 def main():
-
-    if user_input:
-        scored_sentences = analyze_sentences_by_color(user_input, color_keywords)
-        st.subheader("Scored Sentences")
-        for sentence, color in scored_sentences:
-            st.write(f"{sentence} ({color})")
-
-
-st.subheader("Revision Field")
-revision_input = st.text_area("Paste scored sentences here for revision:")
-if revision_input:
-    revised_sentences = re.findall(r"(.+?)\s*\(([^\)]+)\)", revision_input)
-    revised_color_counts = Counter(color for sentence, color in revised_sentences)
-    
-    
-    
-    if revised_color_counts:
-        fig = go.Figure(data=[go.Pie(labels=list(revised_color_counts.keys()), values=list(revised_color_counts.values()), hole=.3)])
-        st.plotly_chart(fig)
-analyze_sentences_by_color(text, color_keywords):
-    sentences = re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s', text)
-    scored_sentences = []
-    for sentence in sentences:
-        sentence = sentence.lower()
-        words = re.findall(r'\b\w+\b', sentence)
-        color_counts = Counter()
-        for color, keywords in color_keywords.items():
-            color_counts[color] = sum(words.count(k.lower()) for k in keywords)
-        dominant_color = max(color_counts, key=color_counts.get)
-        scored_sentences.append((sentence, dominant_color))
-    return scored_sentences
-
-    st.title('Color Personality Analysis')
     if 'OPENAI_API_KEY' not in st.secrets:
         st.error('Please set the OPENAI_API_KEY secret on the Streamlit dashboard.')
         return
@@ -154,30 +86,25 @@ analyze_sentences_by_color(text, color_keywords):
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
     user_content = st.text_area('Paste your content here:')
+    
     if st.button('Analyze'):
-        color_counts = analyze_text(user_content, color_keywords)
-        total_counts = sum(color_counts.values())
-        if total_counts == 0:
-            st.write('No relevant keywords found.')
-            return
-        fig = draw_donut_chart(color_counts, color_keywords)
-        st.plotly_chart(fig)
-        sorted_colors = sorted(color_counts.items(), key=lambda x: x[1], reverse=True)
-        top_colors = [color for color, _ in sorted_colors[:3]]
-        examples = extract_examples(user_content, color_keywords, top_colors)
-        for color in top_colors:
-            st.write(f'Examples for {color}:')
-            st.write(', '.join(examples[color]))
-        gpt3_analysis = analyze_with_gpt3(user_content, openai_api_key)
-        st.write('GPT-3 Analysis:')
-        st.write(gpt3_analysis)
-        tone_scores = analyze_tone(user_content)
-        st.subheader("Tone Analysis")
-        st.write("The text exhibits the following tones:")
-        st.bar_chart(tone_scores)
-        word_file_path = generate_word_doc(color_counts, examples, user_content, gpt3_analysis, tone_scores, color_keywords)
-        download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
-        st.markdown(download_link, unsafe_allow_html=True)
+        # ... (Existing Analysis Code)
+        
+    if user_content:
+        scored_sentences = analyze_sentences_by_color(user_content, color_keywords)
+        st.subheader("Scored Sentences")
+        for sentence, color in scored_sentences:
+            st.write(f"{sentence} ({color})")
+
+    st.subheader("Revision Field")
+    revision_input = st.text_area("Paste scored sentences here for revision:")
+    
+    if revision_input:
+        revised_sentences = re.findall(r"(.+?)\s*\(([^\)]+)\)", revision_input)
+        revised_color_counts = Counter(color for sentence, color in revised_sentences)
+        if revised_color_counts:
+            fig = go.Figure(data=[go.Pie(labels=list(revised_color_counts.keys()), values=list(revised_color_counts.values()), hole=.3)])
+            st.plotly_chart(fig)
 
 if __name__ == '__main__':
     main()
