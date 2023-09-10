@@ -73,6 +73,11 @@ def main():
     
     analyze_button_key = "analyze_button"
     
+    user_content = st.text_area('Paste your content here:')
+    
+    if user_content:
+        analyze_button_key = "analyze_button_new_content"  # Assign a new key when content is provided
+    
     if st.button('Analyze', key=analyze_button_key):
         color_counts = analyze_text(user_content, color_keywords)
         st.subheader("Color Analysis")
@@ -81,31 +86,6 @@ def main():
         tone_counts = analyze_tone(user_content)
         st.subheader("Tone Analysis")
         st.bar_chart(tone_counts)
-        
-    user_content = st.text_area('Paste your content here:')
-    
-    if user_content:
-        analyze_button_key = "analyze_button_new_content"  # Assign a new key when content is provided
-        if st.button('Analyze', key=analyze_button_key):
-            assigned_colors = {}
-            # Remove the existing colors
-            user_content = re.sub(r'\([^\)]+\)', '', user_content)
-            
-            # Reassign colors based on analysis
-            scored_sentences = analyze_sentences_by_color(user_content, color_keywords)
-            for sentence, color in scored_sentences:
-                assigned_colors[sentence] = color
-                sentence_with_color = f"{sentence} ({color})"
-                user_content = user_content.replace(sentence, sentence_with_color)
-            
-            # Update the color analysis and charts
-            color_counts = analyze_text(user_content, color_keywords)
-            donut_chart = draw_donut_chart(color_counts, color_keywords)
-            st.subheader("Color Analysis")
-            st.plotly_chart(donut_chart)
-            tone_counts = analyze_tone(user_content)
-            st.subheader("Tone Analysis")
-            st.bar_chart(tone_counts)
     
     st.subheader("Revision Field")
     revision_input = st.text_area("Paste a sentence here for revision:")
