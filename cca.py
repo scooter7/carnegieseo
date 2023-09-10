@@ -60,30 +60,34 @@ def extract_examples(text, color_keywords, top_colors):
         examples[color] = list(examples[color])[:3]
     return examples
 
-def analyze_with_gpt3(text, api_key, prompt_for_analysis):
+def analyze_with_gpt3(text, api_key, prompt):
     openai.api_key = api_key
-    response = openai.Completion.create(
-        engine="text-davinci-002",
-        prompt=prompt_for_analysis,
-        max_tokens=50,
-        temperature=0.5,
-    )
-
+    try:
+        response = openai.Completion.create(
+            engine='text-davinci-002',
+            prompt=prompt,
+            max_tokens=50,
+            temperature=0.5
+        )
+    except Exception as e:
+        print("GPT-3 API error:", e)
+        return {}
+    
+    response_text = response.choices[0].text.strip()
+    
+    # Log for debugging
+    print("GPT-3 Response:", response_text)
+    
     tone_scores = {}
-    score_pairs = response.choices[0].text.strip().split(", ")
-
+    score_pairs = response_text.split(', ')
+    
     for pair in score_pairs:
-        if pair.count(":") != 1:
-            continue
-
-        key, value = pair.split(": ")
-
         try:
-            value = int(value.strip())
-            tone_scores[key.strip()] = value
-        except ValueError:
-            continue
-
+            key, value = pair.split(': ')
+            tone_scores[key.strip()] = int(value.strip())
+        except Exception as e:
+            print("Error parsing GPT-3 response:", e)
+    
     return tone_scores
 
 def generate_word_doc(top_colors, examples, user_content, general_analysis, tone_scores, new_tone_scores):
