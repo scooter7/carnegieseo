@@ -71,7 +71,8 @@ def main():
     if st.button('Analyze'):
         color_counts = analyze_text(user_content, color_keywords)
         st.subheader("Color Analysis")
-        st.plotly_chart(draw_donut_chart(color_counts, color_keywords))
+        donut_chart = draw_donut_chart(color_counts, color_keywords)
+        st.plotly_chart(donut_chart)
         tone_counts = analyze_tone(user_content)
         st.subheader("Tone Analysis")
         st.bar_chart(tone_counts)
@@ -92,7 +93,8 @@ def main():
             revised_sentences.append((revision_input.strip(), revised_color))
             user_content = " ".join([f"{sentence} ({color})" for sentence, color in revised_sentences])
             color_counts = analyze_text(user_content, color_keywords)
-            st.plotly_chart(draw_donut_chart(color_counts, color_keywords))
+            donut_chart = draw_donut_chart(color_counts, color_keywords)
+            st.plotly_chart(donut_chart)
             st.success("Sentence revised and color updated.")
     
 if __name__ == '__main__':
