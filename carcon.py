@@ -12,26 +12,26 @@ def analyze_text(text, color_keywords):
         color_counts[color] = sum(words.count(k.lower()) for k in keywords)
     return color_counts
 
+def analyze_sentences_by_color(text, color_keywords):
+    text = text.lower()
+    sentences = re.split(r'[.!?]', text)
+    scored_sentences = []
+    for sentence in sentences:
+        words = re.findall(r'\b\w+\b', sentence)
+        color_counts = Counter()
+        for color, keywords in color_keywords.items():
+            color_counts[color] = sum(words.count(k.lower()) for k in keywords)
+        most_common_color = color_counts.most_common(1)
+        if most_common_color:
+            scored_sentences.append((sentence.strip(), most_common_color[0][0]))
+    return scored_sentences
+
 def draw_donut_chart(color_counts, color_keywords):
     labels = list(color_keywords.keys())
     sizes = [color_counts.get(color, 0) for color in labels]
-    colors = {label: label.lower() for label in labels}
-    fig = go.Figure(data=[go.Pie(labels=labels, values=sizes, hole=.3, marker=dict(colors=[colors[label] for label in labels]))])
+    colors = [label.lower() for label in labels]
+    fig = go.Figure(data=[go.Pie(labels=labels, values=sizes, hole=.3, marker=dict(colors=colors))])
     return fig
-
-def extract_examples(text, color_keywords, top_colors):
-    text = text.lower()
-    examples = {}
-    sentences = list(set(re.split(r'[.!?]', text)))
-    for color in top_colors:
-        examples[color] = set()
-        for keyword in color_keywords[color]:
-            keyword = keyword.lower()
-            for sentence in sentences:
-                if keyword in sentence:
-                    examples[color].add(sentence.strip() + '.')
-        examples[color] = list(examples[color])[:3]
-    return examples
 
 def analyze_tone(text):
     tone_keywords = {
@@ -49,15 +49,12 @@ def analyze_tone(text):
     tone_counts = Counter()
     for tone, keywords in tone_keywords.items():
         tone_counts[tone] = sum(words.count(k.lower()) for k in keywords)
-    total_count = sum(tone_counts.values())
-    tone_scores = {tone: (count / total_count) * 100 for tone, count in tone_counts.items()}
-    return tone_scores
+    return tone_counts
 
 def main():
     if 'OPENAI_API_KEY' not in st.secrets:
         st.error('Please set the OPENAI_API_KEY secret on the Streamlit dashboard.')
         return
-    openai_api_key = st.secrets['OPENAI_API_KEY']
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
         'Silver': ['Activate', 'Campaign', 'Challenge', 'Commit', 'Confront', 'Dare', 'Defy', 'Disrupting', 'Drive', 'Excite', 'Face', 'Ignite', 'Incite', 'Influence', 'Inspire', 'Inspirit', 'Motivate', 'Move', 'Push', 'Rebel', 'Reimagine', 'Revolutionize', 'Rise', 'Spark', 'Stir', 'Fight', 'Free', 'Aggressive', 'Bold', 'Brazen', 'Committed', 'Courageous', 'Daring', 'Disruptive', 'Driven', 'Fearless', 'Free', 'Gutsy', 'Independent', 'Inspired', 'Motivated', 'Rebellious', 'Revolutionary', 'Unafraid', 'Unconventional'],
@@ -75,11 +72,10 @@ def main():
         color_counts = analyze_text(user_content, color_keywords)
         st.subheader("Color Analysis")
         st.plotly_chart(draw_donut_chart(color_counts, color_keywords))
-        tone_scores = analyze_tone(user_content)
+        tone_counts = analyze_tone(user_content)
         st.subheader("Tone Analysis")
-        st.write("The text exhibits the following tones:")
-        st.bar_chart(tone_scores)
-    
+        st.bar_chart(tone_counts)
+        
     if user_content:
         scored_sentences = analyze_sentences_by_color(user_content, color_keywords)
         st.subheader("Scored Sentences")
