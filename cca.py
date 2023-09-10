@@ -54,15 +54,21 @@ def extract_examples(text, color_keywords, top_colors):
         examples[color] = list(examples[color])[:3]
     return examples
 
-def analyze_with_gpt3(text, api_key):
+def analyze_with_gpt3(text, api_key, prompt):
     openai.api_key = api_key
     response = openai.Completion.create(
         engine='text-davinci-002',
-        prompt=text,
+        prompt=prompt,
         max_tokens=50,
         temperature=0.5
     )
-    return response.choices[0].text.strip()
+    # Assuming GPT-3 returns tone scores in the format "Relaxed: 7, Assertive: 5, Introverted: 3, Extroverted: 6"
+    tone_scores = {}
+    score_pairs = response.choices[0].text.strip().split(', ')
+    for pair in score_pairs:
+        key, value = pair.split(': ')
+        tone_scores[key.strip()] = int(value.strip())
+    return tone_scores
 
 def generate_word_doc(top_colors, examples, user_content, general_analysis, tone_scores, new_tone_scores):
     doc = Document()
