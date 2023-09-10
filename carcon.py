@@ -106,11 +106,11 @@ def generate_word_doc(color_counts, examples, user_content, gpt3_analysis, tone_
 
 def main():
 
-if user_input:
-    scored_sentences = analyze_sentences_by_color(user_input, color_keywords)
-    st.subheader("Scored Sentences")
-    for sentence, color in scored_sentences:
-        st.write(f"{sentence} ({color})")
+    if user_input:
+        scored_sentences = analyze_sentences_by_color(user_input, color_keywords)
+        st.subheader("Scored Sentences")
+        for sentence, color in scored_sentences:
+            st.write(f"{sentence} ({color})")
 
 
 st.subheader("Revision Field")
