@@ -83,14 +83,17 @@ def main():
             st.write(f"{sentence} ({color})")
     
     st.subheader("Revision Field")
-    revision_input = st.text_area("Paste scored sentences here for revision:")
+    revision_input = st.text_area("Paste a sentence here for revision:")
+    revised_color = st.selectbox("Select the revised color:", list(color_keywords.keys()))
     
-    if revision_input:
-        revised_sentences = re.findall(r"(.+?)\s*\(([^\)]+)\)", revision_input)
-        revised_color_counts = Counter(color for sentence, color in revised_sentences)
-        if revised_color_counts:
-            fig = go.Figure(data=[go.Pie(labels=list(revised_color_counts.keys()), values=list(revised_color_counts.values()), hole=.3)])
-            st.plotly_chart(fig)
-
+    if st.button("Submit Revision"):
+        if revision_input:
+            revised_sentences = re.findall(r"(.+?)\s*\(([^\)]+)\)", user_content)
+            revised_sentences.append((revision_input.strip(), revised_color))
+            user_content = " ".join([f"{sentence} ({color})" for sentence, color in revised_sentences])
+            color_counts = analyze_text(user_content, color_keywords)
+            st.plotly_chart(draw_donut_chart(color_counts, color_keywords))
+            st.success("Sentence revised and color updated.")
+    
 if __name__ == '__main__':
     main()
