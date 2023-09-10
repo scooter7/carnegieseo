@@ -179,10 +179,9 @@ def main():
         st.subheader("Tone Analysis")
         st.write("The text exhibits the following tones:")
         st.bar_chart(tone_scores)
-        
+
         word_file_path = generate_word_doc(top_colors, examples, user_content, gpt3_analysis, tone_scores)
         download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
         st.markdown(download_link, unsafe_allow_html=True)
-
 if __name__ == '__main__':
     main()
