@@ -23,12 +23,16 @@ def draw_donut_chart(labels, sizes):
 
 def draw_quadrant_chart(tone_analysis, title):
     fig = go.Figure()
-    for label, value in tone_analysis.items():
-        fig.add_trace(go.Scatter(x=[label], y=[value], mode='markers', name=label))
-            fig.add_shape(type='line', x0=5, x1=5, y0=0, y1=10, line=dict(color='Grey', width=1, dash='dash'))
+    x_axis = list(tone_analysis.keys())
+    y_axis = list(tone_analysis.values())
+    fig.add_trace(go.Scatter(x=x_axis, y=y_axis, mode='markers', name='Tone'))
+
+    fig.add_shape(type='line', x0=5, x1=5, y0=0, y1=10, line=dict(color='Grey', width=1, dash='dash'))
     fig.add_shape(type='line', x0=0, x1=10, y0=5, y1=5, line=dict(color='Grey', width=1, dash='dash'))
-    fig.update_xaxes(range=[0, 10], tickvals=list(range(0, 11)), ticktext=['Introverted', '', '', '', '', '', '', '', '', '', 'Extroverted'])
-    fig.update_yaxes(range=[0, 10], tickvals=list(range(0, 11)), ticktext=['', '', '', '', '', 'Assertive', '', '', '', '', 'Relaxed'])
+    
+    fig.update_xaxes(range=[0, 10], tickvals=list(range(0, 11)), ticktext=['', '', '', '', '', '', '', '', '', '', ''])
+    fig.update_yaxes(range=[0, 10], tickvals=list(range(0, 11)), ticktext=['', '', '', '', '', '', '', '', '', '', ''])
+    
     fig.update_layout(title=title)
     fig.write_image(title + ".png")
     return fig
