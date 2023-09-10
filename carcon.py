@@ -32,6 +32,26 @@ def draw_donut_chart(color_counts, color_keywords):
     fig = go.Figure(data=[go.Pie(labels=labels, values=sizes, hole=.3, marker=dict(colors=colors))])
     return fig
 
+def analyze_tone(text):
+    tone_keywords = {
+        "Relaxed": ["calm", "peaceful", "easygoing", "informal"],
+        "Assertive": ["confident", "aggressive", "self-assured", "dogmatic"],
+        "Introverted": ["calm", "solitude", "introspective", "reserved"],
+        "Extroverted": ["social", "energetic", "outgoing"],
+        "Conservative": ["traditional", "status quo", "orthodox"],
+        "Progressive": ["reform", "liberal", "innovative"],
+        "Emotive": ["emotional", "passionate", "intense"],
+        "Informative": ["inform", "disclose", "instructive"]
+    }
+    text = text.lower()
+    words = re.findall(r'\b\w+\b', text)
+    tone_counts = Counter()
+    for tone, keywords in tone_keywords.items():
+        tone_counts[tone] = sum(words.count(k.lower()) for k in keywords)
+    total_count = sum(tone_counts.values())
+    tone_scores = {tone: (count / total_count) * 100 for tone, count in tone_counts.items()}
+    return tone_scores
+
 def main():
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
