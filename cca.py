@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 import openai
 
 # Define GPT-3 API key
-OPENAI_API_KEY = "YOUR_OPENAI_API_KEY"
+OPENAI_API_KEY = "OPENAI_API_KEY"
 
 def analyze_with_gpt3(text, prompt):
     openai.api_key = OPENAI_API_KEY
