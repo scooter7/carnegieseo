@@ -98,20 +98,24 @@ def main():
     revised_color = st.selectbox("Select the revised color:", list(color_keywords.keys()))
 
     if st.button("Submit Revision"):
-        if revision_input:
-            pattern = re.escape(revision_input.strip()) + r'\s*\((\w+)\)'
-            match = re.search(pattern, user_content)
-            if match:
-                old_color = match.group(1)
-                revised_sentence = f"{revision_input.strip()} ({revised_color})"
-                user_content = re.sub(pattern, revised_sentence, user_content)
-                st.success(f"Sentence revised from '{old_color}' to '{revised_color}'.")
+    if revision_input:
+        # Find the sentence to revise in the user content
+        pattern = re.escape(revision_input.strip()) + r'\s*\((\w+)\)'
+        match = re.search(pattern, user_content)
+        if match:
+            old_color = match.group(1)
+            # Replace the original sentence with the revised one with the new color
+            revised_sentence = f"{revision_input.strip()} ({revised_color})"
+            user_content = re.sub(pattern, revised_sentence, user_content)
+            st.success(f"Sentence revised from '{old_color}' to '{revised_color}'.")
 
+        # Recalculate the color counts and update the donut chart
         color_counts = analyze_text(user_content, color_keywords)
         donut_chart = draw_donut_chart(color_counts, color_keywords)
         st.subheader("Color Analysis")
         st.plotly_chart(donut_chart)
 
+        # Recalculate and update the scored sentences
         scored_sentences = analyze_sentences_by_color(user_content, color_keywords)
         st.subheader("Scored Sentences")
         for sentence, color in scored_sentences:
