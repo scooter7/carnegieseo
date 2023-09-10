@@ -84,7 +84,13 @@ def analyze_with_gpt3(text, api_key):
             continue
         
         key, value = pair.split(': ')
-        tone_scores[key.strip()] = int(value.strip())
+        
+        # Check if value can be converted to an integer
+        try:
+            value = int(value.strip())
+            tone_scores[key.strip()] = value
+        except ValueError:
+            print(f"Skipping invalid key-value pair: {key}: {value}")
     
     # Debugging: Log the final tone scores
     print("Final tone scores:", tone_scores)
