@@ -120,7 +120,7 @@ def main():
             st.write(', '.join(examples[color]))
         
         tone_analysis_prompt = 'Assess the text for tone based on the definitions: relaxed (calm, laid-back), assertive (confident, self-assured), introverted (reserved, solitary), and extroverted (sociable, outgoing). Provide scores from 1 to 10 for each trait.'
-        tone_analysis_response = analyze_with_gpt3(user_content, tone_analysis_prompt, openai_api_key)  # Corrected argument
+        tone_analysis_response = analyze_with_gpt3(user_content, tone_analysis_prompt)  # Removed openai_api_key argument
         
         if tone_analysis_response:
             tone_scores = parse_tone_scores(tone_analysis_response)
@@ -133,7 +133,7 @@ def main():
             tone_scores = {}  # Initialize with default value
         
         additional_tone_prompt = 'Assess the text for additional tone based on the definitions: conservative (traditional, resistant to change), progressive (forward-thinking, open to change), emotive (expressing emotion), and informative (providing information). Provide scores from 1 to 10 for each trait.'
-        additional_tone_response = analyze_with_gpt3(user_content, additional_tone_prompt, openai_api_key)  # Corrected argument
+        additional_tone_response = analyze_with_gpt3(user_content, additional_tone_prompt)  # Removed openai_api_key argument
         
         if additional_tone_response:
             new_tone_scores = parse_tone_scores(additional_tone_response)
