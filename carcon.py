@@ -2,15 +2,38 @@ import streamlit as st
 import re
 import plotly.graph_objects as go
 from collections import Counter
-import base64
-from docx import Document
-from docx.shared import Inches
-import openai
-import io
-import matplotlib.pyplot as plt
 
-# Define color keywords and their associated words
-color_keywords = {
+def analyze_text(text, color_keywords):
+    text = text.lower()
+    words = re.findall(r'\b\w+\b', text)
+    color_counts = Counter()
+    for color, keywords in color_keywords.items():
+        color_counts[color] = sum(words.count(k.lower()) for k in keywords)
+    return color_counts
+
+def analyze_sentences_by_color(text, color_keywords):
+    text = text.lower()
+    sentences = re.split(r'[.!?]', text)
+    scored_sentences = []
+    for sentence in sentences:
+        words = re.findall(r'\b\w+\b', sentence)
+        color_counts = Counter()
+        for color, keywords in color_keywords.items():
+            color_counts[color] = sum(words.count(k.lower()) for k in keywords)
+        most_common_color = color_counts.most_common(1)
+        if most_common_color:
+            scored_sentences.append((sentence.strip(), most_common_color[0][0]))
+    return scored_sentences
+
+def draw_donut_chart(color_counts, color_keywords):
+    labels = list(color_keywords.keys())
+    sizes = [color_counts.get(color, 0) for color in labels]
+    colors = [label.lower() for label in labels]
+    fig = go.Figure(data=[go.Pie(labels=labels, values=sizes, hole=.3, marker=dict(colors=colors))])
+    return fig
+
+def main():
+    color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
         'Silver': ['Activate', 'Campaign', 'Challenge', 'Commit', 'Confront', 'Dare', 'Defy', 'Disrupting', 'Drive', 'Excite', 'Face', 'Ignite', 'Incite', 'Influence', 'Inspire', 'Inspirit', 'Motivate', 'Move', 'Push', 'Rebel', 'Reimagine', 'Revolutionize', 'Rise', 'Spark', 'Stir', 'Fight', 'Free', 'Aggressive', 'Bold', 'Brazen', 'Committed', 'Courageous', 'Daring', 'Disruptive', 'Driven', 'Fearless', 'Free', 'Gutsy', 'Independent', 'Inspired', 'Motivated', 'Rebellious', 'Revolutionary', 'Unafraid', 'Unconventional'],
         'Blue': ['Accomplish', 'Achieve', 'Affect', 'Assert', 'Cause', 'Command', 'Determine', 'Direct', 'Dominate', 'Drive', 'Empower', 'Establish', 'Guide', 'Impact', 'Impress', 'Influence', 'Inspire', 'Lead', 'Outpace', 'Outshine', 'Realize', 'Shape', 'Succeed', 'Transform', 'Win', 'Accomplished', 'Assertive', 'Authoritative', 'Commanding', 'Confident', 'Decisive', 'Distinguished', 'Dominant', 'Elite', 'Eminent', 'Established', 'Exceptional', 'Expert', 'First-class', 'First-rate', 'Impressive', 'Influential', 'Leading', 'Magnetic', 'Managerial', 'Masterful', 'Noble', 'Premier', 'Prestigious', 'Prominent', 'Proud', 'Strong'],
@@ -22,55 +45,59 @@ color_keywords = {
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
 
-def analyze_text(text, color_keywords):
-    text = text.lower()
-    words = re.findall(r'\b\w+\b', text)
-    color_counts = Counter()
-    for color, keywords in color_keywords.items():
-        color_counts[color] = sum(words.count(k.lower()) for k in keywords)
-    return color_counts
+    # Initialize user content and assigned colors
+    user_content = ""
+    assigned_colors = {}
 
-def draw_donut_chart(color_counts, color_keywords):
-    labels = list(color_keywords.keys())
-    sizes = [color_counts.get(color, 0) for color in labels]
-    colors = {label: label.lower() for label in labels}
-    fig = go.Figure(data=[go.Pie(labels=labels, values=sizes, hole=.3, marker=dict(colors=[colors[label] for label in labels]))])
-    return fig
+    analyze_button_key = "analyze_button"
 
-def main():
-    st.title("Content Analysis and Revision Tool")
+    user_content = st.text_area('Paste your content here:')
 
-    user_content = st.text_area("Paste your text here:")
+    if user_content:
+        analyze_button_key = "analyze_button_new_content"  # Assign a new key when content is provided
 
-    if not user_content:
-        st.warning("Please paste some text for analysis.")
-        return
-
-    if st.button("Analyze"):
-        # Analyze the text and display the results
+    if st.button('Analyze', key=analyze_button_key):
         color_counts = analyze_text(user_content, color_keywords)
-        st.subheader("Color Distribution in Text")
-        st.write(color_counts)
+        st.subheader("Color Analysis")
+        donut_chart = draw_donut_chart(color_counts, color_keywords)
+        st.plotly_chart(donut_chart)
+        tone_counts = analyze_tone(user_content)
+        st.subheader("Tone Analysis")
+        st.bar_chart(tone_counts)
 
-        # Create a donut chart to visualize color distribution
-        fig = draw_donut_chart(color_counts, color_keywords)
-        st.subheader("Color Distribution Chart")
-        st.plotly_chart(fig)
+        # Analyze and display scored sentences
+        scored_sentences = analyze_sentences_by_color(user_content, color_keywords)
+        st.subheader("Scored Sentences")
+        for sentence, color in scored_sentences:
+            st.write(f"{sentence} ({color})")
 
-    # Revision functionality
-    st.subheader("Revision")
+    st.subheader("Revision Field")
+    revision_input = st.text_area("Paste a sentence here for revision:")
+    revised_color = st.selectbox("Select the revised color:", list(color_keywords.keys()))
 
-    revision_text = st.text_area("Enter the revised sentence:")
+    if st.button("Submit Revision"):
+        if revision_input:
+            # Find the sentence to revise in the user content
+            pattern = re.escape(revision_input.strip()) + r'\s*\((\w+)\)'
+            match = re.search(pattern, user_content)
+            if match:
+                old_color = match.group(1)
+                # Replace the original sentence with the revised one with the new color
+                revised_sentence = f"{revision_input.strip()} ({revised_color})"
+                user_content = re.sub(pattern, revised_sentence, user_content)
+                st.success(f"Sentence revised from '{old_color}' to '{revised_color}'.")
 
-    if revision_text:
-        selected_color = st.selectbox("Select Color:", list(color_keywords.keys()))
-        if st.button("Revise"):
-            # Implement revision logic here
-            # Update the user_content and display it
-            st.text_area("Revised Text:", value=updated_user_content)
-            st.success("Revision submitted successfully!")
+        # Recalculate the color counts and update the donut chart
+        color_counts = analyze_text(user_content, color_keywords)
+        donut_chart = draw_donut_chart(color_counts, color_keywords)
+        st.subheader("Color Analysis")
+        st.plotly_chart(donut_chart)
 
-if __name__ == "__main__":
+        # Recalculate and update the scored sentences
+        scored_sentences = analyze_sentences_by_color(user_content, color_keywords)
+        st.subheader("Scored Sentences")
+        for sentence, color in scored_sentences:
+            st.write(f"{sentence} ({color})")
+
+if __name__ == '__main__':
     main()
-
-
