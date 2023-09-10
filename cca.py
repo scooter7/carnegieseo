@@ -40,6 +40,33 @@ def analyze_with_gpt3(text, api_key):
     response = openai.Completion.create(engine="text-davinci-002", prompt=prompt, max_tokens=100)
     return response.choices[0].text.strip()
 
+def analyze_tone(text):
+    tone_keywords = {
+        "Relaxed": ["calm", "peaceful", "relaxed", "easygoing", "laid-back"],
+        "Assertive": ["assertive", "confident", "decisive", "forceful"],
+        "Introverted": ["quiet", "reserved", "solitude", "introspective"],
+        "Extroverted": ["social", "outgoing", "extroverted", "energetic"],
+        "Conservative": ["traditional", "conservative", "orthodox", "status quo"],
+        "Progressive": ["innovative", "progressive", "reform", "change"],
+        "Emotive": ["emotional", "passionate", "intense", "feeling"],
+        "Informative": ["inform", "explain", "data", "facts"]
+    }
+    
+    text = text.lower()
+    words = re.findall(r'\b\w+\b', text)
+    
+    tone_counts = Counter()
+    for tone, keywords in tone_keywords.items():
+        tone_counts[tone] = sum(words.count(k.lower()) for k in keywords)
+        
+    total_count = sum(tone_counts.values())
+    if total_count == 0:
+        tone_scores = {tone: 0 for tone in tone_keywords.keys()}
+    else:
+        tone_scores = {tone: (count / total_count) * 100 for tone, count in tone_counts.items()}
+    
+    return tone_scores
+    
 def generate_word_doc(top_colors, examples, user_content, gpt3_analysis):
     doc = Document()
     doc.add_heading('Color Personality Analysis', 0)
