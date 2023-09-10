@@ -79,6 +79,15 @@ def analyze_tone(text):
         tone_scores = {tone: (count / total_count) * 100 for tone, count in tone_counts.items()}
     return tone_scores
 
+def generate_word_report(tone_scores):
+    doc = Document()
+    doc.add_heading('Tone Analysis Report', 0)
+    
+    for tone, score in tone_scores.items():
+        doc.add_paragraph(f"{tone}: {score}%")
+    
+    doc.save("Tone_Analysis_Report.docx")
+
 def main():
     st.title('Color Personality Analysis')
     if 'OPENAI_API_KEY' not in st.secrets:
@@ -127,6 +136,18 @@ def main():
         st.subheader("Tone Analysis")
         st.write("The text exhibits the following tones:")
         st.bar_chart(tone_scores)
+        if st.button('Analyze'):
+    
+    # Your existing code for analysis
+
+    # Generate Word report
+    generate_word_report(tone_scores)
+    
+    # Provide download link for Word report
+    st.markdown(
+        f'<a href="Tone_Analysis_Report.docx" download="Tone_Analysis_Report.docx">Download Tone Analysis Report</a>',
+        unsafe_allow_html=True,
+    )
 
 if __name__ == '__main__':
     main()
