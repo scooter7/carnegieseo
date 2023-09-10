@@ -25,13 +25,16 @@ def draw_quadrant_chart(tone_analysis, title):
     fig = go.Figure()
     x_axis = list(tone_analysis.keys())
     y_axis = list(tone_analysis.values())
-    fig.add_trace(go.Scatter(x=x_axis, y=y_axis, mode='markers', name='Tone'))
-
+    
+    labels = [f'{k}: {v}' for k, v in tone_analysis.items()]
+    
+    fig.add_trace(go.Scatter(x=x_axis, y=y_axis, text=labels, mode='markers+text', name='Tone'))
+    
     fig.add_shape(type='line', x0=5, x1=5, y0=0, y1=10, line=dict(color='Grey', width=1, dash='dash'))
     fig.add_shape(type='line', x0=0, x1=10, y0=5, y1=5, line=dict(color='Grey', width=1, dash='dash'))
     
-    fig.update_xaxes(range=[0, 10], tickvals=list(range(0, 11)), ticktext=['', '', '', '', '', '', '', '', '', '', ''])
-    fig.update_yaxes(range=[0, 10], tickvals=list(range(0, 11)), ticktext=['', '', '', '', '', '', '', '', '', '', ''])
+    fig.update_xaxes(range=[0, 10], tickvals=list(range(0, 11)), ticktext=['', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'])
+    fig.update_yaxes(range=[0, 10], tickvals=list(range(0, 11)), ticktext=['', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'])
     
     fig.update_layout(title=title)
     fig.write_image(title + ".png")
@@ -124,7 +127,7 @@ def main():
             st.write(f'Examples for {color}:')
             st.write(', '.join(examples[color]))
 
-        general_prompt = 'Who would find the following text compelling?\n\n' + user_content[:500]
+        general_prompt = 'Who would find the following text compelling?\n\n   ' + user_content[:500]  # Add spaces before the text
         general_analysis = analyze_with_gpt3(user_content, openai_api_key, general_prompt)
         st.write('GPT-3 Analysis:')
         st.write(general_analysis)
