@@ -2,7 +2,6 @@ import streamlit as st
 import re
 import plotly.graph_objects as go
 from collections import Counter
-import openai
 
 def analyze_text(text, color_keywords):
     text = text.lower()
@@ -33,28 +32,7 @@ def draw_donut_chart(color_counts, color_keywords):
     fig = go.Figure(data=[go.Pie(labels=labels, values=sizes, hole=.3, marker=dict(colors=colors))])
     return fig
 
-def analyze_tone(text):
-    tone_keywords = {
-        "Relaxed": ["calm", "peaceful", "easygoing", "informal"],
-        "Assertive": ["confident", "aggressive", "self-assured", "dogmatic"],
-        "Introverted": ["calm", "solitude", "introspective", "reserved"],
-        "Extroverted": ["social", "energetic", "outgoing"],
-        "Conservative": ["traditional", "status quo", "orthodox"],
-        "Progressive": ["reform", "liberal", "innovative"],
-        "Emotive": ["emotional", "passionate", "intense"],
-        "Informative": ["inform", "disclose", "instructive"]
-    }
-    text = text.lower()
-    words = re.findall(r'\b\w+\b', text)
-    tone_counts = Counter()
-    for tone, keywords in tone_keywords.items():
-        tone_counts[tone] = sum(words.count(k.lower()) for k in keywords)
-    return tone_counts
-
 def main():
-    if 'OPENAI_API_KEY' not in st.secrets:
-        st.error('Please set the OPENAI_API_KEY secret on the Streamlit dashboard.')
-        return
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
         'Silver': ['Activate', 'Campaign', 'Challenge', 'Commit', 'Confront', 'Dare', 'Defy', 'Disrupting', 'Drive', 'Excite', 'Face', 'Ignite', 'Incite', 'Influence', 'Inspire', 'Inspirit', 'Motivate', 'Move', 'Push', 'Rebel', 'Reimagine', 'Revolutionize', 'Rise', 'Spark', 'Stir', 'Fight', 'Free', 'Aggressive', 'Bold', 'Brazen', 'Committed', 'Courageous', 'Daring', 'Disruptive', 'Driven', 'Fearless', 'Free', 'Gutsy', 'Independent', 'Inspired', 'Motivated', 'Rebellious', 'Revolutionary', 'Unafraid', 'Unconventional'],
@@ -66,18 +44,18 @@ def main():
         'Orange': ['Compose', 'Conceptualize', 'Conceive', 'Craft', 'Create', 'Design', 'Dream', 'Envision', 'Express', 'Fashion', 'Form', 'Imagine', 'Interpret', 'Make', 'Originate', 'Paint', 'Perform', 'Portray', 'Realize', 'Shape', 'Abstract', 'Artistic', 'Avant-garde', 'Colorful', 'Conceptual', 'Contemporary', 'Creative', 'Decorative', 'Eccentric', 'Eclectic', 'Evocative', 'Expressive', 'Imaginative', 'Interpretive', 'Offbeat', 'One-of-a-kind', 'Original', 'Uncommon', 'Unconventional', 'Unexpected', 'Unique', 'Vibrant', 'Whimsical'],
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
-    
+
     # Initialize user content and assigned colors
     user_content = ""
     assigned_colors = {}
-    
+
     analyze_button_key = "analyze_button"
-    
+
     user_content = st.text_area('Paste your content here:')
-    
+
     if user_content:
         analyze_button_key = "analyze_button_new_content"  # Assign a new key when content is provided
-    
+
     if st.button('Analyze', key=analyze_button_key):
         color_counts = analyze_text(user_content, color_keywords)
         st.subheader("Color Analysis")
@@ -86,36 +64,40 @@ def main():
         tone_counts = analyze_tone(user_content)
         st.subheader("Tone Analysis")
         st.bar_chart(tone_counts)
-        
+
         # Analyze and display scored sentences
         scored_sentences = analyze_sentences_by_color(user_content, color_keywords)
         st.subheader("Scored Sentences")
         for sentence, color in scored_sentences:
             st.write(f"{sentence} ({color})")
-    
+
     st.subheader("Revision Field")
     revision_input = st.text_area("Paste a sentence here for revision:")
     revised_color = st.selectbox("Select the revised color:", list(color_keywords.keys()))
-    
+
     if st.button("Submit Revision"):
         if revision_input:
-            # Remove the original sentence from the user content
-            revised_sentence = f"{revision_input.strip()} ({revised_color})"
-            user_content = re.sub(rf"\b{re.escape(revision_input.strip())}\b", revised_sentence, user_content)
-            
-            # Recalculate the color counts and update the donut chart
-            color_counts = analyze_text(user_content, color_keywords)
-            donut_chart = draw_donut_chart(color_counts, color_keywords)
-            st.subheader("Color Analysis")
-            st.plotly_chart(donut_chart)
-            
-            # Recalculate and update the scored sentences
-            scored_sentences = analyze_sentences_by_color(user_content, color_keywords)
-            st.subheader("Scored Sentences")
-            for sentence, color in scored_sentences:
-                st.write(f"{sentence} ({color})")
-            
-            st.success("Sentence revised and color updated.")
-    
+            # Find the sentence to revise in the user content
+            pattern = re.escape(revision_input.strip()) + r'\s*\((\w+)\)'
+            match = re.search(pattern, user_content)
+            if match:
+                old_color = match.group(1)
+                # Replace the original sentence with the revised one with the new color
+                revised_sentence = f"{revision_input.strip()} ({revised_color})"
+                user_content = re.sub(pattern, revised_sentence, user_content)
+                st.success(f"Sentence revised from '{old_color}' to '{revised_color}'.")
+
+        # Recalculate the color counts and update the donut chart
+        color_counts = analyze_text(user_content, color_keywords)
+        donut_chart = draw_donut_chart(color_counts, color_keywords)
+        st.subheader("Color Analysis")
+        st.plotly_chart(donut_chart)
+
+        # Recalculate and update the scored sentences
+        scored_sentences = analyze_sentences_by_color(user_content, color_keywords)
+        st.subheader("Scored Sentences")
+        for sentence, color in scored_sentences:
+            st.write(f"{sentence} ({color})")
+
 if __name__ == '__main__':
     main()
