@@ -105,7 +105,6 @@ def generate_word_doc(color_counts, examples, user_content, gpt3_analysis, tone_
     return word_file_path
 
 def main():
-def 
 
 if user_input:
     scored_sentences = analyze_sentences_by_color(user_input, color_keywords)
