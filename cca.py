@@ -75,6 +75,9 @@ def analyze_with_gpt3(text, api_key):
     tone_scores = {}
     score_pairs = response.choices[0].text.strip().split(', ')
     
+    # Debugging: Log the parsed score pairs
+    print("Parsed score pairs:", score_pairs)
+    
     for pair in score_pairs:
         # Error Handling: Skip lines that can't be split into key and value
         if ': ' not in pair:
@@ -82,6 +85,9 @@ def analyze_with_gpt3(text, api_key):
         
         key, value = pair.split(': ')
         tone_scores[key.strip()] = int(value.strip())
+    
+    # Debugging: Log the final tone scores
+    print("Final tone scores:", tone_scores)
     
     return tone_scores
 
