@@ -77,8 +77,32 @@ def analyze_tone(text):
 def generate_word_doc(top_colors, examples, user_content, gpt3_analysis, tone_scores):
     doc = Document()
     doc.add_heading('Color Personality Analysis', 0)
-    doc.save("Color_Personality_Analysis_Report.docx")
-    return "Color_Personality_Analysis_Report.docx"
+    
+    fig = draw_donut_chart([color for color, _ in top_colors], [count for color, count in top_colors])
+    image_stream = io.BytesIO()
+    fig.write_image(image_stream, format='png')
+    image_stream.seek(0)
+    doc.add_picture(image_stream, width=Inches(4.0))
+    image_stream.close()
+
+    doc.add_heading('Tone Analysis:', level=1)
+    for tone, score in tone_scores.items():
+        doc.add_paragraph(f"{tone}: {score}%")
+
+    for color, count in top_colors:
+        doc.add_heading(f'Top Color: {color}', level=1)
+        for example in examples[color]:
+            doc.add_paragraph(example)
+
+    doc.add_heading('Original Text:', level=1)
+    doc.add_paragraph(user_content)
+
+    doc.add_heading('GPT-3 Analysis:', level=1)
+    doc.add_paragraph(gpt3_analysis)
+    
+    word_file_path = "Color_Personality_Analysis_Report.docx"
+    doc.save(word_file_path)
+    return word_file_path
 
 def get_word_file_download_link(file_path, filename):
     with open(file_path, "rb") as f:
@@ -115,15 +139,13 @@ def main():
             st.write('No relevant keywords found.')
             return
 
-        labels = [k for k, v in color_counts.items() if v > 0]
-        sizes = [v for v in color_counts.values() if v > 0]
-        fig = draw_donut_chart(labels, sizes)
+        sorted_colors = sorted(color_counts.items(), key=lambda x: x[1], reverse=True)
+        top_colors = sorted_colors[:3]
+        fig = draw_donut_chart([color for color, _ in top_colors], [count for color, count in top_colors])
         st.plotly_chart(fig)
 
-        sorted_colors = sorted(color_counts.items(), key=lambda x: x[1], reverse=True)
-        top_colors = [color for color, _ in sorted_colors[:3]]
-        examples = extract_examples(user_content, color_keywords, top_colors)
-        for color in top_colors:
+        examples = extract_examples(user_content, color_keywords, [color for color, _ in top_colors])
+        for color, count in top_colors:
             st.write(f'Examples for {color}:')
             st.write(', '.join(examples[color]))
 
