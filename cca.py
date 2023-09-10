@@ -70,6 +70,10 @@ def download_file(file_path):
     b64_file = base64.b64encode(file_data).decode('utf-8')
     st.markdown(f'<a href="data:application/octet-stream;base64,{b64_file}" download="{file_path}">Download {file_path}</a>', unsafe_allow_html=True)
     
+import streamlit as st  # Import Streamlit
+
+# ...
+
 def main():
     st.title('Color Personality Analysis')
     
@@ -116,7 +120,7 @@ def main():
             st.write(', '.join(examples[color]))
         
         tone_analysis_prompt = 'Assess the text for tone based on the definitions: relaxed (calm, laid-back), assertive (confident, self-assured), introverted (reserved, solitary), and extroverted (sociable, outgoing). Provide scores from 1 to 10 for each trait.'
-        tone_analysis_response = analyze_with_gpt3(user_content, tone_analysis_prompt, openai_api_key)
+        tone_analysis_response = analyze_with_gpt3(user_content, tone_analysis_prompt, openai_api_key)  # Corrected argument
         
         if tone_analysis_response:
             tone_scores = parse_tone_scores(tone_analysis_response)
@@ -129,7 +133,7 @@ def main():
             tone_scores = {}  # Initialize with default value
         
         additional_tone_prompt = 'Assess the text for additional tone based on the definitions: conservative (traditional, resistant to change), progressive (forward-thinking, open to change), emotive (expressing emotion), and informative (providing information). Provide scores from 1 to 10 for each trait.'
-        additional_tone_response = analyze_with_gpt3(user_content, additional_tone_prompt, openai_api_key)
+        additional_tone_response = analyze_with_gpt3(user_content, additional_tone_prompt, openai_api_key)  # Corrected argument
         
         if additional_tone_response:
             new_tone_scores = parse_tone_scores(additional_tone_response)
