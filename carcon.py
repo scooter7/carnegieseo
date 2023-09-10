@@ -90,7 +90,7 @@ def main():
     if st.button("Submit Revision"):
         if revision_input:
             # Remove the original sentence from the user content
-            user_content = re.sub(re.escape(revision_input), '', user_content)
+            user_content = re.sub(rf"{re.escape(revision_input)}\s*\([^\)]+\)", '', user_content)
             # Append the revised sentence with the new color
             revised_sentence = f"{revision_input.strip()} ({revised_color})"
             user_content = f"{user_content} {revised_sentence}"
