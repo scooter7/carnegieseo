@@ -66,10 +66,10 @@ def generate_word_doc(top_colors, examples, user_content, general_analysis, tone
 
 def main():
     st.title('Color Personality Analysis')
-    if 'OPENAI_API_KEY' not in st.secrets:
-        st.error('Please set the OPENAI_API_KEY secret on the Streamlit dashboard.')
+    
+    if not OPENAI_API_KEY:
+        st.error('Please set the OPENAI_API_KEY variable with your OpenAI API key.')
         return
-    openai_api_key = st.secrets['OPENAI_API_KEY']
 
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
@@ -116,6 +116,8 @@ def main():
             
             fig1 = draw_quadrant_chart(tone_scores, 'Tone Quadrant Chart', ['Relaxed', 'Assertive'], ['Extroverted', 'Introverted'])
             st.plotly_chart(fig1)
+        else:
+            tone_scores = {}  # Initialize with default value
         
         additional_tone_prompt = 'Assess the text for additional tone based on the definitions: conservative (traditional, resistant to change), progressive (forward-thinking, open to change), emotive (expressing emotion), and informative (providing information). Provide scores from 1 to 10 for each trait.'
         additional_tone_response = analyze_with_gpt3(user_content, additional_tone_prompt)
@@ -127,6 +129,8 @@ def main():
             
             fig2 = draw_quadrant_chart(new_tone_scores, 'Additional Tone Quadrant Chart', ['Conservative', 'Progressive'], ['Emotive', 'Informative'])
             st.plotly_chart(fig2)
+        else:
+            new_tone_scores = {}  # Initialize with default value
         
         general_analysis = 'Your text was analyzed by GPT-3 to determine the following traits based on your tone: ' + ', '.join([f"{k}: {v}" for k, v in {**tone_scores, **new_tone_scores}.items()])
         word_file_path = generate_word_doc(top_colors, examples, user_content, general_analysis, tone_scores, new_tone_scores)
