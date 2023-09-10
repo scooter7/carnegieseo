@@ -63,27 +63,27 @@ def extract_examples(text, color_keywords, top_colors):
 def analyze_with_gpt3(text, api_key, prompt_for_analysis):
     openai.api_key = api_key
     response = openai.Completion.create(
-        engine='text-davinci-002',
+        engine="text-davinci-002",
         prompt=prompt_for_analysis,
         max_tokens=50,
-        temperature=0.5
+        temperature=0.5,
     )
-    
+
     tone_scores = {}
-    score_pairs = response.choices[0].text.strip().split(', ')
-    
+    score_pairs = response.choices[0].text.strip().split(", ")
+
     for pair in score_pairs:
-        if ': ' not in pair:
+        if pair.count(":") != 1:
             continue
-        
-        key, value = pair.split(': ')
-        
+
+        key, value = pair.split(": ")
+
         try:
             value = int(value.strip())
             tone_scores[key.strip()] = value
         except ValueError:
             continue
-    
+
     return tone_scores
 
 def generate_word_doc(top_colors, examples, user_content, general_analysis, tone_scores, new_tone_scores):
