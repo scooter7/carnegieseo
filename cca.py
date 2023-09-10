@@ -136,18 +136,12 @@ def main():
         st.subheader("Tone Analysis")
         st.write("The text exhibits the following tones:")
         st.bar_chart(tone_scores)
-        if st.button('Analyze'):
-    
-    # Your existing code for analysis
 
-    # Generate Word report
-    generate_word_report(tone_scores)
-    
-    # Provide download link for Word report
-    st.markdown(
-        f'<a href="Tone_Analysis_Report.docx" download="Tone_Analysis_Report.docx">Download Tone Analysis Report</a>',
-        unsafe_allow_html=True,
-    )
+        generate_word_report(tone_scores)
+        st.markdown(
+            f'<a href="Tone_Analysis_Report.docx" download="Tone_Analysis_Report.docx">Download Tone Analysis Report</a>',
+            unsafe_allow_html=True
+        )
 
 if __name__ == '__main__':
     main()
