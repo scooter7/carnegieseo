@@ -66,7 +66,10 @@ def main():
         'Orange': ['Compose', 'Conceptualize', 'Conceive', 'Craft', 'Create', 'Design', 'Dream', 'Envision', 'Express', 'Fashion', 'Form', 'Imagine', 'Interpret', 'Make', 'Originate', 'Paint', 'Perform', 'Portray', 'Realize', 'Shape', 'Abstract', 'Artistic', 'Avant-garde', 'Colorful', 'Conceptual', 'Contemporary', 'Creative', 'Decorative', 'Eccentric', 'Eclectic', 'Evocative', 'Expressive', 'Imaginative', 'Interpretive', 'Offbeat', 'One-of-a-kind', 'Original', 'Uncommon', 'Unconventional', 'Unexpected', 'Unique', 'Vibrant', 'Whimsical'],
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
-    user_content = st.text_area('Paste your content here:')
+    
+    # Initialize user content and assigned colors
+    user_content = ""
+    assigned_colors = {}
     
     if st.button('Analyze'):
         color_counts = analyze_text(user_content, color_keywords)
@@ -77,11 +80,29 @@ def main():
         st.subheader("Tone Analysis")
         st.bar_chart(tone_counts)
         
+    user_content = st.text_area('Paste your content here:')
+    
     if user_content:
-        scored_sentences = analyze_sentences_by_color(user_content, color_keywords)
-        st.subheader("Scored Sentences")
-        for sentence, color in scored_sentences:
-            st.write(f"{sentence} ({color})")
+        if st.button('Analyze'):
+            assigned_colors = {}
+            # Remove the existing colors
+            user_content = re.sub(r'\([^\)]+\)', '', user_content)
+            
+            # Reassign colors based on analysis
+            scored_sentences = analyze_sentences_by_color(user_content, color_keywords)
+            for sentence, color in scored_sentences:
+                assigned_colors[sentence] = color
+                sentence_with_color = f"{sentence} ({color})"
+                user_content = user_content.replace(sentence, sentence_with_color)
+            
+            # Update the color analysis and charts
+            color_counts = analyze_text(user_content, color_keywords)
+            donut_chart = draw_donut_chart(color_counts, color_keywords)
+            st.subheader("Color Analysis")
+            st.plotly_chart(donut_chart)
+            tone_counts = analyze_tone(user_content)
+            st.subheader("Tone Analysis")
+            st.bar_chart(tone_counts)
     
     st.subheader("Revision Field")
     revision_input = st.text_area("Paste a sentence here for revision:")
@@ -90,7 +111,7 @@ def main():
     if st.button("Submit Revision"):
         if revision_input:
             # Remove the original sentence from the user content
-            user_content = re.sub(rf"{re.escape(revision_input)}\s*\([^\)]+\)", '', user_content)
+            user_content = user_content.replace(revision_input, '')
             # Append the revised sentence with the new color
             revised_sentence = f"{revision_input.strip()} ({revised_color})"
             user_content = f"{user_content} {revised_sentence}"
@@ -98,6 +119,7 @@ def main():
             # Recalculate the color counts and update the donut chart
             color_counts = analyze_text(user_content, color_keywords)
             donut_chart = draw_donut_chart(color_counts, color_keywords)
+            st.subheader("Color Analysis")
             st.plotly_chart(donut_chart)
             
             # Recalculate and update the scored sentences
