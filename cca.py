@@ -160,7 +160,7 @@ def main():
             st.write(f'Examples for {color}:')
             st.write(', '.join(examples[color]))
 
-        general_analysis = analyze_with_gpt3(user_content, openai_api_key)
+        gpt3_analysis = analyze_with_gpt3(user_content, openai_api_key)
         st.write('GPT-3 Analysis:')
         st.write(general_analysis)
 
