@@ -86,6 +86,12 @@ def main():
         tone_counts = analyze_tone(user_content)
         st.subheader("Tone Analysis")
         st.bar_chart(tone_counts)
+        
+        # Analyze and display scored sentences
+        scored_sentences = analyze_sentences_by_color(user_content, color_keywords)
+        st.subheader("Scored Sentences")
+        for sentence, color in scored_sentences:
+            st.write(f"{sentence} ({color})")
     
     st.subheader("Revision Field")
     revision_input = st.text_area("Paste a sentence here for revision:")
