@@ -7,6 +7,7 @@ import base64
 from docx import Document
 from docx.shared import Inches
 import openai
+import io
 
 def analyze_text(text, color_keywords):
     text = text.lower()
