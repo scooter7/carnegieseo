@@ -16,7 +16,23 @@ def analyze_text(text, color_keywords):
     return color_counts
 
 def draw_donut_chart(labels, sizes):
-    fig = px.pie(values=sizes, names=labels, hole=0.3)
+    # Colors matching the labels
+    colors = {
+        'Red': 'red',
+        'Silver': 'silver',
+        'Blue': 'blue',
+        'Yellow': 'yellow',
+        'Green': 'green',
+        'Purple': 'purple',
+        'Maroon': 'maroon',
+        'Orange': 'orange',
+        'Pink': 'pink'
+    }
+    
+    fig = go.Figure(data=[go.Pie(labels=labels,
+                                 values=sizes,
+                                 hole=.3,
+                                 marker=dict(colors=[colors[label] for label in labels]))])
     return fig
 
 def extract_examples(text, color_keywords, top_colors):
