@@ -64,13 +64,22 @@ def generate_word_doc(top_colors, examples, user_content, general_analysis, tone
     # Implement the function to generate a Word document with analysis
     pass
 
+def download_file(file_path):
+    with open(file_path, 'rb') as f:
+        file_data = f.read()
+    b64_file = base64.b64encode(file_data).decode('utf-8')
+    st.markdown(f'<a href="data:application/octet-stream;base64,{b64_file}" download="{file_path}">Download {file_path}</a>', unsafe_allow_html=True)
+    
 def main():
     st.title('Color Personality Analysis')
+    
+    # Check for the existence of the OPENAI_API_KEY secret
     if 'OPENAI_API_KEY' not in st.secrets:
         st.error('Please set the OPENAI_API_KEY secret on the Streamlit dashboard.')
         return
-    openai_api_key = st.secrets['OPENAI_API_KEY']
 
+    openai_api_key = st.secrets['OPENAI_API_KEY']
+    
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
         'Silver': ['Activate', 'Campaign', 'Challenge', 'Commit', 'Confront', 'Dare', 'Defy', 'Disrupting', 'Drive', 'Excite', 'Face', 'Ignite', 'Incite', 'Influence', 'Inspire', 'Inspirit', 'Motivate', 'Move', 'Push', 'Rebel', 'Reimagine', 'Revolutionize', 'Rise', 'Spark', 'Stir', 'Fight', 'Free', 'Aggressive', 'Bold', 'Brazen', 'Committed', 'Courageous', 'Daring', 'Disruptive', 'Driven', 'Fearless', 'Free', 'Gutsy', 'Independent', 'Inspired', 'Motivated', 'Rebellious', 'Revolutionary', 'Unafraid', 'Unconventional'],
@@ -107,7 +116,7 @@ def main():
             st.write(', '.join(examples[color]))
         
         tone_analysis_prompt = 'Assess the text for tone based on the definitions: relaxed (calm, laid-back), assertive (confident, self-assured), introverted (reserved, solitary), and extroverted (sociable, outgoing). Provide scores from 1 to 10 for each trait.'
-        tone_analysis_response = analyze_with_gpt3(user_content, tone_analysis_prompt)
+        tone_analysis_response = analyze_with_gpt3(user_content, tone_analysis_prompt, openai_api_key)
         
         if tone_analysis_response:
             tone_scores = parse_tone_scores(tone_analysis_response)
@@ -120,7 +129,7 @@ def main():
             tone_scores = {}  # Initialize with default value
         
         additional_tone_prompt = 'Assess the text for additional tone based on the definitions: conservative (traditional, resistant to change), progressive (forward-thinking, open to change), emotive (expressing emotion), and informative (providing information). Provide scores from 1 to 10 for each trait.'
-        additional_tone_response = analyze_with_gpt3(user_content, additional_tone_prompt)
+        additional_tone_response = analyze_with_gpt3(user_content, additional_tone_prompt, openai_api_key)
         
         if additional_tone_response:
             new_tone_scores = parse_tone_scores(additional_tone_response)
