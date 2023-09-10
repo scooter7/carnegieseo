@@ -164,7 +164,7 @@ def main():
         st.write('GPT-3 Analysis:')
         st.write(general_analysis)
 
-         tone_scores = analyze_tone(user_content)
+        tone_scores = analyze_tone(user_content)
         st.subheader("Tone Analysis")
         st.write("The text exhibits the following tones:")
         st.bar_chart(tone_scores)
