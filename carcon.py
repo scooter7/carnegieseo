@@ -98,7 +98,7 @@ def main():
     revised_color = st.selectbox("Select the revised color:", list(color_keywords.keys()))
 
     if st.button("Submit Revision"):
-    if revision_input:
+        if revision_input:
         # Find the sentence to revise in the user content
         pattern = re.escape(revision_input.strip()) + r'\s*\((\w+)\)'
         match = re.search(pattern, user_content)
@@ -120,7 +120,6 @@ def main():
         st.subheader("Scored Sentences")
         for sentence, color in scored_sentences:
             st.write(f"{sentence} ({color})")
-
 
 if __name__ == '__main__':
     main()
