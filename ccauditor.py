@@ -101,7 +101,7 @@ def main():
         st.plotly_chart(initial_fig)
         
         tone_scores = analyze_tone_with_gpt3(user_content, openai_api_key)
-        if tone_scores:  # Check if tone_scores is not empty
+        if tone_scores:
             tone_fig = go.Figure(data=[go.Bar(x=list(tone_scores.keys()), y=list(tone_scores.values()))])
             tone_fig.update_layout(xaxis_title='Tone', yaxis_title='Level')
             st.subheader("Tone Analysis")
@@ -118,16 +118,21 @@ def main():
         tone_fig.update_layout(xaxis_title='Tone', yaxis_title='Level')
         st.subheader("Updated Tone Analysis")
         st.plotly_chart(tone_fig)
-
+    
     # Revising color assignments
     sentences = user_content.split('.')
     sentence_to_colors = {}
     for sentence in sentences:
         sentence = sentence.strip()
         if sentence:
+            initial_colors = ["Red", "Blue"]  # You should replace this with the actual initial colors determined for the sentence
+            st.write(f"{sentence} ({', '.join(initial_colors)})")
             options = list(color_keywords.keys())
-            selected_options = st.multiselect(f"Select color for: {sentence}", options, options)
-            sentence_to_colors[sentence] = selected_options
+            selected_options = st.multiselect(f"Reassign color for: {sentence}", options, [])
+            if selected_options:
+                sentence_to_colors[sentence] = selected_options
+            else:
+                sentence_to_colors[sentence] = initial_colors
     
     st.session_state.sentence_to_colors = sentence_to_colors
     updated_color_counts = Counter()
