@@ -36,11 +36,15 @@ def analyze_tone_with_gpt3(text, api_key):
     Text to Analyze:
     {text}
     """
+    # Replace the below line with actual GPT-3 API call to get gpt3_output
+    gpt3_output = openai.Completion.create(prompt=prompt, engine="text-davinci-002", max_tokens=100) 
+    
     tone_levels = {}
     for line in gpt3_output.strip().split('\n'):
         tone, level = line.split(":")
         tone_levels[tone.strip()] = level.strip()
     return tone_levels
+
 
 def generate_word_doc(color_counts, tone_levels, user_content):
     doc = Document()
