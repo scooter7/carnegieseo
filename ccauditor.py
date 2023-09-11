@@ -71,18 +71,7 @@ def get_word_file_download_link(file_path, filename):
 
 def main():
     st.title('Color Personality Analysis')
-
-    if "OPENAI_API_KEY" not in st.secrets:
-        st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
-        return
     openai_api_key = st.secrets["OPENAI_API_KEY"]
-
-    if 'sentence_to_colors' not in st.session_state:
-        st.session_state.sentence_to_colors = {}
-        
-    if 'tone_scores' not in st.session_state:
-        st.session_state.tone_scores = {}
-
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
         'Silver': ['Activate', 'Campaign', 'Challenge', 'Commit', 'Confront', 'Dare', 'Defy', 'Disrupting', 'Drive', 'Excite', 'Face', 'Ignite', 'Incite', 'Influence', 'Inspire', 'Inspirit', 'Motivate', 'Move', 'Push', 'Rebel', 'Reimagine', 'Revolutionize', 'Rise', 'Spark', 'Stir', 'Fight', 'Free', 'Aggressive', 'Bold', 'Brazen', 'Committed', 'Courageous', 'Daring', 'Disruptive', 'Driven', 'Fearless', 'Free', 'Gutsy', 'Independent', 'Inspired', 'Motivated', 'Rebellious', 'Revolutionary', 'Unafraid', 'Unconventional'],
@@ -95,21 +84,26 @@ def main():
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
     user_content = st.text_area('Paste your content here:')
-    
+
+    if 'sentence_to_colors' not in st.session_state:
+        st.session_state.sentence_to_colors = {}
+        
+    if 'tone_scores' not in st.session_state:
+        st.session_state.tone_scores = {}
+
     if st.button('Analyze'):
         color_counts = analyze_text(user_content, color_keywords)
         initial_fig = draw_donut_chart(color_counts)
         st.subheader('Initial Donut Chart')
         st.plotly_chart(initial_fig)
         
-        st.session_state.tone_scores = analyze_tone_with_gpt3(user_content, "your_openai_api_key_here")
+        st.session_state.tone_scores = analyze_tone_with_gpt3(user_content, openai_api_key)
         tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
         tone_fig.update_layout(title='Tone Analysis', xaxis_title='Tone', yaxis_title='Percentage (%)')
         st.subheader("Initial Tone Analysis")
         st.plotly_chart(tone_fig)
 
         sentences = re.split(r'[.!?]', user_content)
-        st.subheader("Sentences scored by color")
         for sentence in sentences:
             if not sentence.strip():
                 continue
@@ -117,15 +111,9 @@ def main():
             for color, keywords in color_keywords.items():
                 if any(keyword.lower() in sentence.lower() for keyword in keywords):
                     initial_colors.append(color)
-            selected_colors = st.multiselect(
-                f"{sentence}. [{', '.join(initial_colors)}]",
-                list(color_keywords.keys()),
-                default=initial_colors
-            )
-            st.session_state.sentence_to_colors[sentence] = selected_colors
+            st.multiselect(f"{sentence}. [{', '.join(initial_colors)}]", list(color_keywords.keys()), default=initial_colors)
 
-    if st.session_state.sentence_to_colors:
-        st.subheader("Update Tone Scores")
+    if st.session_state.tone_scores:
         for tone in st.session_state.tone_scores.keys():
             st.session_state.tone_scores[tone] = st.slider(f"{tone} (%)", 0, 100, int(st.session_state.tone_scores[tone]))
 
