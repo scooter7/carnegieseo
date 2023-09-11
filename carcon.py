@@ -24,6 +24,7 @@ def draw_donut_chart(color_counts):
     return fig
 
 def analyze_tone_with_gpt3(text, api_key):
+    openai.api_key = api_key
     prompt = f"""
     Please provide a nuanced analysis of the following text, assigning a percentage score to indicate the extent to which the text embodies each of the following tones:
     - Relaxed
@@ -70,15 +71,14 @@ def get_word_file_download_link(file_path, filename):
 
 def main():
     st.title('Color Personality Analysis')
-    
-    if 'sentence_to_colors' not in st.session_state:
-        st.session_state.sentence_to_colors = {}
-        
     if "OPENAI_API_KEY" not in st.secrets:
         st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
         return
     openai_api_key = st.secrets["OPENAI_API_KEY"]
     
+    if 'sentence_to_colors' not in st.session_state:
+        st.session_state.sentence_to_colors = {}
+        
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
         'Silver': ['Activate', 'Campaign', 'Challenge', 'Commit', 'Confront', 'Dare', 'Defy', 'Disrupting', 'Drive', 'Excite', 'Face', 'Ignite', 'Incite', 'Influence', 'Inspire', 'Inspirit', 'Motivate', 'Move', 'Push', 'Rebel', 'Reimagine', 'Revolutionize', 'Rise', 'Spark', 'Stir', 'Fight', 'Free', 'Aggressive', 'Bold', 'Brazen', 'Committed', 'Courageous', 'Daring', 'Disruptive', 'Driven', 'Fearless', 'Free', 'Gutsy', 'Independent', 'Inspired', 'Motivated', 'Rebellious', 'Revolutionary', 'Unafraid', 'Unconventional'],
@@ -99,17 +99,6 @@ def main():
         initial_fig = draw_donut_chart(color_counts)
         st.subheader('Initial Donut Chart')
         st.plotly_chart(initial_fig)
-        
-        tone_scores = analyze_tone_with_gpt3(user_content, openai_api_key)
-        st.subheader("Tone Analysis")
-        
-        tone_colors = [tone for tone in tone_scores.keys()]
-        plt.bar(tone_scores.keys(), tone_scores.values(), color=tone_colors)
-        plt.xticks(rotation=45)
-        plt.xlabel('Tone')
-        plt.ylabel('Percentage (%)')
-        plt.title('Tone Analysis')
-        st.pyplot()
         
         sentences = re.split(r'[.!?]', user_content)
         for sentence in sentences:
@@ -136,6 +125,16 @@ def main():
         updated_fig = draw_donut_chart(updated_color_counts)
         st.subheader('Updated Donut Chart based on User Reassignments')
         st.plotly_chart(updated_fig)
+        
+        tone_scores = analyze_tone_with_gpt3(user_content, openai_api_key)
+        st.subheader("Tone Analysis")
+        
+        plt.bar(tone_scores.keys(), tone_scores.values())
+        plt.xticks(rotation=45)
+        plt.xlabel('Tone')
+        plt.ylabel('Percentage (%)')
+        plt.title('Tone Analysis')
+        st.pyplot()
         
         word_file_path = generate_word_doc(updated_color_counts, user_content, tone_scores)
         download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
