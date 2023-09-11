@@ -2,12 +2,12 @@ import streamlit as st
 import re
 import plotly.graph_objects as go
 from collections import Counter
-import base64
 from docx import Document
 from docx.shared import Inches
-import openai
 import io
 import matplotlib.pyplot as plt
+import base64
+import openai
 
 def analyze_text(text, color_keywords):
     text = text.lower()
@@ -23,24 +23,15 @@ def draw_donut_chart(color_counts):
     fig = go.Figure(data=[go.Pie(labels=labels, values=sizes, hole=.3, marker=dict(colors=labels))])
     return fig
 
-def analyze_tone(text):
-    tone_keywords = {
-        "Relaxed": ["calm", "peaceful", "easygoing", "informal"],
-        "Assertive": ["confident", "aggressive", "self-assured", "dogmatic"],
-        "Introverted": ["calm", "solitude", "introspective", "reserved"],
-        "Extroverted": ["social", "energetic", "outgoing"],
-        "Conservative": ["traditional", "status quo", "orthodox"],
-        "Progressive": ["reform", "liberal", "innovative"],
-        "Emotive": ["emotional", "passionate", "intense"],
-        "Informative": ["inform", "disclose", "instructive"]
-    }
-    text = text.lower()
-    words = re.findall(r'\b\w+\b', text)
-    tone_counts = Counter()
-    for tone, keywords in tone_keywords.items():
-        tone_counts[tone] = sum(words.count(k.lower()) for k in keywords)
-    total_count = sum(tone_counts.values())
-    tone_scores = {tone: (count / total_count) * 100 if total_count else 0 for tone, count in tone_counts.items()}
+def analyze_tone_with_gpt3(text, api_key):
+    openai.api_key = api_key
+    prompt = f"Please evaluate the following text and provide a percentage score for each of the following tonal categories: Relaxed, Assertive, Introverted, Extroverted, Conservative, Progressive, Emotive, Informative.\n\nText:\n{text}"
+    response = openai.Completion.create(engine="text-davinci-002", prompt=prompt, max_tokens=100)
+    gpt3_output = response.choices[0].text.strip().split('\n')
+    tone_scores = {}
+    for line in gpt3_output:
+        tone, score = line.split(":")
+        tone_scores[tone.strip()] = float(score.strip())
     return tone_scores
 
 def generate_word_doc(color_counts, user_content, tone_scores):
@@ -86,11 +77,16 @@ def main():
 
     if st.button('Analyze'):
         st.session_state.sentence_to_colors = {}
-        
         color_counts = analyze_text(user_content, color_keywords)
         initial_fig = draw_donut_chart(color_counts)
-        st.subheader('Initial Donut Chart')
         st.plotly_chart(initial_fig)
+        
+        if 'OPENAI_API_KEY' not in st.secrets:
+            st.error('Please set the OPENAI_API_KEY secret on the Streamlit dashboard.')
+            return
+        openai_api_key = st.secrets['OPENAI_API_KEY']
+        tone_scores = analyze_tone_with_gpt3(user_content, openai_api_key)
+        st.bar_chart(tone_scores)
         
         sentences = re.split(r'[.!?]', user_content)
         for sentence in sentences:
@@ -115,19 +111,7 @@ def main():
                 updated_color_counts[color] += 1
                 
         updated_fig = draw_donut_chart(updated_color_counts)
-        st.subheader('Updated Donut Chart based on User Reassignments')
         st.plotly_chart(updated_fig)
-        
-        tone_scores = analyze_tone(user_content)
-        st.subheader("Tone Analysis")
-        
-        tone_colors = [tone for tone in tone_scores.keys()]
-        plt.bar(tone_scores.keys(), tone_scores.values(), color=tone_colors)
-        plt.xticks(rotation=45)
-        plt.xlabel('Tone')
-        plt.ylabel('Percentage (%)')
-        plt.title('Tone Analysis')
-        st.pyplot()
         
         word_file_path = generate_word_doc(updated_color_counts, user_content, tone_scores)
         download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
