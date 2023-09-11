@@ -60,7 +60,7 @@ def main():
     
     if 'user_content' not in st.session_state:
         st.session_state.user_content = ""
-        
+    
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
         'Silver': ['Activate', 'Campaign', 'Challenge', 'Commit', 'Confront', 'Dare', 'Defy', 'Disrupting', 'Drive', 'Excite', 'Face', 'Ignite', 'Incite', 'Influence', 'Inspire', 'Inspirit', 'Motivate', 'Move', 'Push', 'Rebel', 'Reimagine', 'Revolutionize', 'Rise', 'Spark', 'Stir', 'Fight', 'Free', 'Aggressive', 'Bold', 'Brazen', 'Committed', 'Courageous', 'Daring', 'Disruptive', 'Driven', 'Fearless', 'Free', 'Gutsy', 'Independent', 'Inspired', 'Motivated', 'Rebellious', 'Revolutionary', 'Unafraid', 'Unconventional'],
@@ -72,16 +72,17 @@ def main():
         'Orange': ['Compose', 'Conceptualize', 'Conceive', 'Craft', 'Create', 'Design', 'Dream', 'Envision', 'Express', 'Fashion', 'Form', 'Imagine', 'Interpret', 'Make', 'Originate', 'Paint', 'Perform', 'Portray', 'Realize', 'Shape', 'Abstract', 'Artistic', 'Avant-garde', 'Colorful', 'Conceptual', 'Contemporary', 'Creative', 'Decorative', 'Eccentric', 'Eclectic', 'Evocative', 'Expressive', 'Imaginative', 'Interpretive', 'Offbeat', 'One-of-a-kind', 'Original', 'Uncommon', 'Unconventional', 'Unexpected', 'Unique', 'Vibrant', 'Whimsical'],
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
-    
-        "Relaxed": ["calm", "peaceful", "easygoing", "informal"],
-        "Assertive": ["confident", "aggressive", "self-assured", "dogmatic"],
-        "Introverted": ["calm", "solitude", "introspective", "reserved"],
-        "Extroverted": ["social", "energetic", "outgoing"],
-        "Conservative": ["traditional", "status quo", "orthodox"],
-        "Progressive": ["reform", "liberal", "innovative"],
-        "Emotive": ["emotional", "passionate", "intense"],
-        "Informative": ["inform", "disclose", "instructive"]
-    }
+
+    tone_keywords = {
+    "Relaxed": ["calm", "peaceful", "easygoing", "informal"],
+    "Assertive": ["confident", "aggressive", "self-assured", "dogmatic"],
+    "Introverted": ["calm", "solitude", "introspective", "reserved"],
+    "Extroverted": ["social", "energetic", "outgoing"],
+    "Conservative": ["traditional", "status quo", "orthodox"],
+    "Progressive": ["reform", "liberal", "innovative"],
+    "Emotive": ["emotional", "passionate", "intense"],
+    "Informative": ["inform", "disclose", "instructive"]
+}
 
     user_content = st.text_area('Paste your content here:', value=st.session_state.user_content)
     st.session_state.user_content = user_content
@@ -116,12 +117,26 @@ def main():
         if st.button("Apply Revision"):
             if revision_input:
                 pattern = re.escape(revision_input.strip()) + r'\s*\((\w+)\)'
-                match = re.search(pattern, user_content)
+                match = re.search(pattern, st.session_state.user_content)
                 if match:
                     old_color = match.group(1)
                     revised_sentence = f"{revision_input.strip()} ({revised_color})"
-                    st.session_state.user_content = re.sub(pattern, revised_sentence, user_content)
+                    st.session_state.user_content = re.sub(pattern, revised_sentence, st.session_state.user_content)
                     st.success(f"Sentence revised from '{old_color}' to '{revised_color}'.")
+                    
+                    # Recompute color counts and update the donut chart
+                    color_counts = analyze_text(st.session_state.user_content, color_keywords)
+                    fig = draw_donut_chart(color_counts, color_keywords)
+                    st.plotly_chart(fig)
+                    
+                    # Recompute sentence color scores and display them
+                    sentences = re.split(r'[.!?]', st.session_state.user_content)
+                    st.subheader("Sentence Color Scoring")
+                    for sentence in sentences:
+                        if sentence.strip():
+                            sentence_color_counts = analyze_text(sentence, color_keywords)
+                            max_color = max(sentence_color_counts, key=sentence_color_counts.get, default="None")
+                            st.write(f"{sentence.strip()} ({max_color})")
 
 if __name__ == '__main__':
     main()
