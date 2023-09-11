@@ -24,19 +24,7 @@ def draw_donut_chart(color_counts):
 
 def analyze_tone_with_gpt3(text, api_key):
     openai.api_key = api_key
-    prompt = f"""
-    Please provide a nuanced analysis of the following text, assigning a percentage score to indicate the extent to which the text embodies each of the following tones:
-    - Relaxed
-    - Assertive
-    - Introverted
-    - Extroverted
-    - Conservative
-    - Progressive
-    - Emotive
-    - Informative
-    Text to Analyze:
-    {text}
-    """
+    prompt = f"Please provide a nuanced analysis of the following text, assigning a percentage score to indicate the extent to which the text embodies each of the following tones: - Relaxed - Assertive - Introverted - Extroverted - Conservative - Progressive - Emotive - Informative Text to Analyze: {text}"
     response = openai.Completion.create(engine="text-davinci-002", prompt=prompt, max_tokens=100)
     gpt3_output = response.choices[0].text.strip().split('\n')
     tone_scores = {}
@@ -67,7 +55,7 @@ def get_word_file_download_link(file_path, filename):
 
 def main():
     st.title('Color Personality Analysis')
-    color_keywords = {
+     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
         'Silver': ['Activate', 'Campaign', 'Challenge', 'Commit', 'Confront', 'Dare', 'Defy', 'Disrupting', 'Drive', 'Excite', 'Face', 'Ignite', 'Incite', 'Influence', 'Inspire', 'Inspirit', 'Motivate', 'Move', 'Push', 'Rebel', 'Reimagine', 'Revolutionize', 'Rise', 'Spark', 'Stir', 'Fight', 'Free', 'Aggressive', 'Bold', 'Brazen', 'Committed', 'Courageous', 'Daring', 'Disruptive', 'Driven', 'Fearless', 'Free', 'Gutsy', 'Independent', 'Inspired', 'Motivated', 'Rebellious', 'Revolutionary', 'Unafraid', 'Unconventional'],
         'Blue': ['Accomplish', 'Achieve', 'Affect', 'Assert', 'Cause', 'Command', 'Determine', 'Direct', 'Dominate', 'Drive', 'Empower', 'Establish', 'Guide', 'Impact', 'Impress', 'Influence', 'Inspire', 'Lead', 'Outpace', 'Outshine', 'Realize', 'Shape', 'Succeed', 'Transform', 'Win', 'Accomplished', 'Assertive', 'Authoritative', 'Commanding', 'Confident', 'Decisive', 'Distinguished', 'Dominant', 'Elite', 'Eminent', 'Established', 'Exceptional', 'Expert', 'First-class', 'First-rate', 'Impressive', 'Influential', 'Leading', 'Magnetic', 'Managerial', 'Masterful', 'Noble', 'Premier', 'Prestigious', 'Prominent', 'Proud', 'Strong'],
@@ -98,14 +86,15 @@ def main():
 
         sentences = re.split(r'[.!?]', user_content)
         sentence_color_mapping = {}
-        updated_color_counts = color_counts.copy()
+        updated_color_counts = Counter()
 
         for i, sentence in enumerate(sentences):
-            initial_color = max(color_keywords, key=lambda k: analyze_text(sentence, color_keywords)[k])
-            options = st.multiselect(f"Sentence {i+1}: {sentence} (Initial: {initial_color})", list(color_keywords.keys()), default=[initial_color])
-            if options:
+            if sentence.strip():
+                initial_color = max(color_keywords, key=lambda k: analyze_text(sentence, color_keywords)[k])
+                options = st.multiselect(f"Sentence {i+1}: {sentence} (Initial: {initial_color})", list(color_keywords.keys()), default=[initial_color])
                 for color in options:
                     updated_color_counts[color] = updated_color_counts.get(color, 0) + 1
+
         revised_fig = draw_donut_chart(updated_color_counts)
         st.plotly_chart(revised_fig)
 
