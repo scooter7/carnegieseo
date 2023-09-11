@@ -25,7 +25,8 @@ def draw_donut_chart(color_counts):
 def analyze_tone_with_gpt3(text, api_key):
     openai.api_key = api_key
     prompt = f"""
-    Please provide a nuanced analysis of the following text, assigning a level of 'Low', 'Medium', or 'High' to indicate the extent to which the text embodies each of the following tones:
+    Please provide a nuanced analysis of the following text, assigning a score to indicate the extent to which the text embodies each of the following tones:
+    - Relaxed
     - Assertive
     - Introverted
     - Extroverted
@@ -36,35 +37,38 @@ def analyze_tone_with_gpt3(text, api_key):
     Text to Analyze:
     {text}
     """
-    # Make the GPT-3 API call to get gpt3_output
-    gpt3_output = openai.Completion.create(prompt=prompt, engine="text-davinci-002", max_tokens=100)
-    
-    # Extract text from the OpenAI API response
-    gpt3_output_text = gpt3_output['choices'][0]['text'].strip()
+    response = openai.Completion.create(engine="text-davinci-002", prompt=prompt, max_tokens=100)
+    gpt3_output = response.choices[0].text.strip().split('\n')
+    tone_scores = {}
+    for line in gpt3_output:
+        if ":" in line:
+            tone, score = line.split(":")
+            tone_scores[tone.strip()] = float(score.strip())
+    return tone_scores
 
-    tone_levels = {}
-    for line in gpt3_output_text.split('\n'):
-        tone, level = line.split(":")
-        tone_levels[tone.strip()] = level.strip()
-        
-    return tone_levels
-
-def generate_word_doc(color_counts, tone_levels, user_content):
+def generate_word_doc(color_counts, user_content, tone_scores, initial_fig, tone_fig, updated_fig):
     doc = Document()
     doc.add_heading('Color Personality Analysis', 0)
-    
-    fig = draw_donut_chart(color_counts)
-    image_stream = io.BytesIO(fig.to_image(format="png"))
+    image_stream = io.BytesIO(initial_fig.to_image(format="png"))
+    doc.add_heading('Initial Donut Chart:', level=1)
     doc.add_picture(image_stream, width=Inches(4.0))
     image_stream.close()
-    
+    image_stream = io.BytesIO(tone_fig.to_image(format="png"))
     doc.add_heading('Tone Analysis:', level=1)
-    for tone, level in tone_levels.items():
-        doc.add_paragraph(f"{tone}: {level}")
-    
+    doc.add_picture(image_stream, width=Inches(4.0))
+    image_stream.close()
+    image_stream = io.BytesIO(updated_fig.to_image(format="png"))
+    doc.add_heading('Updated Donut Chart:', level=1)
+    doc.add_picture(image_stream, width=Inches(4.0))
+    image_stream.close()
+    doc.add_heading('Tone Scores:', level=1)
+    for tone, score in tone_scores.items():
+        doc.add_paragraph(f"{tone}: {score}")
+    doc.add_heading('Scored Sentences:', level=1)
+    for sentence, colors in st.session_state.sentence_to_colors.items():
+        doc.add_paragraph(f"{sentence}: {', '.join(colors)}")
     doc.add_heading('Original Text:', level=1)
     doc.add_paragraph(user_content)
-    
     word_file_path = "Color_Personality_Analysis_Report.docx"
     doc.save(word_file_path)
     return word_file_path
@@ -78,18 +82,14 @@ def get_word_file_download_link(file_path, filename):
 
 def main():
     st.title('Color Personality Analysis')
-    
     if "OPENAI_API_KEY" not in st.secrets:
         st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
         return
     openai_api_key = st.secrets["OPENAI_API_KEY"]
-    
     if 'sentence_to_colors' not in st.session_state:
         st.session_state.sentence_to_colors = {}
-        
-    if 'tone_levels' not in st.session_state:
-        st.session_state.tone_levels = {}
-        
+    if 'tone_scores' not in st.session_state:
+        st.session_state.tone_scores = {}
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
         'Silver': ['Activate', 'Campaign', 'Challenge', 'Commit', 'Confront', 'Dare', 'Defy', 'Disrupting', 'Drive', 'Excite', 'Face', 'Ignite', 'Incite', 'Influence', 'Inspire', 'Inspirit', 'Motivate', 'Move', 'Push', 'Rebel', 'Reimagine', 'Revolutionize', 'Rise', 'Spark', 'Stir', 'Fight', 'Free', 'Aggressive', 'Bold', 'Brazen', 'Committed', 'Courageous', 'Daring', 'Disruptive', 'Driven', 'Fearless', 'Free', 'Gutsy', 'Independent', 'Inspired', 'Motivated', 'Rebellious', 'Revolutionary', 'Unafraid', 'Unconventional'],
@@ -101,24 +101,20 @@ def main():
         'Orange': ['Compose', 'Conceptualize', 'Conceive', 'Craft', 'Create', 'Design', 'Dream', 'Envision', 'Express', 'Fashion', 'Form', 'Imagine', 'Interpret', 'Make', 'Originate', 'Paint', 'Perform', 'Portray', 'Realize', 'Shape', 'Abstract', 'Artistic', 'Avant-garde', 'Colorful', 'Conceptual', 'Contemporary', 'Creative', 'Decorative', 'Eccentric', 'Eclectic', 'Evocative', 'Expressive', 'Imaginative', 'Interpretive', 'Offbeat', 'One-of-a-kind', 'Original', 'Uncommon', 'Unconventional', 'Unexpected', 'Unique', 'Vibrant', 'Whimsical'],
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
-    
     user_content = st.text_area('Paste your content here:')
-    
     if st.button('Analyze'):
-        st.session_state.sentence_to_colors = {}
-        
         color_counts = analyze_text(user_content, color_keywords)
+        st.session_state.color_counts = color_counts
         initial_fig = draw_donut_chart(color_counts)
         st.subheader('Initial Donut Chart')
         st.plotly_chart(initial_fig)
-        
-        st.session_state.tone_levels = analyze_tone_with_gpt3(user_content, openai_api_key)
-        st.subheader("Initial Tone Analysis")
-        for tone, level in st.session_state.tone_levels.items():
-            st.write(f"{tone}: {level}")
-        
+        st.session_state.tone_scores = analyze_tone_with_gpt3(user_content, openai_api_key)
+        tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
+        tone_fig.update_layout(xaxis_title='Tone', yaxis_title='Score')
+        st.subheader("Tone Analysis")
+        st.plotly_chart(tone_fig)
         sentences = re.split(r'[.!?]', user_content)
-        st.subheader("Sentences scored by color")
+        sentence_to_colors = {}
         for sentence in sentences:
             if not sentence.strip():
                 continue
@@ -126,27 +122,29 @@ def main():
             for color, keywords in color_keywords.items():
                 if any(keyword.lower() in sentence.lower() for keyword in keywords):
                     initial_colors.append(color)
+            sentence_to_colors[sentence] = initial_colors
+        st.session_state.sentence_to_colors = sentence_to_colors
+    if 'tone_scores' in st.session_state and st.session_state.tone_scores:
+        for tone in st.session_state.tone_scores.keys():
+            st.session_state.tone_scores[tone] = st.slider(f"{tone}", 0, 100, int(st.session_state.tone_scores[tone]))
+        tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
+        tone_fig.update_layout(xaxis_title='Tone', yaxis_title='Score')
+        st.subheader("Updated Tone Analysis")
+        st.plotly_chart(tone_fig)
+    if 'sentence_to_colors' in st.session_state and st.session_state.sentence_to_colors:
+        updated_color_counts = Counter()
+        for sentence, initial_colors in st.session_state.sentence_to_colors.items():
             selected_colors = st.multiselect(
-                f"{sentence}. [{', '.join(initial_colors)}]",
+                f"{sentence}.",
                 list(color_keywords.keys()),
                 default=initial_colors
             )
-            st.session_state.sentence_to_colors[sentence] = selected_colors
-
-    if st.session_state.sentence_to_colors:
-        st.subheader("Update Tone Levels")
-        for tone in st.session_state.tone_levels.keys():
-            st.session_state.tone_levels[tone] = st.selectbox(f"{tone}", ["Low", "Medium", "High"], index=["Low", "Medium", "High"].index(st.session_state.tone_levels[tone]))
-
-        st.subheader("Updated Tone Analysis")
-        for tone, level in st.session_state.tone_levels.items():
-            st.write(f"{tone}: {level}")
-
-        updated_fig = draw_donut_chart(st.session_state.sentence_to_colors)
-        st.subheader('Updated Donut Chart based on User Reassignments')
+            for color in selected_colors:
+                updated_color_counts[color] += 1
+        updated_fig = draw_donut_chart(updated_color_counts)
+        st.subheader('Updated Donut Chart')
         st.plotly_chart(updated_fig)
-        
-        word_file_path = generate_word_doc(st.session_state.sentence_to_colors, st.session_state.tone_levels, user_content)
+        word_file_path = generate_word_doc(updated_color_counts, user_content, st.session_state.tone_scores, initial_fig, tone_fig, updated_fig)
         download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
         st.markdown(download_link, unsafe_allow_html=True)
 
