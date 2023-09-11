@@ -94,8 +94,16 @@ def main():
     if st.button('Analyze'):
         color_counts = analyze_text(user_content, color_keywords)
         st.session_state.color_counts = color_counts
+        initial_fig = draw_donut_chart(color_counts)
+        st.subheader('Initial Donut Chart')
+        st.plotly_chart(initial_fig)
         st.session_state.tone_scores = analyze_tone_with_gpt3(user_content, openai_api_key)
+        tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
+        tone_fig.update_layout(title='Tone Analysis', xaxis_title='Tone', yaxis_title='Percentage (%)')
+        st.subheader("Tone Analysis")
+        st.plotly_chart(tone_fig)
         sentences = re.split(r'[.!?]', user_content)
+        st.subheader("Sentences scored by color")
         sentence_to_colors = {}
         for sentence in sentences:
             if not sentence.strip():
@@ -106,18 +114,14 @@ def main():
                     initial_colors.append(color)
             sentence_to_colors[sentence] = initial_colors
         st.session_state.sentence_to_colors = sentence_to_colors
-    if 'color_counts' in st.session_state and st.session_state.color_counts:
-        initial_fig = draw_donut_chart(st.session_state.color_counts)
-        st.subheader('Initial Donut Chart')
-        st.plotly_chart(initial_fig)
     if 'tone_scores' in st.session_state and st.session_state.tone_scores:
         for tone in st.session_state.tone_scores.keys():
             st.session_state.tone_scores[tone] = st.slider(f"{tone} (%)", 0, 100, int(st.session_state.tone_scores[tone]))
         tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
-        tone_fig.update_layout(title='Tone Analysis', xaxis_title='Tone', yaxis_title='Percentage (%)')
-        st.subheader("Tone Analysis")
+        tone_fig.update_layout(title='Updated Tone Analysis', xaxis_title='Tone', yaxis_title='Percentage (%)')
+        st.subheader("Updated Tone Analysis")
         st.plotly_chart(tone_fig)
-    if st.session_state.sentence_to_colors:
+    if 'sentence_to_colors' in st.session_state and st.session_state.sentence_to_colors:
         st.subheader("Sentences scored by color")
         updated_color_counts = Counter()
         for sentence, initial_colors in st.session_state.sentence_to_colors.items():
