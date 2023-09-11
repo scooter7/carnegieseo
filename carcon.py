@@ -91,5 +91,8 @@ def main():
     if st.session_state.revision_made:
         perform_analysis(st.session_state.user_content, color_keywords)
 
+    if st.button("Refresh Analysis"):
+        perform_analysis(st.session_state.user_content, color_keywords)
+
 if __name__ == '__main__':
     main()
