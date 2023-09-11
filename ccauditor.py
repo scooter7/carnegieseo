@@ -80,7 +80,6 @@ def main():
     user_content = st.text_area('Paste your content here:')
     initial_fig = None
     tone_fig = None
-    updated_fig = None
 
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
@@ -93,7 +92,7 @@ def main():
         'Orange': ['Compose', 'Conceptualize', 'Conceive', 'Craft', 'Create', 'Design', 'Dream', 'Envision', 'Express', 'Fashion', 'Form', 'Imagine', 'Interpret', 'Make', 'Originate', 'Paint', 'Perform', 'Portray', 'Realize', 'Shape', 'Abstract', 'Artistic', 'Avant-garde', 'Colorful', 'Conceptual', 'Contemporary', 'Creative', 'Decorative', 'Eccentric', 'Eclectic', 'Evocative', 'Expressive', 'Imaginative', 'Interpretive', 'Offbeat', 'One-of-a-kind', 'Original', 'Uncommon', 'Unconventional', 'Unexpected', 'Unique', 'Vibrant', 'Whimsical'],
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
-
+    
     if st.button('Analyze'):
         initial_color_counts = analyze_text(user_content, color_keywords)
         initial_fig = draw_donut_chart(initial_color_counts)
@@ -122,23 +121,23 @@ def main():
     # Revising color assignments
     sentences = user_content.split('.')
     sentence_to_colors = {}
+    updated_color_counts = initial_color_counts.copy()
+    
     for sentence in sentences:
         sentence = sentence.strip()
         if sentence:
-            initial_colors = ["Red", "Blue"]  # You should replace this with the actual initial colors determined for the sentence
+            initial_colors = ["Red", "Blue"]  # Replace with the actual initial colors determined for the sentence
             st.write(f"{sentence} ({', '.join(initial_colors)})")
             options = list(color_keywords.keys())
             selected_options = st.multiselect(f"Reassign color for: {sentence}", options, [])
             if selected_options:
                 sentence_to_colors[sentence] = selected_options
-            else:
-                sentence_to_colors[sentence] = initial_colors
+                for color in initial_colors:
+                    updated_color_counts[color] -= 1
+                for color in selected_options:
+                    updated_color_counts[color] += 1
     
     st.session_state.sentence_to_colors = sentence_to_colors
-    updated_color_counts = Counter()
-    for sentence, colors in sentence_to_colors.items():
-        for color in colors:
-            updated_color_counts[color] += 1
     
     updated_fig = draw_donut_chart(updated_color_counts)
     st.subheader('Updated Donut Chart')
