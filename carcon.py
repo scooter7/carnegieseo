@@ -57,6 +57,7 @@ def generate_word_doc(color_counts, user_content, tone_scores, color_keywords):
 
 def main():
     st.title('Color Personality Analysis')
+    
     if 'user_content' not in st.session_state:
         st.session_state.user_content = ""
         
@@ -72,7 +73,6 @@ def main():
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
     
-    tone_keywords = {
         "Relaxed": ["calm", "peaceful", "easygoing", "informal"],
         "Assertive": ["confident", "aggressive", "self-assured", "dogmatic"],
         "Introverted": ["calm", "solitude", "introspective", "reserved"],
@@ -82,7 +82,7 @@ def main():
         "Emotive": ["emotional", "passionate", "intense"],
         "Informative": ["inform", "disclose", "instructive"]
     }
-        
+
     user_content = st.text_area('Paste your content here:', value=st.session_state.user_content)
     st.session_state.user_content = user_content
 
@@ -98,6 +98,30 @@ def main():
         word_file_path = generate_word_doc(color_counts, user_content, tone_scores, color_keywords)
         download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
         st.markdown(download_link, unsafe_allow_html=True)
+        
+        # Sentence Color Scoring
+        sentences = re.split(r'[.!?]', user_content)
+        st.subheader("Sentence Color Scoring")
+        for sentence in sentences:
+            if sentence.strip():
+                sentence_color_counts = analyze_text(sentence, color_keywords)
+                max_color = max(sentence_color_counts, key=sentence_color_counts.get, default="None")
+                st.write(f"{sentence.strip()} ({max_color})")
+                
+        # Revision Section
+        st.subheader("Revision Field")
+        revision_input = st.text_area("Paste a sentence here for revision:")
+        revised_color = st.selectbox("Select the revised color:", list(color_keywords.keys()))
+        
+        if st.button("Apply Revision"):
+            if revision_input:
+                pattern = re.escape(revision_input.strip()) + r'\s*\((\w+)\)'
+                match = re.search(pattern, user_content)
+                if match:
+                    old_color = match.group(1)
+                    revised_sentence = f"{revision_input.strip()} ({revised_color})"
+                    st.session_state.user_content = re.sub(pattern, revised_sentence, user_content)
+                    st.success(f"Sentence revised from '{old_color}' to '{revised_color}'.")
 
 if __name__ == '__main__':
     main()
