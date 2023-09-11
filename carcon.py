@@ -1,4 +1,3 @@
-
 import streamlit as st
 import re
 import plotly.graph_objects as go
@@ -89,10 +88,8 @@ def main():
                 st.session_state.revision_made = True
 
     if st.session_state.revision_made:
-        perform_analysis(st.session_state.user_content, color_keywords)
-
-    if st.button("Refresh Analysis"):
-        perform_analysis(st.session_state.user_content, color_keywords)
+        if st.button("Apply Revision"):
+            perform_analysis(st.session_state.user_content, color_keywords)
 
 if __name__ == '__main__':
     main()
