@@ -1,3 +1,4 @@
+
 import streamlit as st
 import re
 import plotly.graph_objects as go
@@ -8,6 +9,10 @@ from docx.shared import Inches
 import openai
 import io
 import matplotlib.pyplot as plt
+import streamlit as st
+import re
+import plotly.graph_objects as go
+from collections import Counter
 
 def analyze_text(text, color_keywords):
     text = text.lower()
@@ -38,25 +43,15 @@ def draw_donut_chart(color_counts, color_keywords):
     fig = go.Figure(data=[go.Pie(labels=labels, values=sizes, hole=.3, marker=dict(colors=colors))])
     return fig
 
-def analyze_tone(text):
-    tone_keywords = {
-        "Relaxed": ["calm", "peaceful", "easygoing", "informal"],
-        "Assertive": ["confident", "aggressive", "self-assured", "dogmatic"],
-        "Introverted": ["calm", "solitude", "introspective", "reserved"],
-        "Extroverted": ["social", "energetic", "outgoing"],
-        "Conservative": ["traditional", "status quo", "orthodox"],
-        "Progressive": ["reform", "liberal", "innovative"],
-        "Emotive": ["emotional", "passionate", "intense"],
-        "Informative": ["inform", "disclose", "instructive"]
-    }
-    text = text.lower()
-    words = re.findall(r'\b\w+\b', text)
-    tone_counts = Counter()
-    for tone, keywords in tone_keywords.items():
-        tone_counts[tone] = sum(words.count(k.lower()) for k in keywords)
-    total_count = sum(tone_counts.values())
-    tone_scores = {tone: (count / total_count) * 100 for tone, count in tone_counts.items()}
-    return tone_scores
+def perform_analysis(user_content, color_keywords):
+    color_counts = analyze_text(user_content, color_keywords)
+    st.subheader("Color Analysis")
+    donut_chart = draw_donut_chart(color_counts, color_keywords)
+    st.plotly_chart(donut_chart)
+    scored_sentences = analyze_sentences_by_color(user_content, color_keywords)
+    st.subheader("Scored Sentences")
+    for sentence, color in scored_sentences:
+        st.write(f"{sentence} ({color})")
 
 def main():
     color_keywords = {
@@ -71,27 +66,14 @@ def main():
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
 
-    user_content = ""
-    assigned_colors = {}
-    analyze_button_key = "analyze_button"
-    user_content = st.text_area('Paste your content here:')
+    if 'user_content' not in st.session_state:
+        st.session_state.user_content = ""
 
-    if user_content:
-        analyze_button_key = "analyze_button_new_content"
+    user_content = st.text_area('Paste your content here:', value=st.session_state.user_content)
 
-    if st.button('Analyze', key=analyze_button_key):
-        color_counts = analyze_text(user_content, color_keywords)
-        st.subheader("Color Analysis")
-        donut_chart = draw_donut_chart(color_counts, color_keywords)
-        st.plotly_chart(donut_chart)
-        tone_counts = analyze_tone(user_content)
-        st.subheader("Tone Analysis")
-        st.bar_chart(tone_counts)
-
-        scored_sentences = analyze_sentences_by_color(user_content, color_keywords)
-        st.subheader("Scored Sentences")
-        for sentence, color in scored_sentences:
-            st.write(f"{sentence} ({color})")
+    if st.button('Analyze'):
+        st.session_state.user_content = user_content
+        perform_analysis(user_content, color_keywords)
 
     st.subheader("Revision Field")
     revision_input = st.text_area("Paste a sentence here for revision:")
@@ -100,22 +82,13 @@ def main():
     if st.button("Submit Revision"):
         if revision_input:
             pattern = re.escape(revision_input.strip()) + r'\s*\((\w+)\)'
-            match = re.search(pattern, user_content)
+            match = re.search(pattern, st.session_state.user_content)
             if match:
                 old_color = match.group(1)
                 revised_sentence = f"{revision_input.strip()} ({revised_color})"
-                user_content = re.sub(pattern, revised_sentence, user_content)
+                st.session_state.user_content = re.sub(pattern, revised_sentence, st.session_state.user_content)
                 st.success(f"Sentence revised from '{old_color}' to '{revised_color}'.")
-
-            color_counts = analyze_text(user_content, color_keywords)
-            st.subheader("Color Analysis")
-            donut_chart = draw_donut_chart(color_counts, color_keywords)
-            st.plotly_chart(donut_chart)
-
-            scored_sentences = analyze_sentences_by_color(user_content, color_keywords)
-            st.subheader("Scored Sentences")
-            for sentence, color in scored_sentences:
-                st.write(f"{sentence} ({color})")
+            perform_analysis(st.session_state.user_content, color_keywords)
 
 if __name__ == '__main__':
     main()
