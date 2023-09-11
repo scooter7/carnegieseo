@@ -141,7 +141,9 @@ def main():
         
         updated_color_counts = Counter()
         for sentence, initial_colors in st.session_state.sentence_to_colors.items():
-            selected_colors = st.multiselect(f"{sentence}.", list(color_keywords.keys()), default=initial_colors)
+            selected_colors = st.multiselect(f"{sentence} (Initial colors: {', '.join(initial_colors)}) ", list(color_keywords.keys()), default=[])
+            if not selected_colors:
+                selected_colors = initial_colors
             for color in selected_colors:
                 updated_color_counts[color] += 1
         
