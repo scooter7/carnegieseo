@@ -2,11 +2,11 @@ import streamlit as st
 import re
 import plotly.graph_objects as go
 from collections import Counter
-import base64
 from docx import Document
 from docx.shared import Inches
 import io
 import matplotlib.pyplot as plt
+import base64
 
 def analyze_text(text, color_keywords):
     text = text.lower()
@@ -23,46 +23,14 @@ def draw_donut_chart(color_counts, color_keywords):
     fig = go.Figure(data=[go.Pie(labels=labels, values=sizes, hole=.3, marker=dict(colors=[colors[label] for label in labels]))])
     return fig
 
-def extract_examples(text, color_keywords, top_colors):
-    text = text.lower()
-    examples = {}
-    sentences = list(set(re.split(r'[.!?]', text)))
-    for color in top_colors:
-        examples[color] = set()
-        for keyword in color_keywords[color]:
-            keyword = keyword.lower()
-            for sentence in sentences:
-                if keyword in sentence:
-                    examples[color].add(sentence.strip() + '.')
-        examples[color] = list(examples[color])[:3]
-    return examples
-
-def analyze_tone(text):
-    tone_keywords = {
-        "Relaxed": ["calm", "peaceful", "easygoing", "informal"],
-        "Assertive": ["confident", "aggressive", "self-assured", "dogmatic"],
-        "Introverted": ["calm", "solitude", "introspective", "reserved"],
-        "Extroverted": ["social", "energetic", "outgoing"],
-        "Conservative": ["traditional", "status quo", "orthodox"],
-        "Progressive": ["reform", "liberal", "innovative"],
-        "Emotive": ["emotional", "passionate", "intense"],
-        "Informative": ["inform", "disclose", "instructive"]
-    }
-    text = text.lower()
-    words = re.findall(r'\b\w+\b', text)
-    tone_counts = Counter()
-    for tone, keywords in tone_keywords.items():
-        tone_counts[tone] = sum(words.count(k.lower()) for k in keywords)
-    total_count = sum(tone_counts.values())
-    tone_scores = {tone: (count / total_count) * 100 for tone, count in tone_counts.items()}
-    return tone_scores
-
-def get_word_file_download_link(file_path, filename):
-    with open(file_path, "rb") as f:
-        file_data = f.read()
-    b64_file = base64.b64encode(file_data).decode()
-    href = f'<a href="data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,{b64_file}" download="{filename}">Download Word Report</a>'
-    return href
+def annotate_sentences_with_color(text, color_keywords):
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+    annotated_sentences = []
+    for sentence in sentences:
+        color_counts = analyze_text(sentence, color_keywords)
+        dominant_color = max(color_counts, key=color_counts.get, default='None')
+        annotated_sentences.append(f"{sentence} ({dominant_color})")
+    return ' '.join(annotated_sentences)
 
 def plot_tone_analysis(tone_scores):
     fig, ax = plt.subplots()
@@ -73,7 +41,7 @@ def plot_tone_analysis(tone_scores):
     buf.seek(0)
     return buf
 
-def generate_word_doc(color_counts, examples, user_content, tone_scores, color_keywords):
+def generate_word_doc(color_counts, user_content, tone_scores, color_keywords):
     doc = Document()
     doc.add_heading('Color Personality Analysis', 0)
     fig = draw_donut_chart(color_counts, color_keywords)
@@ -83,17 +51,18 @@ def generate_word_doc(color_counts, examples, user_content, tone_scores, color_k
     tone_buf = plot_tone_analysis(tone_scores)
     doc.add_picture(tone_buf, width=Inches(4.0))
     tone_buf.close()
-    for tone, score in tone_scores.items():
-        doc.add_paragraph(f"{tone}: {score}%")
-    for color, example_sentences in examples.items():
-        doc.add_heading(f'Top Color: {color}', level=1)
-        for example in example_sentences:
-            doc.add_paragraph(example)
     doc.add_heading('Original Text:', level=1)
     doc.add_paragraph(user_content)
     word_file_path = "Color_Personality_Analysis_Report.docx"
     doc.save(word_file_path)
     return word_file_path
+
+def get_word_file_download_link(file_path, filename):
+    with open(file_path, "rb") as f:
+        file_data = f.read()
+    b64_file = base64.b64encode(file_data).decode()
+    href = f'<a href="data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,{b64_file}" download="{filename}">Download Word Report</a>'
+    return href
 
 def main():
     st.title('Color Personality Analysis')
@@ -116,26 +85,8 @@ def main():
     st.session_state.user_content = user_content
     
     if st.button('Analyze'):
-        color_counts = analyze_text(user_content, color_keywords)
-        total_counts = sum(color_counts.values())
-        if total_counts == 0:
-            st.write('No relevant keywords found.')
-            return
-        fig = draw_donut_chart(color_counts, color_keywords)
-        st.plotly_chart(fig)
-        sorted_colors = sorted(color_counts.items(), key=lambda x: x[1], reverse=True)
-        top_colors = [color for color, _ in sorted_colors[:3]]
-        examples = extract_examples(user_content, color_keywords, top_colors)
-        for color in top_colors:
-            st.write(f'Examples for {color}:')
-            st.write(', '.join(examples[color]))
-        tone_scores = analyze_tone(user_content)
-        st.subheader("Tone Analysis")
-        st.write("The text exhibits the following tones:")
-        st.bar_chart(tone_scores)
-        word_file_path = generate_word_doc(color_counts, examples, user_content, tone_scores, color_keywords)
-        download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
-        st.markdown(download_link, unsafe_allow_html=True)
+        annotated_text = annotate_sentences_with_color(user_content, color_keywords)
+        st.session_state.user_content = annotated_text
 
     st.subheader("Revision Field")
     revision_input = st.text_area("Paste a sentence here for revision:")
@@ -143,13 +94,12 @@ def main():
     
     if st.button("Apply Revision"):
         if revision_input:
-            pattern = re.escape(revision_input.strip())
-            if pattern in user_content:
+            pattern = re.escape(revision_input.strip()) + r'\s*\((\w+)\)'
+            match = re.search(pattern, st.session_state.user_content)
+            if match:
+                old_color = match.group(1)
                 revised_sentence = f"{revision_input.strip()} ({revised_color})"
-                st.session_state.user_content = user_content.replace(revision_input, revised_sentence)
-                st.success(f"Sentence revised to include '{revised_color}'.")
-            else:
-                st.error("The sentence was not found in the original content.")
+                st.session_state.user_content = re.sub(pattern, revised_sentence, st.session_state.user_content)
 
     st.text_area('Updated content:', value=st.session_state.user_content)
 
