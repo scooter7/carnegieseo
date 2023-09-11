@@ -72,6 +72,11 @@ def get_word_file_download_link(file_path, filename):
 def main():
     st.title('Color Personality Analysis')
 
+    if "OPENAI_API_KEY" not in st.secrets:
+        st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
+        return
+    openai_api_key = st.secrets["OPENAI_API_KEY"]
+
     if 'sentence_to_colors' not in st.session_state:
         st.session_state.sentence_to_colors = {}
         
