@@ -1,39 +1,39 @@
 import streamlit as st
 import re
-import plotly.graph_objects as go
 from collections import Counter
+import plotly.graph_objects as go
 from docx import Document
 from docx.shared import Inches
-import io
-import matplotlib.pyplot as plt
 import base64
+import io
 import openai
 
 def analyze_text(text, color_keywords):
-    words = text.split()
+    text = text.lower()
+    words = re.findall(r'\b\w+\b', text)
     color_counts = Counter()
     for color, keywords in color_keywords.items():
-        color_counts[color] = sum(words.count(k) for k in keywords)
+        color_counts[color] = sum(words.count(k.lower()) for k in keywords)
     return color_counts
 
 def draw_donut_chart(color_counts):
     labels = list(color_counts.keys())
     values = list(color_counts.values())
-    fig = go.Figure(data=[go.Pie(labels=labels, values=values, hole=.3)])
+    fig = go.Figure(data=[go.Pie(labels=labels, values=values, hole=.3, marker=dict(colors=labels))])
     return fig
 
 def analyze_tone_with_gpt3(text, api_key):
     openai.api_key = api_key
     prompt = f"""
     Please provide a nuanced analysis of the following text, assigning a percentage score to indicate the extent to which the text embodies each of the following tones:
-    - Relaxed: Characterized by a calm or peaceful nature, possibly informal or easygoing.
-    - Assertive: Exhibits confidence, perhaps aggressiveness or dogmatism.
-    - Introverted: Reflects calmness, solitude, introspection, or a reserved demeanor.
-    - Extroverted: Demonstrates social engagement, energetic behavior, or outgoing nature.
-    - Conservative: Leans towards traditional views, the status quo, or orthodox opinions.
-    - Progressive: Indicates a tendency for reform, liberal viewpoints, or innovation.
-    - Emotive: Shows emotional depth, passion, or intensity.
-    - Informative: Primarily focuses on delivering information, disclosure, or instructional content.
+    - Relaxed
+    - Assertive
+    - Introverted
+    - Extroverted
+    - Conservative
+    - Progressive
+    - Emotive
+    - Informative
     Text to Analyze:
     {text}
     """
@@ -67,14 +67,6 @@ def get_word_file_download_link(file_path, filename):
 
 def main():
     st.title('Color Personality Analysis')
-
-    if 'sentence_to_colors' not in st.session_state:
-        st.session_state.sentence_to_colors = {}
-    if 'initial_fig' not in st.session_state:
-        st.session_state.initial_fig = None
-    if 'tone_scores' not in st.session_state:
-        st.session_state.tone_scores = {}
-        
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
         'Silver': ['Activate', 'Campaign', 'Challenge', 'Commit', 'Confront', 'Dare', 'Defy', 'Disrupting', 'Drive', 'Excite', 'Face', 'Ignite', 'Incite', 'Influence', 'Inspire', 'Inspirit', 'Motivate', 'Move', 'Push', 'Rebel', 'Reimagine', 'Revolutionize', 'Rise', 'Spark', 'Stir', 'Fight', 'Free', 'Aggressive', 'Bold', 'Brazen', 'Committed', 'Courageous', 'Daring', 'Disruptive', 'Driven', 'Fearless', 'Free', 'Gutsy', 'Independent', 'Inspired', 'Motivated', 'Rebellious', 'Revolutionary', 'Unafraid', 'Unconventional'],
@@ -89,28 +81,27 @@ def main():
     user_content = st.text_area('Paste your content here:')
 
     if st.button('Analyze'):
-        st.session_state.sentence_to_colors = {}
         color_counts = analyze_text(user_content, color_keywords)
         initial_fig = draw_donut_chart(color_counts)
-        st.session_state.initial_fig = initial_fig
         st.plotly_chart(initial_fig)
 
-        if 'OPENAI_API_KEY' not in st.secrets:
-            st.error('Please set the OPENAI_API_KEY secret on the Streamlit dashboard.')
-            return
         openai_api_key = st.secrets['OPENAI_API_KEY']
         tone_scores = analyze_tone_with_gpt3(user_content, openai_api_key)
-        st.session_state.tone_scores = tone_scores
         st.bar_chart(tone_scores)
 
         word_file_path = generate_word_doc(color_counts, user_content, tone_scores)
         download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
         st.markdown(download_link, unsafe_allow_html=True)
-        
-    if st.session_state.initial_fig:
-        st.plotly_chart(st.session_state.initial_fig)
-    if st.session_state.tone_scores:
-        st.bar_chart(st.session_state.tone_scores)
+
+        sentences = re.split(r'[.!?]', user_content)
+        sentence_color_mapping = {}
+        for i, sentence in enumerate(sentences):
+            options = st.multiselect(f"Sentence {i+1}: {sentence}", list(color_keywords.keys()))
+            if options:
+                for color in options:
+                    sentence_color_mapping[color] = sentence_color_mapping.get(color, 0) + 1
+        revised_fig = draw_donut_chart(sentence_color_mapping)
+        st.plotly_chart(revised_fig)
 
 if __name__ == '__main__':
     main()
