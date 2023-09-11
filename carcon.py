@@ -17,10 +17,10 @@ def analyze_text(text, color_keywords):
         color_counts[color] = sum(words.count(k.lower()) for k in keywords)
     return color_counts
 
-def draw_donut_chart(color_counts, color_keywords):
-    labels = list(color_keywords.keys())
+def draw_donut_chart(color_counts):
+    labels = list(color_counts.keys())
     sizes = [color_counts.get(color, 0) for color in labels]
-    fig = go.Figure(data=[go.Pie(labels=labels, values=sizes, hole=.3)])
+    fig = go.Figure(data=[go.Pie(labels=labels, values=sizes, hole=.3, marker=dict(colors=labels))])
     return fig
 
 def analyze_tone(text):
@@ -40,13 +40,13 @@ def analyze_tone(text):
     for tone, keywords in tone_keywords.items():
         tone_counts[tone] = sum(words.count(k.lower()) for k in keywords)
     total_count = sum(tone_counts.values())
-    tone_scores = {tone: (count / total_count) * 100 for tone, count in tone_counts.items()}
+    tone_scores = {tone: (count / total_count) * 100 if total_count else 0 for tone, count in tone_counts.items()}
     return tone_scores
 
-def generate_word_doc(color_counts, user_content, tone_scores, color_keywords):
+def generate_word_doc(color_counts, user_content, tone_scores):
     doc = Document()
     doc.add_heading('Color Personality Analysis', 0)
-    fig = draw_donut_chart(color_counts, color_keywords)
+    fig = draw_donut_chart(color_counts)
     image_stream = io.BytesIO(fig.to_image(format="png"))
     doc.add_picture(image_stream, width=Inches(4.0))
     image_stream.close()
@@ -67,8 +67,10 @@ def get_word_file_download_link(file_path, filename):
 
 def main():
     st.title('Color Personality Analysis')
+    
     if 'sentence_to_colors' not in st.session_state:
         st.session_state.sentence_to_colors = {}
+        
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
         'Silver': ['Activate', 'Campaign', 'Challenge', 'Commit', 'Confront', 'Dare', 'Defy', 'Disrupting', 'Drive', 'Excite', 'Face', 'Ignite', 'Incite', 'Influence', 'Inspire', 'Inspirit', 'Motivate', 'Move', 'Push', 'Rebel', 'Reimagine', 'Revolutionize', 'Rise', 'Spark', 'Stir', 'Fight', 'Free', 'Aggressive', 'Bold', 'Brazen', 'Committed', 'Courageous', 'Daring', 'Disruptive', 'Driven', 'Fearless', 'Free', 'Gutsy', 'Independent', 'Inspired', 'Motivated', 'Rebellious', 'Revolutionary', 'Unafraid', 'Unconventional'],
@@ -81,12 +83,15 @@ def main():
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
     user_content = st.text_area('Paste your content here:')
+
     if st.button('Analyze'):
+        st.session_state.sentence_to_colors = {}
+        
         color_counts = analyze_text(user_content, color_keywords)
-        initial_fig = draw_donut_chart(color_counts, color_keywords)
+        initial_fig = draw_donut_chart(color_counts)
         st.subheader('Initial Donut Chart')
         st.plotly_chart(initial_fig)
-        st.session_state.sentence_to_colors = {}
+        
         sentences = re.split(r'[.!?]', user_content)
         for sentence in sentences:
             if not sentence.strip():
@@ -95,23 +100,36 @@ def main():
             for color, keywords in color_keywords.items():
                 if any(keyword.lower() in sentence.lower() for keyword in keywords):
                     initial_colors.append(color)
+            st.session_state.sentence_to_colors[sentence] = initial_colors
+            
+    if st.session_state.sentence_to_colors:
+        updated_color_counts = Counter()
+        for sentence, initial_colors in st.session_state.sentence_to_colors.items():
             selected_colors = st.multiselect(
                 f"{sentence}. [{', '.join(initial_colors)}]",
                 list(color_keywords.keys()),
                 default=initial_colors
             )
             st.session_state.sentence_to_colors[sentence] = selected_colors
-        updated_color_counts = Counter()
-        for sentence, colors in st.session_state.sentence_to_colors.items():
-            for color in colors:
+            for color in selected_colors:
                 updated_color_counts[color] += 1
-        updated_fig = draw_donut_chart(updated_color_counts, color_keywords)
+                
+        updated_fig = draw_donut_chart(updated_color_counts)
         st.subheader('Updated Donut Chart based on User Reassignments')
         st.plotly_chart(updated_fig)
+        
         tone_scores = analyze_tone(user_content)
         st.subheader("Tone Analysis")
-        st.bar_chart(tone_scores)
-        word_file_path = generate_word_doc(updated_color_counts, user_content, tone_scores, color_keywords)
+        
+        tone_colors = [tone for tone in tone_scores.keys()]
+        plt.bar(tone_scores.keys(), tone_scores.values(), color=tone_colors)
+        plt.xticks(rotation=45)
+        plt.xlabel('Tone')
+        plt.ylabel('Percentage (%)')
+        plt.title('Tone Analysis')
+        st.pyplot()
+        
+        word_file_path = generate_word_doc(updated_color_counts, user_content, tone_scores)
         download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
         st.markdown(download_link, unsafe_allow_html=True)
 
