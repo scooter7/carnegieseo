@@ -145,10 +145,11 @@ def main():
     st.subheader('Updated Donut Chart')
     st.plotly_chart(updated_fig)
     
-    # Always generate the download link
-    word_file_path = generate_word_doc(updated_color_counts, user_content, st.session_state.tone_scores, initial_fig, tone_fig, updated_fig)
-    download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
-    st.markdown(download_link, unsafe_allow_html=True)
+    # Always generate the download link if 'tone_scores' is in session state
+    if 'tone_scores' in st.session_state:
+        word_file_path = generate_word_doc(updated_color_counts, user_content, st.session_state.tone_scores, initial_fig, tone_fig, updated_fig)
+        download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
+        st.markdown(download_link, unsafe_allow_html=True)
 
 if __name__ == '__main__':
     main()
