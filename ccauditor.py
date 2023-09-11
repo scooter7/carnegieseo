@@ -131,16 +131,13 @@ def main():
                 initial_colors = [color for color, keywords in color_keywords.items() if any(keyword.lower() in sentence.lower() for keyword in keywords)]
                 st.session_state.sentence_to_colors[sentence] = initial_colors
 
-        st.session_state.updated_color_counts = color_counts
+        st.session_state.updated_color_counts = color_counts.copy()
 
     if st.session_state.init_done:
         for tone in st.session_state.tone_scores.keys():
             st.session_state.tone_scores[tone] = st.slider(f"{tone}", 0, 10, int(st.session_state.tone_scores[tone]))
-        updated_tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
-        updated_tone_fig.update_layout(xaxis_title='Tone', yaxis_title='Level')
-        st.subheader("Updated Tone Analysis")
-        st.plotly_chart(updated_tone_fig)
-
+        
+        st.session_state.updated_color_counts.clear()
         for sentence, initial_colors in st.session_state.sentence_to_colors.items():
             selected_colors = st.multiselect(f"{sentence}.", list(color_keywords.keys()), default=initial_colors)
             for color in selected_colors:
