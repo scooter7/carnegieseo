@@ -9,10 +9,6 @@ from docx.shared import Inches
 import openai
 import io
 import matplotlib.pyplot as plt
-import streamlit as st
-import re
-import plotly.graph_objects as go
-from collections import Counter
 
 def analyze_text(text, color_keywords):
     text = text.lower()
@@ -54,6 +50,11 @@ def perform_analysis(user_content, color_keywords):
         st.write(f"{sentence} ({color})")
 
 def main():
+    if 'user_content' not in st.session_state:
+        st.session_state.user_content = ""
+    if 'revision_made' not in st.session_state:
+        st.session_state.revision_made = False
+
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
         'Silver': ['Activate', 'Campaign', 'Challenge', 'Commit', 'Confront', 'Dare', 'Defy', 'Disrupting', 'Drive', 'Excite', 'Face', 'Ignite', 'Incite', 'Influence', 'Inspire', 'Inspirit', 'Motivate', 'Move', 'Push', 'Rebel', 'Reimagine', 'Revolutionize', 'Rise', 'Spark', 'Stir', 'Fight', 'Free', 'Aggressive', 'Bold', 'Brazen', 'Committed', 'Courageous', 'Daring', 'Disruptive', 'Driven', 'Fearless', 'Free', 'Gutsy', 'Independent', 'Inspired', 'Motivated', 'Rebellious', 'Revolutionary', 'Unafraid', 'Unconventional'],
@@ -66,13 +67,11 @@ def main():
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
 
-    if 'user_content' not in st.session_state:
-        st.session_state.user_content = ""
-
     user_content = st.text_area('Paste your content here:', value=st.session_state.user_content)
 
     if st.button('Analyze'):
         st.session_state.user_content = user_content
+        st.session_state.revision_made = False
         perform_analysis(user_content, color_keywords)
 
     st.subheader("Revision Field")
@@ -87,8 +86,10 @@ def main():
                 old_color = match.group(1)
                 revised_sentence = f"{revision_input.strip()} ({revised_color})"
                 st.session_state.user_content = re.sub(pattern, revised_sentence, st.session_state.user_content)
-                st.success(f"Sentence revised from '{old_color}' to '{revised_color}'.")
-            perform_analysis(st.session_state.user_content, color_keywords)
+                st.session_state.revision_made = True
+
+    if st.session_state.revision_made:
+        perform_analysis(st.session_state.user_content, color_keywords)
 
 if __name__ == '__main__':
     main()
