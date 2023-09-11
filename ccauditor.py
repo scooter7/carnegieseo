@@ -110,16 +110,17 @@ def main():
         else:
             st.warning("Could not analyze the tone of the text.")
     
+    # Tone sliders
     if 'tone_scores' in st.session_state:
         for tone in st.session_state.tone_scores.keys():
             st.session_state.tone_scores[tone] = st.slider(f"{tone}", 0, 10, int(st.session_state.tone_scores[tone]))
-        
+
         tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
         tone_fig.update_layout(xaxis_title='Tone', yaxis_title='Level')
         st.subheader("Updated Tone Analysis")
         st.plotly_chart(tone_fig)
-    
-    # Revising color assignments
+
+    # Sentence-level color assignment and reassignment
     sentences = user_content.split('.')
     sentence_to_colors = {}
     updated_color_counts = initial_color_counts.copy()
@@ -127,7 +128,7 @@ def main():
     for sentence in sentences:
         sentence = sentence.strip()
         if sentence:
-            initial_colors = ["Red", "Blue"]  # Replace with the actual initial colors determined for the sentence
+            initial_colors = []  # This should be determined from the analysis
             st.write(f"{sentence} ({', '.join(initial_colors)})")
             options = list(color_keywords.keys())
             selected_options = st.multiselect(f"Reassign color for: {sentence}", options, [])
@@ -144,12 +145,9 @@ def main():
     st.subheader('Updated Donut Chart')
     st.plotly_chart(updated_fig)
     
-    if initial_fig and tone_fig and updated_fig:
-        word_file_path = generate_word_doc(updated_color_counts, user_content, st.session_state.tone_scores, initial_fig, tone_fig, updated_fig)
-        download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
-    else:
-        download_link = "Analysis incomplete. Please complete all steps to generate the download link."
-    
+    # Always generate the download link
+    word_file_path = generate_word_doc(updated_color_counts, user_content, st.session_state.tone_scores, initial_fig, tone_fig, updated_fig)
+    download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
     st.markdown(download_link, unsafe_allow_html=True)
 
 if __name__ == '__main__':
