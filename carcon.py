@@ -5,7 +5,6 @@ from collections import Counter
 import base64
 from docx import Document
 from docx.shared import Inches
-import openai
 import io
 import matplotlib.pyplot as plt
 
@@ -37,12 +36,6 @@ def extract_examples(text, color_keywords, top_colors):
                     examples[color].add(sentence.strip() + '.')
         examples[color] = list(examples[color])[:3]
     return examples
-
-def analyze_with_gpt3(text, api_key):
-    openai.api_key = api_key
-    prompt = f"Please evaluate the following text and score it based on these tonal definitions: Relaxed, Assertive, Introverted, Extroverted, Conservative, Progressive, Emotive, Informative.\n\nText:\n{text}"
-    response = openai.Completion.create(engine="text-davinci-002", prompt=prompt, max_tokens=100)
-    return response.choices[0].text.strip()
 
 def analyze_tone(text):
     tone_keywords = {
@@ -80,7 +73,7 @@ def plot_tone_analysis(tone_scores):
     buf.seek(0)
     return buf
 
-def generate_word_doc(color_counts, examples, user_content, gpt3_analysis, tone_scores, color_keywords):
+def generate_word_doc(color_counts, examples, user_content, tone_scores, color_keywords):
     doc = Document()
     doc.add_heading('Color Personality Analysis', 0)
     fig = draw_donut_chart(color_counts, color_keywords)
@@ -98,23 +91,15 @@ def generate_word_doc(color_counts, examples, user_content, gpt3_analysis, tone_
             doc.add_paragraph(example)
     doc.add_heading('Original Text:', level=1)
     doc.add_paragraph(user_content)
-    doc.add_heading('GPT-3 Analysis:', level=1)
-    doc.add_paragraph(gpt3_analysis)
     word_file_path = "Color_Personality_Analysis_Report.docx"
     doc.save(word_file_path)
     return word_file_path
 
 def main():
     st.title('Color Personality Analysis')
-    if 'OPENAI_API_KEY' not in st.secrets:
-        st.error('Please set the OPENAI_API_KEY secret on the Streamlit dashboard.')
-        return
-    openai_api_key = st.secrets['OPENAI_API_KEY']
-
-    # Initialize session state for user_content
     if 'user_content' not in st.session_state:
         st.session_state.user_content = ""
-        
+
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
         'Silver': ['Activate', 'Campaign', 'Challenge', 'Commit', 'Confront', 'Dare', 'Defy', 'Disrupting', 'Drive', 'Excite', 'Face', 'Ignite', 'Incite', 'Influence', 'Inspire', 'Inspirit', 'Motivate', 'Move', 'Push', 'Rebel', 'Reimagine', 'Revolutionize', 'Rise', 'Spark', 'Stir', 'Fight', 'Free', 'Aggressive', 'Bold', 'Brazen', 'Committed', 'Courageous', 'Daring', 'Disruptive', 'Driven', 'Fearless', 'Free', 'Gutsy', 'Independent', 'Inspired', 'Motivated', 'Rebellious', 'Revolutionary', 'Unafraid', 'Unconventional'],
@@ -128,7 +113,7 @@ def main():
     }
 
     user_content = st.text_area('Paste your content here:', value=st.session_state.user_content)
-    st.session_state.user_content = user_content  # Update session state
+    st.session_state.user_content = user_content
     
     if st.button('Analyze'):
         color_counts = analyze_text(user_content, color_keywords)
@@ -144,31 +129,29 @@ def main():
         for color in top_colors:
             st.write(f'Examples for {color}:')
             st.write(', '.join(examples[color]))
-        gpt3_analysis = analyze_with_gpt3(user_content, openai_api_key)
-        st.write('GPT-3 Analysis:')
-        st.write(gpt3_analysis)
         tone_scores = analyze_tone(user_content)
         st.subheader("Tone Analysis")
         st.write("The text exhibits the following tones:")
         st.bar_chart(tone_scores)
-        word_file_path = generate_word_doc(color_counts, examples, user_content, gpt3_analysis, tone_scores, color_keywords)
+        word_file_path = generate_word_doc(color_counts, examples, user_content, tone_scores, color_keywords)
         download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
         st.markdown(download_link, unsafe_allow_html=True)
-        # Revision Section
+
     st.subheader("Revision Field")
     revision_input = st.text_area("Paste a sentence here for revision:")
     revised_color = st.selectbox("Select the revised color:", list(color_keywords.keys()))
     
     if st.button("Apply Revision"):
         if revision_input:
-            pattern = re.escape(revision_input.strip()) + r'\s*\((\w+)\)'
-            match = re.search(pattern, user_content)
-            if match:
-                old_color = match.group(1)
+            pattern = re.escape(revision_input.strip())
+            if pattern in user_content:
                 revised_sentence = f"{revision_input.strip()} ({revised_color})"
-                st.session_state.user_content = re.sub(pattern, revised_sentence, user_content)
-                st.success(f"Sentence revised from '{old_color}' to '{revised_color}'.")
+                st.session_state.user_content = user_content.replace(revision_input, revised_sentence)
+                st.success(f"Sentence revised to include '{revised_color}'.")
+            else:
+                st.error("The sentence was not found in the original content.")
+
+    st.text_area('Updated content:', value=st.session_state.user_content)
 
 if __name__ == '__main__':
     main()
-
