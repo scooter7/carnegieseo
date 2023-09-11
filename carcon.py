@@ -95,12 +95,15 @@ def main():
 
         sentences = re.split(r'[.!?]', user_content)
         sentence_color_mapping = {}
+        updated_color_counts = color_counts.copy()
+
         for i, sentence in enumerate(sentences):
-            options = st.multiselect(f"Sentence {i+1}: {sentence}", list(color_keywords.keys()))
+            initial_color = max(color_keywords, key=lambda k: analyze_text(sentence, color_keywords)[k])
+            options = st.multiselect(f"Sentence {i+1}: {sentence} (Initial: {initial_color})", list(color_keywords.keys()), default=[initial_color])
             if options:
                 for color in options:
-                    sentence_color_mapping[color] = sentence_color_mapping.get(color, 0) + 1
-        revised_fig = draw_donut_chart(sentence_color_mapping)
+                    updated_color_counts[color] = updated_color_counts.get(color, 0) + 1
+        revised_fig = draw_donut_chart(updated_color_counts)
         st.plotly_chart(revised_fig)
 
 if __name__ == '__main__':
