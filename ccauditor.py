@@ -147,7 +147,7 @@ def main():
         updated_fig = draw_donut_chart(updated_color_counts)
         st.subheader('Updated Donut Chart')
         st.plotly_chart(updated_fig)
-        if initial_fig and tone_fig and updated_fig:
+        if initial_fig is not None and tone_fig is not None and updated_fig is not None:
             word_file_path = generate_word_doc(updated_color_counts, user_content, st.session_state.tone_scores, initial_fig, tone_fig, updated_fig)
             download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
             st.markdown(download_link, unsafe_allow_html=True)
