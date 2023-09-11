@@ -25,7 +25,21 @@ def draw_donut_chart(color_counts):
 
 def analyze_tone_with_gpt3(text, api_key):
     openai.api_key = api_key
-    prompt = f"Please evaluate the following text and provide a percentage score for each of the following tonal categories: Relaxed, Assertive, Introverted, Extroverted, Conservative, Progressive, Emotive, Informative.\n\nText:\n{text}"
+    prompt = f"""
+    Please provide a nuanced analysis of the following text, assigning a percentage score to indicate the extent to which the text embodies each of the following tones:
+
+    - Relaxed: Characterized by a calm or peaceful nature, possibly informal or easygoing.
+    - Assertive: Exhibits confidence, perhaps aggressiveness or dogmatism.
+    - Introverted: Reflects calmness, solitude, introspection, or a reserved demeanor.
+    - Extroverted: Demonstrates social engagement, energetic behavior, or outgoing nature.
+    - Conservative: Leans towards traditional views, the status quo, or orthodox opinions.
+    - Progressive: Indicates a tendency for reform, liberal viewpoints, or innovation.
+    - Emotive: Shows emotional depth, passion, or intensity.
+    - Informative: Primarily focuses on delivering information, disclosure, or instructional content.
+
+    Text to Analyze:
+    {text}
+    """
     response = openai.Completion.create(engine="text-davinci-002", prompt=prompt, max_tokens=100)
     gpt3_output = response.choices[0].text.strip().split('\n')
     tone_scores = {}
