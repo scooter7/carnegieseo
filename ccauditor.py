@@ -94,8 +94,8 @@ def main():
         st.session_state.sentence_to_colors = {}
     if 'tone_scores' not in st.session_state:
         st.session_state.tone_scores = {}
-    if 'updated_color_counts' not in st.session_state:
-        st.session_state.updated_color_counts = Counter()
+    if 'initial_color_counts' not in st.session_state:
+        st.session_state.initial_color_counts = Counter()
 
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
@@ -110,10 +110,13 @@ def main():
     }
 
     user_content = st.text_area('Paste your content here:')
+    initial_fig = None
+    tone_fig = None
+    updated_fig = None
     
     if st.button('Analyze'):
         color_counts = analyze_text(user_content, color_keywords)
-        st.session_state.updated_color_counts = color_counts.copy()  # Initialize updated_color_counts based on initial analysis
+        st.session_state.initial_color_counts = color_counts.copy()  # Initialize initial_color_counts based on initial analysis
         initial_fig = draw_donut_chart(color_counts)
         st.subheader('Initial Donut Chart')
         st.plotly_chart(initial_fig)
@@ -138,7 +141,7 @@ def main():
         for tone, score in st.session_state.tone_scores.items():
             st.session_state.tone_scores[tone] = st.slider(f"{tone}", 0, 10, int(score / 10))
 
-    updated_color_counts = st.session_state.updated_color_counts.copy()
+    updated_color_counts = st.session_state.initial_color_counts.copy()
     
     if st.session_state.sentence_to_colors:
         for sentence, initial_colors in st.session_state.sentence_to_colors.items():
@@ -150,7 +153,7 @@ def main():
     st.subheader('Updated Donut Chart')
     st.plotly_chart(updated_fig)
     
-    if st.session_state.tone_scores:
+    if st.session_state.tone_scores and initial_fig and tone_fig:
         tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
         tone_fig.update_layout(xaxis_title='Tone', yaxis_title='Level')
         st.subheader("Updated Tone Analysis")
