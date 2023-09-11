@@ -95,6 +95,17 @@ def main():
         color_counts = analyze_text(user_content, color_keywords)
         st.session_state.color_counts = color_counts
         st.session_state.tone_scores = analyze_tone_with_gpt3(user_content, openai_api_key)
+        sentences = re.split(r'[.!?]', user_content)
+        sentence_to_colors = {}
+        for sentence in sentences:
+            if not sentence.strip():
+                continue
+            initial_colors = []
+            for color, keywords in color_keywords.items():
+                if any(keyword.lower() in sentence.lower() for keyword in keywords):
+                    initial_colors.append(color)
+            sentence_to_colors[sentence] = initial_colors
+        st.session_state.sentence_to_colors = sentence_to_colors
     if 'color_counts' in st.session_state and st.session_state.color_counts:
         initial_fig = draw_donut_chart(st.session_state.color_counts)
         st.subheader('Initial Donut Chart')
@@ -107,7 +118,7 @@ def main():
         st.subheader("Tone Analysis")
         st.plotly_chart(tone_fig)
     if st.session_state.sentence_to_colors:
-        st.subheader("Update Color Scores")
+        st.subheader("Sentences scored by color")
         updated_color_counts = Counter()
         for sentence, initial_colors in st.session_state.sentence_to_colors.items():
             selected_colors = st.multiselect(
