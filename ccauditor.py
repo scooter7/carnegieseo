@@ -110,6 +110,7 @@ def main():
     }
 
     user_content = st.text_area('Paste your content here:')
+    initial_fig, tone_fig, updated_fig = None, None, None
     
     if st.button('Analyze'):
         color_counts = analyze_text(user_content, color_keywords)
@@ -148,9 +149,9 @@ def main():
         updated_fig = draw_donut_chart(st.session_state.updated_color_counts)
         st.subheader('Updated Donut Chart')
         st.plotly_chart(updated_fig)
-
-        if st.session_state.tone_scores and st.session_state.updated_color_counts:
-            word_file_path = generate_word_doc(st.session_state.updated_color_counts, user_content, st.session_state.tone_scores)
+        
+        if initial_fig and tone_fig and updated_fig:
+            word_file_path = generate_word_doc(st.session_state.updated_color_counts, user_content, st.session_state.tone_scores, initial_fig, tone_fig, updated_fig)
             download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
             st.markdown(download_link, unsafe_allow_html=True)
 
