@@ -83,6 +83,7 @@ def get_word_file_download_link(file_path, filename):
 
 def main():
     st.title('Color Personality Analysis')
+    
     if "OPENAI_API_KEY" not in st.secrets:
         st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
         return
@@ -94,9 +95,6 @@ def main():
         st.session_state.tone_scores = {}
         st.session_state.sentence_to_colors = {}
         st.session_state.updated_color_counts = Counter()
-        st.session_state.initial_fig = None
-        st.session_state.tone_fig = None
-        st.session_state.updated_fig = None
     
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
@@ -116,15 +114,11 @@ def main():
         color_counts = analyze_text(user_content, color_keywords)
         st.session_state.updated_color_counts = color_counts.copy()
         
-        st.session_state.initial_fig = draw_donut_chart(color_counts)
+        initial_fig = draw_donut_chart(color_counts)
         st.subheader('Initial Donut Chart')
-        st.plotly_chart(st.session_state.initial_fig)
+        st.plotly_chart(initial_fig)
         
         st.session_state.tone_scores = analyze_tone_with_gpt3(user_content, openai_api_key)
-        st.session_state.tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
-        st.session_state.tone_fig.update_layout(xaxis_title='Tone', yaxis_title='Level')
-        st.subheader("Tone Analysis")
-        st.plotly_chart(st.session_state.tone_fig)
         
         sentences = re.split(r'[.!?]', user_content)
         st.session_state.sentence_to_colors = {}
@@ -132,10 +126,15 @@ def main():
             if sentence.strip():
                 initial_colors = [color for color, keywords in color_keywords.items() if any(keyword.lower() in sentence.lower() for keyword in keywords)]
                 st.session_state.sentence_to_colors[sentence] = initial_colors
-
+    
     if st.session_state.init_done:
         for tone in st.session_state.tone_scores.keys():
             st.session_state.tone_scores[tone] = st.slider(f"{tone}", 0, 10, int(st.session_state.tone_scores[tone]))
+        
+        tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
+        tone_fig.update_layout(xaxis_title='Tone', yaxis_title='Level')
+        st.subheader("Updated Tone Analysis")
+        st.plotly_chart(tone_fig)
         
         updated_color_counts = Counter()
         for sentence, initial_colors in st.session_state.sentence_to_colors.items():
@@ -143,16 +142,13 @@ def main():
             for color in selected_colors:
                 updated_color_counts[color] += 1
         
-        st.session_state.updated_fig = draw_donut_chart(updated_color_counts)
+        updated_fig = draw_donut_chart(updated_color_counts)
         st.subheader('Updated Donut Chart')
-        st.plotly_chart(st.session_state.updated_fig)
-
-        word_file_path = generate_word_doc(updated_color_counts, user_content, st.session_state.tone_scores, st.session_state.initial_fig, st.session_state.tone_fig, st.session_state.updated_fig)
+        st.plotly_chart(updated_fig)
+        
+        word_file_path = generate_word_doc(updated_color_counts, user_content, st.session_state.tone_scores, initial_fig, tone_fig, updated_fig)
         download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
         st.markdown(download_link, unsafe_allow_html=True)
-
-        st.subheader("Tone Analysis")
-        st.plotly_chart(st.session_state.tone_fig)
 
 if __name__ == '__main__':
     main()
