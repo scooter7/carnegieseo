@@ -30,8 +30,9 @@ def analyze_tone_with_gpt3(text, api_key):
     gpt3_output = response.choices[0].text.strip().split('\n')
     tone_scores = {}
     for line in gpt3_output:
-        tone, score = line.split(":")
-        tone_scores[tone.strip()] = float(score.strip())
+        if ":" in line:
+            tone, score = line.split(":")
+            tone_scores[tone.strip()] = float(score.strip())
     return tone_scores
 
 def generate_word_doc(color_counts, user_content, tone_scores):
