@@ -30,7 +30,7 @@ def analyze_tone_with_gpt3(text, api_key):
     tone_scores = {}
     for line in gpt3_output:
         if ":" in line:
-            tone, score = line.split(":")
+            tone, score = line.split(":", 1)
             if score.strip():
                 tone_scores[tone.strip()] = float(score.strip())
     return tone_scores
