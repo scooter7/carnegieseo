@@ -110,13 +110,10 @@ def main():
     }
 
     user_content = st.text_area('Paste your content here:')
-    initial_fig = None
-    tone_fig = None
-    updated_fig = None
     
     if st.button('Analyze'):
         color_counts = analyze_text(user_content, color_keywords)
-        st.session_state.initial_color_counts = color_counts.copy()  # Initialize initial_color_counts based on initial analysis
+        st.session_state.initial_color_counts = color_counts.copy()
         initial_fig = draw_donut_chart(color_counts)
         st.subheader('Initial Donut Chart')
         st.plotly_chart(initial_fig)
@@ -136,10 +133,15 @@ def main():
                 if any(keyword.lower() in sentence.lower() for keyword in keywords):
                     initial_colors.append(color)
             st.session_state.sentence_to_colors[sentence] = initial_colors
-
+    
     if st.session_state.tone_scores:
         for tone, score in st.session_state.tone_scores.items():
             st.session_state.tone_scores[tone] = st.slider(f"{tone}", 0, 10, int(score / 10))
+
+        tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
+        tone_fig.update_layout(xaxis_title='Tone', yaxis_title='Level')
+        st.subheader("Updated Tone Analysis")
+        st.plotly_chart(tone_fig)
 
     updated_color_counts = st.session_state.initial_color_counts.copy()
     
@@ -148,18 +150,13 @@ def main():
             selected_colors = st.multiselect(f"{sentence}.", list(color_keywords.keys()), default=initial_colors)
             for color in selected_colors:
                 updated_color_counts[color] += 1
-        
+
     updated_fig = draw_donut_chart(updated_color_counts)
     st.subheader('Updated Donut Chart')
     st.plotly_chart(updated_fig)
-    
-    if st.session_state.tone_scores and initial_fig and tone_fig:
-        tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
-        tone_fig.update_layout(xaxis_title='Tone', yaxis_title='Level')
-        st.subheader("Updated Tone Analysis")
-        st.plotly_chart(tone_fig)
-        
-        word_file_path = generate_word_doc(updated_color_counts, user_content, st.session_state.tone_scores, initial_fig, tone_fig, updated_fig)
+
+    if st.session_state.tone_scores and st.session_state.initial_color_counts:
+        word_file_path = generate_word_doc(updated_color_counts, user_content, st.session_state.tone_scores, draw_donut_chart(st.session_state.initial_color_counts), tone_fig, updated_fig)
         download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
         st.markdown(download_link, unsafe_allow_html=True)
 
