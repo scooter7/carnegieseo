@@ -76,6 +76,7 @@ def main():
         st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
         return
     openai_api_key = st.secrets["OPENAI_API_KEY"]
+    
     user_content = st.text_area('Paste your content here:')
     initial_fig = None
     tone_fig = None
@@ -92,7 +93,7 @@ def main():
         'Orange': ['Compose', 'Conceptualize', 'Conceive', 'Craft', 'Create', 'Design', 'Dream', 'Envision', 'Express', 'Fashion', 'Form', 'Imagine', 'Interpret', 'Make', 'Originate', 'Paint', 'Perform', 'Portray', 'Realize', 'Shape', 'Abstract', 'Artistic', 'Avant-garde', 'Colorful', 'Conceptual', 'Contemporary', 'Creative', 'Decorative', 'Eccentric', 'Eclectic', 'Evocative', 'Expressive', 'Imaginative', 'Interpretive', 'Offbeat', 'One-of-a-kind', 'Original', 'Uncommon', 'Unconventional', 'Unexpected', 'Unique', 'Vibrant', 'Whimsical'],
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
-    
+
     if st.button('Analyze'):
         initial_color_counts = analyze_text(user_content, color_keywords)
         initial_fig = draw_donut_chart(initial_color_counts)
@@ -100,11 +101,14 @@ def main():
         st.plotly_chart(initial_fig)
         
         tone_scores = analyze_tone_with_gpt3(user_content, openai_api_key)
-        tone_fig = go.Figure(data=[go.Bar(x=list(tone_scores.keys()), y=list(tone_scores.values()))])
-        tone_fig.update_layout(xaxis_title='Tone', yaxis_title='Level')
-        st.subheader("Tone Analysis")
-        st.plotly_chart(tone_fig)
-        st.session_state.tone_scores = tone_scores
+        if tone_scores:  # Check if tone_scores is not empty
+            tone_fig = go.Figure(data=[go.Bar(x=list(tone_scores.keys()), y=list(tone_scores.values()))])
+            tone_fig.update_layout(xaxis_title='Tone', yaxis_title='Level')
+            st.subheader("Tone Analysis")
+            st.plotly_chart(tone_fig)
+            st.session_state.tone_scores = tone_scores
+        else:
+            st.warning("Could not analyze the tone of the text.")
     
     if 'tone_scores' in st.session_state:
         for tone in st.session_state.tone_scores.keys():
@@ -114,19 +118,23 @@ def main():
         tone_fig.update_layout(xaxis_title='Tone', yaxis_title='Level')
         st.subheader("Updated Tone Analysis")
         st.plotly_chart(tone_fig)
-        
-    if user_content:
-        sentences = user_content.split(". ")
-        if 'sentence_to_colors' not in st.session_state:
-            st.session_state.sentence_to_colors = {}
-        for sentence in sentences:
-            sentence_color_counts = analyze_text(sentence, color_keywords)
-            sentence_colors = [color for color, count in sentence_color_counts.items() if count > 0]
-            st.session_state.sentence_to_colors[sentence] = st.multiselect(
-                f"{sentence}. Select colors:", list(color_keywords.keys()), default=sentence_colors
-            )
-            
-    updated_color_counts = analyze_text(user_content, color_keywords)
+
+    # Revising color assignments
+    sentences = user_content.split('.')
+    sentence_to_colors = {}
+    for sentence in sentences:
+        sentence = sentence.strip()
+        if sentence:
+            options = list(color_keywords.keys())
+            selected_options = st.multiselect(f"Select color for: {sentence}", options, options)
+            sentence_to_colors[sentence] = selected_options
+    
+    st.session_state.sentence_to_colors = sentence_to_colors
+    updated_color_counts = Counter()
+    for sentence, colors in sentence_to_colors.items():
+        for color in colors:
+            updated_color_counts[color] += 1
+    
     updated_fig = draw_donut_chart(updated_color_counts)
     st.subheader('Updated Donut Chart')
     st.plotly_chart(updated_fig)
