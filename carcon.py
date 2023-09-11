@@ -74,15 +74,15 @@ def main():
     }
 
     tone_keywords = {
-    "Relaxed": ["calm", "peaceful", "easygoing", "informal"],
-    "Assertive": ["confident", "aggressive", "self-assured", "dogmatic"],
-    "Introverted": ["calm", "solitude", "introspective", "reserved"],
-    "Extroverted": ["social", "energetic", "outgoing"],
-    "Conservative": ["traditional", "status quo", "orthodox"],
-    "Progressive": ["reform", "liberal", "innovative"],
-    "Emotive": ["emotional", "passionate", "intense"],
-    "Informative": ["inform", "disclose", "instructive"]
-}
+        "Relaxed": ["calm", "peaceful", "easygoing", "informal"],
+        "Assertive": ["confident", "aggressive", "self-assured", "dogmatic"],
+        "Introverted": ["calm", "solitude", "introspective", "reserved"],
+        "Extroverted": ["social", "energetic", "outgoing"],
+        "Conservative": ["traditional", "status quo", "orthodox"],
+        "Progressive": ["reform", "liberal", "innovative"],
+        "Emotive": ["emotional", "passionate", "intense"],
+        "Informative": ["inform", "disclose", "instructive"]
+    }
 
     user_content = st.text_area('Paste your content here:', value=st.session_state.user_content)
     st.session_state.user_content = user_content
