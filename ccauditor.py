@@ -26,13 +26,12 @@ def analyze_tone_with_gpt3(text, api_key):
     openai.api_key = api_key
     prompt = f"Please provide a nuanced analysis of the following text, assigning a level to indicate the extent to which the text embodies each of the following tones: - Relaxed - Assertive - Introverted - Extroverted - Conservative - Progressive - Emotive - Informative Text to Analyze: {text}"
     response = openai.Completion.create(engine="text-davinci-002", prompt=prompt, max_tokens=100)
-    gpt3_output = response.choices[0].text.strip().split('\\n')
+    gpt3_output_lines = response.choices[0].text.strip().split('\n')
     tone_scores = {}
-    for line in gpt3_output:
+    for line in gpt3_output_lines:
         if ":" in line:
             tone, score = line.split(":", 1)
-            if score.strip():
-                tone_scores[tone.strip()] = float(score.strip())
+            tone_scores[tone.strip()] = float(score.strip())
     return tone_scores
 
 def generate_word_doc(color_counts, user_content, tone_scores, initial_fig, tone_fig, updated_fig):
