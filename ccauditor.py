@@ -46,7 +46,7 @@ def analyze_tone_with_gpt3(text, api_key):
             tone_scores[tone.strip()] = float(score.strip().replace('%', ''))
     return tone_scores
 
-def generate_word_doc(color_counts, tone_scores, user_content):
+def generate_word_doc(color_counts, user_content, tone_scores):
     doc = Document()
     doc.add_heading('Color Personality Analysis', 0)
     fig = draw_donut_chart(color_counts)
@@ -71,11 +71,7 @@ def get_word_file_download_link(file_path, filename):
 
 def main():
     st.title('Color Personality Analysis')
-    if "OPENAI_API_KEY" not in st.secrets:
-        st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
-        return
-    openai_api_key = st.secrets["OPENAI_API_KEY"]
-    
+
     if 'sentence_to_colors' not in st.session_state:
         st.session_state.sentence_to_colors = {}
         
@@ -96,17 +92,38 @@ def main():
     user_content = st.text_area('Paste your content here:')
     
     if st.button('Analyze'):
-        st.session_state.sentence_to_colors = analyze_text(user_content, color_keywords)
-        st.session_state.tone_scores = analyze_tone_with_gpt3(user_content, openai_api_key)
+        color_counts = analyze_text(user_content, color_keywords)
+        initial_fig = draw_donut_chart(color_counts)
+        st.subheader('Initial Donut Chart')
+        st.plotly_chart(initial_fig)
+        
+        st.session_state.tone_scores = analyze_tone_with_gpt3(user_content, "your_openai_api_key_here")
         tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
         tone_fig.update_layout(title='Tone Analysis', xaxis_title='Tone', yaxis_title='Percentage (%)')
         st.subheader("Initial Tone Analysis")
         st.plotly_chart(tone_fig)
-        
-    if st.session_state.tone_scores:
+
+        sentences = re.split(r'[.!?]', user_content)
+        st.subheader("Sentences scored by color")
+        for sentence in sentences:
+            if not sentence.strip():
+                continue
+            initial_colors = []
+            for color, keywords in color_keywords.items():
+                if any(keyword.lower() in sentence.lower() for keyword in keywords):
+                    initial_colors.append(color)
+            selected_colors = st.multiselect(
+                f"{sentence}. [{', '.join(initial_colors)}]",
+                list(color_keywords.keys()),
+                default=initial_colors
+            )
+            st.session_state.sentence_to_colors[sentence] = selected_colors
+
+    if st.session_state.sentence_to_colors:
         st.subheader("Update Tone Scores")
         for tone in st.session_state.tone_scores.keys():
-            st.session_state.tone_scores[tone] = st.slider(tone, 0, 100, int(st.session_state.tone_scores[tone]))
+            st.session_state.tone_scores[tone] = st.slider(f"{tone} (%)", 0, 100, int(st.session_state.tone_scores[tone]))
+
         tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
         tone_fig.update_layout(title='Updated Tone Analysis', xaxis_title='Tone', yaxis_title='Percentage (%)')
         st.subheader("Updated Tone Analysis")
