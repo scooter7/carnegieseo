@@ -95,7 +95,7 @@ def main():
     if 'tone_scores' not in st.session_state:
         st.session_state.tone_scores = {}
     if 'updated_color_counts' not in st.session_state:
-        st.session_state.updated_color_counts = Counter()
+        st.session_state.updated_color_counts = {}
 
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
@@ -114,7 +114,7 @@ def main():
     
     if st.button('Analyze'):
         color_counts = analyze_text(user_content, color_keywords)
-        st.session_state.updated_color_counts = color_counts
+        st.session_state.updated_color_counts = color_counts.copy()  # Initialize updated_color_counts based on initial analysis
         initial_fig = draw_donut_chart(color_counts)
         st.subheader('Initial Donut Chart')
         st.plotly_chart(initial_fig)
@@ -136,24 +136,32 @@ def main():
     if st.session_state.tone_scores:
         for tone, score in st.session_state.tone_scores.items():
             st.session_state.tone_scores[tone] = st.slider(f"{tone}", 0, 10, int(score / 10))
-        updated_tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
-        updated_tone_fig.update_layout(xaxis_title='Tone', yaxis_title='Level')
-        st.subheader("Updated Tone Analysis")
-        st.plotly_chart(updated_tone_fig)
-    
+        
     if st.session_state.sentence_to_colors:
+        updated_color_counts = Counter()
         for sentence, initial_colors in st.session_state.sentence_to_colors.items():
             selected_colors = st.multiselect(f"{sentence}.", list(color_keywords.keys()), default=initial_colors)
             for color in selected_colors:
-                st.session_state.updated_color_counts[color] += 1
+                updated_color_counts[color] += 1
+        
+        st.session_state.updated_color_counts = updated_color_counts
         updated_fig = draw_donut_chart(st.session_state.updated_color_counts)
         st.subheader('Updated Donut Chart')
         st.plotly_chart(updated_fig)
         
-        if initial_fig and tone_fig and updated_fig:
-            word_file_path = generate_word_doc(st.session_state.updated_color_counts, user_content, st.session_state.tone_scores, initial_fig, tone_fig, updated_fig)
-            download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
-            st.markdown(download_link, unsafe_allow_html=True)
+    if st.session_state.tone_scores and st.session_state.updated_color_counts:
+        tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
+        tone_fig.update_layout(xaxis_title='Tone', yaxis_title='Level')
+        st.subheader("Updated Tone Analysis")
+        st.plotly_chart(tone_fig)
+        
+        updated_fig = draw_donut_chart(st.session_state.updated_color_counts)
+        st.subheader('Updated Donut Chart')
+        st.plotly_chart(updated_fig)
+        
+        word_file_path = generate_word_doc(st.session_state.updated_color_counts, user_content, st.session_state.tone_scores, initial_fig, tone_fig, updated_fig)
+        download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
+        st.markdown(download_link, unsafe_allow_html=True)
 
 if __name__ == '__main__':
     main()
