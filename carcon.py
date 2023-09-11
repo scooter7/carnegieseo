@@ -5,7 +5,6 @@ from collections import Counter
 from docx import Document
 from docx.shared import Inches
 import io
-import matplotlib.pyplot as plt
 import base64
 import openai
 
@@ -129,12 +128,9 @@ def main():
         tone_scores = analyze_tone_with_gpt3(user_content, openai_api_key)
         st.subheader("Tone Analysis")
         
-        plt.bar(tone_scores.keys(), tone_scores.values())
-        plt.xticks(rotation=45)
-        plt.xlabel('Tone')
-        plt.ylabel('Percentage (%)')
-        plt.title('Tone Analysis')
-        st.pyplot()
+        tone_fig = go.Figure(data=[go.Bar(x=list(tone_scores.keys()), y=list(tone_scores.values()))])
+        tone_fig.update_layout(title='Tone Analysis', xaxis_title='Tone', yaxis_title='Percentage (%)')
+        st.plotly_chart(tone_fig)
         
         word_file_path = generate_word_doc(updated_color_counts, user_content, tone_scores)
         download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
