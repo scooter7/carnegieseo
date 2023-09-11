@@ -43,6 +43,28 @@ def analyze_tone(text):
     tone_scores = {tone: (count / total_count) * 100 for tone, count in tone_counts.items()}
     return tone_scores
 
+def generate_word_doc(color_counts, user_content, tone_scores, color_keywords):
+    doc = Document()
+    doc.add_heading('Color Personality Analysis', 0)
+    fig = draw_donut_chart(color_counts, color_keywords)
+    image_stream = io.BytesIO(fig.to_image(format="png"))
+    doc.add_picture(image_stream, width=Inches(4.0))
+    image_stream.close()
+    for tone, score in tone_scores.items():
+        doc.add_paragraph(f"{tone}: {score}%")
+    doc.add_heading('Original Text:', level=1)
+    doc.add_paragraph(user_content)
+    word_file_path = "Color_Personality_Analysis_Report.docx"
+    doc.save(word_file_path)
+    return word_file_path
+
+def get_word_file_download_link(file_path, filename):
+    with open(file_path, "rb") as f:
+        file_data = f.read()
+    b64_file = base64.b64encode(file_data).decode()
+    href = f'<a href="data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,{b64_file}" download="{filename}">Download Word Report</a>'
+    return href
+
 def main():
     st.title('Color Personality Analysis')
     if 'sentence_to_colors' not in st.session_state:
@@ -60,6 +82,10 @@ def main():
     }
     user_content = st.text_area('Paste your content here:')
     if st.button('Analyze'):
+        color_counts = analyze_text(user_content, color_keywords)
+        initial_fig = draw_donut_chart(color_counts, color_keywords)
+        st.subheader('Initial Donut Chart')
+        st.plotly_chart(initial_fig)
         st.session_state.sentence_to_colors = {}
         sentences = re.split(r'[.!?]', user_content)
         for sentence in sentences:
@@ -85,6 +111,9 @@ def main():
         tone_scores = analyze_tone(user_content)
         st.subheader("Tone Analysis")
         st.bar_chart(tone_scores)
+        word_file_path = generate_word_doc(updated_color_counts, user_content, tone_scores, color_keywords)
+        download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
+        st.markdown(download_link, unsafe_allow_html=True)
 
 if __name__ == '__main__':
     main()
