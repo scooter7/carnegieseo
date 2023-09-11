@@ -2,12 +2,6 @@ import streamlit as st
 import re
 import plotly.graph_objects as go
 from collections import Counter
-import base64
-from docx import Document
-from docx.shared import Inches
-import openai
-import io
-import matplotlib.pyplot as plt
 
 def analyze_text(text, color_keywords):
     text = text.lower()
@@ -87,9 +81,8 @@ def main():
                 st.session_state.user_content = re.sub(pattern, revised_sentence, st.session_state.user_content)
                 st.session_state.revision_made = True
 
-    if st.session_state.revision_made:
-        if st.button("Apply Revision"):
-            perform_analysis(st.session_state.user_content, color_keywords)
+    if st.button("Apply Revision"):
+        perform_analysis(st.session_state.user_content, color_keywords)
 
 if __name__ == '__main__':
     main()
