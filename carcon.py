@@ -112,7 +112,7 @@ def main():
         updated_fig = draw_donut_chart(updated_color_counts, color_keywords)
         st.subheader('Updated Donut Chart based on User Reassignments')
         st.plotly_chart(updated_fig)
-        tone_scores = analyze_tone(user_content)
+        tone_scores = analyze_tone_with_gpt3(user_content)
         st.subheader("Tone Analysis")
         st.bar_chart(tone_scores)
         word_file_path = generate_word_doc(updated_color_counts, user_content, tone_scores, color_keywords)
