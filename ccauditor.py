@@ -78,6 +78,7 @@ def main():
     openai_api_key = st.secrets["OPENAI_API_KEY"]
     
     user_content = st.text_area('Paste your content here:')
+    initial_color_counts = Counter()
     initial_fig = None
     tone_fig = None
 
@@ -146,7 +147,10 @@ def main():
     if initial_fig and tone_fig and updated_fig:
         word_file_path = generate_word_doc(updated_color_counts, user_content, st.session_state.tone_scores, initial_fig, tone_fig, updated_fig)
         download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
-        st.markdown(download_link, unsafe_allow_html=True)
+    else:
+        download_link = "Analysis incomplete. Please complete all steps to generate the download link."
+    
+    st.markdown(download_link, unsafe_allow_html=True)
 
 if __name__ == '__main__':
     main()
