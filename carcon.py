@@ -33,7 +33,9 @@ def analyze_sentences_by_color(text, color_keywords):
 def draw_donut_chart(color_counts, color_keywords):
     labels = list(color_keywords.keys())
     sizes = [color_counts.get(color, 0) for color in labels]
+    colors = [label.lower() for label in labels]
     fig = px.pie(names=labels, values=sizes, hole=0.3)
+    fig.update_traces(marker=dict(colors=colors))
     return fig
 
 def perform_analysis(user_content, color_keywords):
@@ -46,15 +48,8 @@ def perform_analysis(user_content, color_keywords):
     for sentence, color in scored_sentences:
         st.write(f"{sentence} ({color})")
 
-def analyze_tone_with_gpt3(text):
-    # Placeholder for GPT-3 tone analysis function
-    # The actual GPT-3 call would go here
-    return {"Progressive": 50, "Introverted": 30, "Other": 20}
-
 def main():
-    if 'user_content' not in st.session_state:
-        st.session_state.user_content = ""
-
+    st.session_state.setdefault('user_content', "")
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
         'Silver': ['Activate', 'Campaign', 'Challenge', 'Commit', 'Confront', 'Dare', 'Defy', 'Disrupting', 'Drive', 'Excite', 'Face', 'Ignite', 'Incite', 'Influence', 'Inspire', 'Inspirit', 'Motivate', 'Move', 'Push', 'Rebel', 'Reimagine', 'Revolutionize', 'Rise', 'Spark', 'Stir', 'Fight', 'Free', 'Aggressive', 'Bold', 'Brazen', 'Committed', 'Courageous', 'Daring', 'Disruptive', 'Driven', 'Fearless', 'Free', 'Gutsy', 'Independent', 'Inspired', 'Motivated', 'Rebellious', 'Revolutionary', 'Unafraid', 'Unconventional'],
@@ -72,11 +67,6 @@ def main():
     if st.button('Analyze'):
         st.session_state.user_content = user_content
         perform_analysis(user_content, color_keywords)
-        
-        # Tone Analysis with GPT-3
-        tone_analysis = analyze_tone_with_gpt3(user_content)
-        st.subheader("Tone Analysis")
-        st.bar_chart(tone_analysis)
 
     st.subheader("Revision Field")
     revision_input = st.text_area("Paste a sentence here for revision:")
