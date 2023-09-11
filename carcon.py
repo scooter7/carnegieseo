@@ -75,6 +75,7 @@ def main():
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
     user_content = st.text_area('Paste your content here:')
+    tone_scores = {}  # Initialize here
 
     if st.button('Analyze'):
         st.session_state.sentence_to_colors = {}
@@ -86,7 +87,7 @@ def main():
             st.error('Please set the OPENAI_API_KEY secret on the Streamlit dashboard.')
             return
         openai_api_key = st.secrets['OPENAI_API_KEY']
-        tone_scores = analyze_tone_with_gpt3(user_content, openai_api_key)
+        tone_scores = analyze_tone_with_gpt3(user_content, openai_api_key)  # Update the value here
         st.bar_chart(tone_scores)
         
         sentences = re.split(r'[.!?]', user_content)
