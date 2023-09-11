@@ -93,21 +93,18 @@ def main():
     user_content = st.text_area('Paste your content here:')
     if st.button('Analyze'):
         color_counts = analyze_text(user_content, color_keywords)
-        initial_fig = draw_donut_chart(color_counts)
+        st.session_state.color_counts = color_counts
+        st.session_state.tone_scores = analyze_tone_with_gpt3(user_content, openai_api_key)
+    if 'color_counts' in st.session_state and st.session_state.color_counts:
+        initial_fig = draw_donut_chart(st.session_state.color_counts)
         st.subheader('Initial Donut Chart')
         st.plotly_chart(initial_fig)
-        st.session_state.tone_scores = analyze_tone_with_gpt3(user_content, openai_api_key)
-        tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
-        tone_fig.update_layout(title='Tone Analysis', xaxis_title='Tone', yaxis_title='Percentage (%)')
-        st.subheader("Initial Tone Analysis")
-        st.plotly_chart(tone_fig)
-    if st.session_state.tone_scores:
-        st.subheader("Update Tone Scores")
+    if 'tone_scores' in st.session_state and st.session_state.tone_scores:
         for tone in st.session_state.tone_scores.keys():
             st.session_state.tone_scores[tone] = st.slider(f"{tone} (%)", 0, 100, int(st.session_state.tone_scores[tone]))
         tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
-        tone_fig.update_layout(title='Updated Tone Analysis', xaxis_title='Tone', yaxis_title='Percentage (%)')
-        st.subheader("Updated Tone Analysis")
+        tone_fig.update_layout(title='Tone Analysis', xaxis_title='Tone', yaxis_title='Percentage (%)')
+        st.subheader("Tone Analysis")
         st.plotly_chart(tone_fig)
     if st.session_state.sentence_to_colors:
         st.subheader("Update Color Scores")
