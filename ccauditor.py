@@ -134,6 +134,8 @@ def main():
         st.session_state.updated_color_counts = color_counts.copy()
 
     if st.session_state.init_done:
+        st.subheader("Tone Analysis")
+        st.plotly_chart(st.session_state.tone_fig)
         for tone in st.session_state.tone_scores.keys():
             st.session_state.tone_scores[tone] = st.slider(f"{tone}", 0, 10, int(st.session_state.tone_scores[tone]))
         
