@@ -24,82 +24,9 @@ def draw_donut_chart(color_counts):
 
 def analyze_tone_with_gpt3(text, api_key):
     openai.api_key = api_key
-    prompt = f"""
-    Please provide a nuanced analysis of the following text, assigning a level to indicate the extent to which the text embodies each of the following tones:
-    - Relaxed
-    - Assertive
-    - Introverted
-    - Extroverted
-    - Conservative
-    - Progressive
-    - Emotive
-    - Informative
-    Text to Analyze:
-    {text}
-    """
-    response = openai.Completion.create(engine="text-davinci-002", prompt=prompt, max_tokens=100)
-    gpt3_output = response.choices[0].text.strip().split('\n')
-    tone_scores = {}
-    for line in gpt3_output:
-        if ":" in line:
-            tone, score = line.split(":", 1)  # Split only at the first colon
-            if score.strip():
-                tone_scores[tone.strip()] = float(score.strip())
-    return tone_scores
-
-def generate_word_doc(color_counts, user_content, tone_scores, initial_fig, tone_fig, updated_fig):
-    doc = Document()
-    doc.add_heading('Color Personality Analysis', 0)
-    image_stream = io.BytesIO(initial_fig.to_image(format="png"))
-    doc.add_heading('Initial Donut Chart:', level=1)
-    doc.add_picture(image_stream, width=Inches(4.0))
-    image_stream.close()
-    image_stream = io.BytesIO(tone_fig.to_image(format="png"))
-    doc.add_heading('Tone Analysis:', level=1)
-    doc.add_picture(image_stream, width=Inches(4.0))
-    image_stream.close()
-    image_stream = io.BytesIO(updated_fig.to_image(format="png"))
-    doc.add_heading('Updated Donut Chart:', level=1)
-    doc.add_picture(image_stream, width=Inches(4.0))
-    image_stream.close()
-    doc.add_heading('Tone Scores:', level=1)
-    for tone, score in tone_scores.items():
-        doc.add_paragraph(f"{tone}: {score}")
-    doc.add_heading('Scored Sentences:', level=1)
-    for sentence, colors in st.session_state.sentence_to_colors.items():
-        doc.add_paragraph(f"{sentence}: {', '.join(colors)}")
-    doc.add_heading('Original Text:', level=1)
-    doc.add_paragraph(user_content)
-    word_file_path = "Color_Personality_Analysis_Report.docx"
-    doc.save(word_file_path)
-    return word_file_path
-
-def get_word_file_download_link(file_path, filename):
-    with open(file_path, "rb") as f:
-        file_data = f.read()
-    b64_file = base64.b64encode(file_data).decode()
-    href = f'<a href="data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,{b64_file}" download="{filename}">Download Word Report</a>'
-    return href
-
-def analyze_text(text, color_keywords):
-    text = text.lower()
-    words = re.findall(r'\b\w+\b', text)
-    color_counts = Counter()
-    for color, keywords in color_keywords.items():
-        color_counts[color] = sum(words.count(k.lower()) for k in keywords)
-    return color_counts
-
-def draw_donut_chart(color_counts):
-    labels = list(color_counts.keys())
-    sizes = [color_counts.get(color, 0) for color in labels]
-    fig = go.Figure(data=[go.Pie(labels=labels, values=sizes, hole=.3, marker=dict(colors=labels))])
-    return fig
-
-def analyze_tone_with_gpt3(text, api_key):
-    openai.api_key = api_key
     prompt = f"Please provide a nuanced analysis of the following text, assigning a level to indicate the extent to which the text embodies each of the following tones: - Relaxed - Assertive - Introverted - Extroverted - Conservative - Progressive - Emotive - Informative Text to Analyze: {text}"
     response = openai.Completion.create(engine="text-davinci-002", prompt=prompt, max_tokens=100)
-    gpt3_output = response.choices[0].text.strip().split('\n')
+    gpt3_output = response.choices[0].text.strip().split('\\n')
     tone_scores = {}
     for line in gpt3_output:
         if ":" in line:
@@ -145,7 +72,6 @@ def main():
         st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
         return
     openai_api_key = st.secrets["OPENAI_API_KEY"]
-    
     user_content = st.text_area('Paste your content here:')
     initial_fig = None
     tone_fig = None
@@ -184,7 +110,18 @@ def main():
         tone_fig.update_layout(xaxis_title='Tone', yaxis_title='Level')
         st.subheader("Updated Tone Analysis")
         st.plotly_chart(tone_fig)
-    
+        
+    if user_content:
+        sentences = user_content.split(". ")
+        if 'sentence_to_colors' not in st.session_state:
+            st.session_state.sentence_to_colors = {}
+        for sentence in sentences:
+            sentence_color_counts = analyze_text(sentence, color_keywords)
+            sentence_colors = [color for color, count in sentence_color_counts.items() if count > 0]
+            st.session_state.sentence_to_colors[sentence] = st.multiselect(
+                f"{sentence}. Select colors:", list(color_keywords.keys()), default=sentence_colors
+            )
+            
     updated_color_counts = analyze_text(user_content, color_keywords)
     updated_fig = draw_donut_chart(updated_color_counts)
     st.subheader('Updated Donut Chart')
