@@ -25,7 +25,7 @@ def draw_donut_chart(color_counts):
 def analyze_tone_with_gpt3(text, api_key):
     openai.api_key = api_key
     prompt = f"""
-    Please provide a nuanced analysis of the following text, assigning a score to indicate the extent to which the text embodies each of the following tones:
+    Please provide a nuanced analysis of the following text, assigning a level to indicate the extent to which the text embodies each of the following tones:
     - Relaxed
     - Assertive
     - Introverted
@@ -43,7 +43,8 @@ def analyze_tone_with_gpt3(text, api_key):
     for line in gpt3_output:
         if ":" in line:
             tone, score = line.split(":")
-            tone_scores[tone.strip()] = float(score.strip())
+            if score.strip():
+                tone_scores[tone.strip()] = float(score.strip())
     return tone_scores
 
 def generate_word_doc(color_counts, user_content, tone_scores, initial_fig, tone_fig, updated_fig):
