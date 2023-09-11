@@ -83,21 +83,17 @@ def get_word_file_download_link(file_path, filename):
 
 def main():
     st.title('Color Personality Analysis')
+    
     if "OPENAI_API_KEY" not in st.secrets:
         st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
         return
+    
     openai_api_key = st.secrets["OPENAI_API_KEY"]
     
     if 'sentence_to_colors' not in st.session_state:
         st.session_state.sentence_to_colors = {}
     if 'tone_scores' not in st.session_state:
         st.session_state.tone_scores = {}
-    if 'initial_fig' not in st.session_state:
-        st.session_state.initial_fig = None
-    if 'tone_fig' not in st.session_state:
-        st.session_state.tone_fig = None
-    if 'updated_fig' not in st.session_state:
-        st.session_state.updated_fig = None
     if 'updated_color_counts' not in st.session_state:
         st.session_state.updated_color_counts = Counter()
 
@@ -112,21 +108,21 @@ def main():
         'Orange': ['Compose', 'Conceptualize', 'Conceive', 'Craft', 'Create', 'Design', 'Dream', 'Envision', 'Express', 'Fashion', 'Form', 'Imagine', 'Interpret', 'Make', 'Originate', 'Paint', 'Perform', 'Portray', 'Realize', 'Shape', 'Abstract', 'Artistic', 'Avant-garde', 'Colorful', 'Conceptual', 'Contemporary', 'Creative', 'Decorative', 'Eccentric', 'Eclectic', 'Evocative', 'Expressive', 'Imaginative', 'Interpretive', 'Offbeat', 'One-of-a-kind', 'Original', 'Uncommon', 'Unconventional', 'Unexpected', 'Unique', 'Vibrant', 'Whimsical'],
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
+
     user_content = st.text_area('Paste your content here:')
     
     if st.button('Analyze'):
         color_counts = analyze_text(user_content, color_keywords)
         st.session_state.updated_color_counts = color_counts
-        st.session_state.initial_fig = draw_donut_chart(color_counts)
+        initial_fig = draw_donut_chart(color_counts)
         st.subheader('Initial Donut Chart')
-        st.plotly_chart(st.session_state.initial_fig)
+        st.plotly_chart(initial_fig)
         st.session_state.tone_scores = analyze_tone_with_gpt3(user_content, openai_api_key)
-        st.session_state.tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
-        st.session_state.tone_fig.update_layout(xaxis_title='Tone', yaxis_title='Level')
+        tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
+        tone_fig.update_layout(xaxis_title='Tone', yaxis_title='Level')
         st.subheader("Tone Analysis")
-        st.plotly_chart(st.session_state.tone_fig)
+        st.plotly_chart(tone_fig)
         sentences = re.split(r'[.!?]', user_content)
-        sentence_to_colors = {}
         for sentence in sentences:
             if not sentence.strip():
                 continue
@@ -134,28 +130,27 @@ def main():
             for color, keywords in color_keywords.items():
                 if any(keyword.lower() in sentence.lower() for keyword in keywords):
                     initial_colors.append(color)
-            sentence_to_colors[sentence] = initial_colors
-        st.session_state.sentence_to_colors = sentence_to_colors
+            st.session_state.sentence_to_colors[sentence] = initial_colors
     
-    if 'tone_scores' in st.session_state and st.session_state.tone_scores:
+    if st.session_state.tone_scores:
         for tone, score in st.session_state.tone_scores.items():
             st.session_state.tone_scores[tone] = st.slider(f"{tone}", 0, 10, int(score / 10))
-        st.session_state.tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
-        st.session_state.tone_fig.update_layout(xaxis_title='Tone', yaxis_title='Level')
+        updated_tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
+        updated_tone_fig.update_layout(xaxis_title='Tone', yaxis_title='Level')
         st.subheader("Updated Tone Analysis")
-        st.plotly_chart(st.session_state.tone_fig)
+        st.plotly_chart(updated_tone_fig)
     
-    if 'sentence_to_colors' in st.session_state and st.session_state.sentence_to_colors:
+    if st.session_state.sentence_to_colors:
         for sentence, initial_colors in st.session_state.sentence_to_colors.items():
             selected_colors = st.multiselect(f"{sentence}.", list(color_keywords.keys()), default=initial_colors)
             for color in selected_colors:
                 st.session_state.updated_color_counts[color] += 1
-        st.session_state.updated_fig = draw_donut_chart(st.session_state.updated_color_counts)
+        updated_fig = draw_donut_chart(st.session_state.updated_color_counts)
         st.subheader('Updated Donut Chart')
-        st.plotly_chart(st.session_state.updated_fig)
-        
-        if st.session_state.initial_fig and st.session_state.tone_fig and st.session_state.updated_fig:
-            word_file_path = generate_word_doc(st.session_state.updated_color_counts, user_content, st.session_state.tone_scores, st.session_state.initial_fig, st.session_state.tone_fig, st.session_state.updated_fig)
+        st.plotly_chart(updated_fig)
+
+        if st.session_state.tone_scores and st.session_state.updated_color_counts:
+            word_file_path = generate_word_doc(st.session_state.updated_color_counts, user_content, st.session_state.tone_scores)
             download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
             st.markdown(download_link, unsafe_allow_html=True)
 
