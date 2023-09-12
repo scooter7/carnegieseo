@@ -130,7 +130,7 @@ def main():
         st.plotly_chart(st.session_state.tone_fig)
         st.session_state.updated_color_counts.clear()
         for sentence, initial_colors in st.session_state.sentence_to_colors.items():
-            selected_colors = st.multiselect(f"{sentence}.", list(color_keywords.keys()), default=initial_colors)
+            selected_colors = st.multiselect(f"{sentence}. ({', '.join(initial_colors)})", list(color_keywords.keys()), default=[])
             for color in selected_colors:
                 st.session_state.updated_color_counts[color] += 1
         st.session_state.updated_fig = draw_donut_chart(st.session_state.updated_color_counts)
@@ -142,4 +142,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
