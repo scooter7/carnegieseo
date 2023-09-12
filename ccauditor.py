@@ -124,16 +124,15 @@ def main():
             st.plotly_chart(tone_fig)
         st.session_state.updated_color_counts.clear()
         for sentence, initial_colors in st.session_state.sentence_to_colors.items():
-            selected_colors = st.multiselect(f"{sentence}. ({', '.join(initial_colors)})", list(color_keywords.keys()), default=[])
+            selected_colors = st.multiselect(f"{sentence}. ({', '.join(initial_colors)})", list(color_keywords.keys()))
             for color in selected_colors:
                 st.session_state.updated_color_counts[color] += 1
-        if st.session_state.updated_color_counts:
-            updated_fig = draw_donut_chart(st.session_state.updated_color_counts)
-            st.subheader('Updated Donut Chart')
-            st.plotly_chart(updated_fig)
-            word_file_path = generate_word_doc(st.session_state.updated_color_counts, user_content, st.session_state.tone_scores, st.session_state.initial_fig, tone_fig, updated_fig)
-            download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
-            st.markdown(download_link, unsafe_allow_html=True)
+        updated_fig = draw_donut_chart(st.session_state.updated_color_counts if st.session_state.updated_color_counts else color_counts)
+        st.subheader('Updated Donut Chart')
+        st.plotly_chart(updated_fig)
+        word_file_path = generate_word_doc(st.session_state.updated_color_counts, user_content, st.session_state.tone_scores, st.session_state.initial_fig, tone_fig, updated_fig)
+        download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
+        st.markdown(download_link, unsafe_allow_html=True)
 
 if __name__ == '__main__':
     main()
