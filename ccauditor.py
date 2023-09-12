@@ -84,11 +84,13 @@ def get_word_file_download_link(file_path, filename):
 def main():
     st.title('Color Personality Analysis')
     openai_api_key = st.secrets["OPENAI_API_KEY"]
+    
     if 'init_done' not in st.session_state:
         st.session_state.init_done = False
         st.session_state.tone_scores = {}
         st.session_state.sentence_to_colors = {}
         st.session_state.updated_color_counts = Counter()
+
     color_keywords = {
         'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
         'Silver': ['Activate', 'Campaign', 'Challenge', 'Commit', 'Confront', 'Dare', 'Defy', 'Disrupting', 'Drive', 'Excite', 'Face', 'Ignite', 'Incite', 'Influence', 'Inspire', 'Inspirit', 'Motivate', 'Move', 'Push', 'Rebel', 'Reimagine', 'Revolutionize', 'Rise', 'Spark', 'Stir', 'Fight', 'Free', 'Aggressive', 'Bold', 'Brazen', 'Committed', 'Courageous', 'Daring', 'Disruptive', 'Driven', 'Fearless', 'Free', 'Gutsy', 'Independent', 'Inspired', 'Motivated', 'Rebellious', 'Revolutionary', 'Unafraid', 'Unconventional'],
@@ -100,9 +102,11 @@ def main():
         'Orange': ['Compose', 'Conceptualize', 'Conceive', 'Craft', 'Create', 'Design', 'Dream', 'Envision', 'Express', 'Fashion', 'Form', 'Imagine', 'Interpret', 'Make', 'Originate', 'Paint', 'Perform', 'Portray', 'Realize', 'Shape', 'Abstract', 'Artistic', 'Avant-garde', 'Colorful', 'Conceptual', 'Contemporary', 'Creative', 'Decorative', 'Eccentric', 'Eclectic', 'Evocative', 'Expressive', 'Imaginative', 'Interpretive', 'Offbeat', 'One-of-a-kind', 'Original', 'Uncommon', 'Unconventional', 'Unexpected', 'Unique', 'Vibrant', 'Whimsical'],
         'Pink': ['Arise', 'Aspire', 'Detail', 'Dream', 'Elevate', 'Enchant', 'Enrich', 'Envision', 'Exceed', 'Excel', 'Experience', 'Improve', 'Idealize', 'Imagine', 'Inspire', 'Perfect', 'Poise', 'Polish', 'Prepare', 'Refine', 'Uplift', 'Affectionate', 'Admirable', 'Age-less', 'Beautiful', 'Classic', 'Desirable', 'Detailed', 'Dreamy', 'Elegant', 'Enchanting', 'Enriching', 'Ethereal', 'Excellent', 'Exceptional', 'Experiential', 'Exquisite', 'Glamorous', 'Graceful', 'Idealistic', 'Inspiring', 'Lofty', 'Mysterious', 'Ordered', 'Perfect', 'Poised', 'Polished', 'Pristine', 'Pure', 'Refined', 'Romantic', 'Sophisticated', 'Spiritual', 'Timeless', 'Traditional', 'Virtuous', 'Visionary']
     }
+    
     user_content = st.text_area('Paste your content here:')
     color_counts = Counter()
     tone_fig = None
+    
     if st.button('Analyze'):
         st.session_state.init_done = True
         color_counts = analyze_text(user_content, color_keywords)
@@ -111,12 +115,15 @@ def main():
         st.subheader('Initial Donut Chart')
         st.plotly_chart(st.session_state.initial_fig)
         st.session_state.tone_scores = analyze_tone_with_gpt3(user_content, openai_api_key)
+        
         sentences = re.split(r'[.!?]', user_content)
         st.session_state.sentence_to_colors = {}
+        
         for sentence in sentences:
             if sentence.strip():
                 initial_colors = [color for color, keywords in color_keywords.items() if any(keyword.lower() in sentence.lower() for keyword in keywords)]
                 st.session_state.sentence_to_colors[sentence] = initial_colors
+                
     if st.session_state.init_done:
         if st.session_state.tone_scores:
             for tone, score in st.session_state.tone_scores.items():
@@ -124,14 +131,19 @@ def main():
             tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
             st.subheader('Tone Analysis')
             st.plotly_chart(tone_fig)
-        st.session_state.updated_color_counts.clear()
+
+        new_color_counts = st.session_state.updated_color_counts.copy()
+        
         for sentence, initial_colors in st.session_state.sentence_to_colors.items():
             selected_colors = st.multiselect(f"{sentence}. ({', '.join(initial_colors)})", list(color_keywords.keys()))
             for color in selected_colors:
-                st.session_state.updated_color_counts[color] += 1
-        updated_fig = draw_donut_chart(st.session_state.updated_color_counts if st.session_state.updated_color_counts else color_counts)
+                new_color_counts[color] += 1
+        
+        st.session_state.updated_color_counts = new_color_counts
+        updated_fig = draw_donut_chart(st.session_state.updated_color_counts)
         st.subheader('Updated Donut Chart')
         st.plotly_chart(updated_fig)
+        
         word_file_path = generate_word_doc(st.session_state.updated_color_counts, user_content, st.session_state.tone_scores, st.session_state.initial_fig, tone_fig, updated_fig)
         download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
         st.markdown(download_link, unsafe_allow_html=True)
