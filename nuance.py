@@ -33,14 +33,9 @@ def draw_donut_chart(color_scores, color_to_hex):
 def main():
     st.title('Color Personality Analysis')
     
-    if "OPENAI_API_KEY" not in st.secrets:
-        st.error("Please set the OPENAI_API_KEY secret.")
-        return
-    
-    openai_api_key = st.secrets["OPENAI_API_KEY"]
     user_content = st.text_area('Paste your content here:')
     
-    color_profiles = {
+color_profiles = {
         'Silver': {'key_characteristics': ['rebellious', 'rule-breaking', 'freedom', 'fearless', 'risks'], 'tone_and_style': ['intriguing', 'expressive', 'focused', 'intentional', 'unbound', 'bold', 'brash'], 'messaging_tips': ['spectrum', 'independence', 'freedom', 'unconventional', 'bold', 'dangerous', 'empower', 'embolden', 'free', 'fearless']},
         'Purple': {'key_characteristics': ['care', 'encourage', 'safe', 'supported', 'help', 'heal'], 'tone_and_style': ['warm', 'gentle', 'accessible', 'relatable', 'personable', 'genuine', 'intimate', 'invitational'], 'messaging_tips': ['personable', 'care', 'compassion', 'friendship', 'deep', 'nurtures', 'protects', 'guides', 'comes alongside']},
         'Pink': {'key_characteristics': ['elegant', 'sophisticated', 'experience', 'excellence', 'beauty', 'vitality'], 'tone_and_style': ['elevated', 'ethereal', 'thoughtful', 'meaningful', 'aspirational', 'dreamy'], 'messaging_tips': ['fine details', 'intentionality', 'unique experiences', 'elevated language', 'excellence', 'refinement', 'inspire', 'uplift', 'desired', 'important']},
@@ -50,7 +45,7 @@ def main():
         'Blue': {'key_characteristics': ['growth', 'industry leader', 'stability', 'pride', 'strength', 'influence', 'accomplishment'], 'tone_and_style': ['bold', 'confident', 'self-assured', 'proud'], 'messaging_tips': ['bold', 'confident', 'self-assured', 'proud', 'powerful']}
     }
 	
-    color_to_hex = {
+color_to_hex = {
         'Silver': '#C0C0C0',
         'Purple': '#800080',
         'Pink': '#FFC0CB',
@@ -61,7 +56,7 @@ def main():
         'Maroon': '#800000',
         'Green': '#008000'
     }
-
+    
     if st.button('Analyze'):
         st.session_state['color_scores'] = analyze_text(user_content, color_profiles)
         st.session_state['updated_color_scores'] = Counter(st.session_state['color_scores'])
@@ -76,11 +71,11 @@ def main():
             if sentence.strip():
                 st.session_state['sentence_to_colors'][sentence] = st.multiselect(f"{sentence}.", list(color_profiles.keys()), key=sentence)
     
-    for sentence, selected_colors in st.session_state['sentence_to_colors'].items():
-        for color in selected_colors:
-            st.session_state['updated_color_scores'][color] += 1
+    if st.session_state['sentence_to_colors']:
+        for sentence, selected_colors in st.session_state['sentence_to_colors'].items():
+            for color in selected_colors:
+                st.session_state['updated_color_scores'][color] += 1
     
-    if st.session_state['updated_color_scores']:
         updated_fig = draw_donut_chart(st.session_state['updated_color_scores'], color_to_hex)
         st.subheader('Updated Donut Chart')
         st.plotly_chart(updated_fig)
