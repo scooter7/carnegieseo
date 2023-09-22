@@ -62,17 +62,17 @@ def assess_content(content):
     
     response = openai.Completion.create(
         engine="text-davinci-003",
-        prompt=f"{color_guide}\n\n{content}\n\nPrimary Color: ",
+        prompt=f"{color_guide}\n\n{content}\n\nBased on the content, the primary color is ",
         temperature=0.5,
-        max_tokens=200,
+        max_tokens=300,
         top_p=1.0,
         frequency_penalty=0.0,
         presence_penalty=0.0
     )
-    output = response.choices[0].text.strip()
-    primary_color = output.split('\n')[0]
-    supporting_colors = output.split('\n')[1] if '\n' in output else ''
-    rationale = output.split('\n')[2] if '\n' in output else ''
+    output = response.choices[0].text.strip().split('\n')
+    primary_color = output[0]
+    supporting_colors = output[1] if len(output) > 1 else ''
+    rationale = output[2] if len(output) > 2 else ''
     return primary_color, supporting_colors, rationale
 
 def main():
