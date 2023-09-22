@@ -16,7 +16,7 @@ color_profiles = {
         'Blue': {'key_characteristics': ['growth', 'industry leader', 'stability', 'pride', 'strength', 'influence', 'accomplishment'], 'tone_and_style': ['bold', 'confident', 'self-assured', 'proud'], 'messaging_tips': ['bold', 'confident', 'self-assured', 'proud', 'powerful']}
     }
 	
-	color_to_hex = {
+color_to_hex = {
         'Silver': '#C0C0C0',
         'Purple': '#800080',
         'Pink': '#FFC0CB',
