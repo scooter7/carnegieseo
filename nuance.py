@@ -59,20 +59,17 @@ def assess_content(content):
     primary_color = "Not Identified"
     supporting_colors = "Not Identified"
     rationale = "Not Provided"
-
+    
     lines = output_text.split('\n')
     if lines:
-        primary_color_line = lines[0].strip().split('.')
-        primary_color = primary_color_line[0].strip()
-        rationale = primary_color_line[1].strip() if len(primary_color_line) > 1 else "Not Provided"
+        primary_color_line = lines[0].strip()
+        primary_color = primary_color_line.split(":")[1].strip() if ":" in primary_color_line else primary_color_line
         
         if len(lines) > 1:
             supporting_colors_line = lines[1].strip()
-            supporting_colors_list = [color for color in color_profiles if color in supporting_colors_line]
-            supporting_colors = ', '.join(supporting_colors_list)
+            supporting_colors = supporting_colors_line.split(":")[1].strip() if ":" in supporting_colors_line else supporting_colors_line
             
-            rationale_lines = lines[2:] if supporting_colors_list else lines[1:]
-            rationale += " " + " ".join(rationale_lines).strip()
+            rationale = "\n".join(lines[2:]).strip() if len(lines) > 2 else "Not Provided"
 
     return primary_color, supporting_colors, rationale
 
@@ -95,6 +92,7 @@ def main():
                 st.write(f"**Supporting Colors:** {supporting_colors if supporting_colors != 'Not Identified' else ''}")
                 st.write(f"**Rationale:** {rationale}")
                 st.write("---")
+                
                 color_count[primary_color] = color_count.get(primary_color, 0) + 1
 
             color_count_df = pd.DataFrame(list(color_count.items()), columns=['Color', 'Count'])
