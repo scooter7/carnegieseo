@@ -58,7 +58,7 @@ def assess_content(content):
         color_guide += f"{color}:\n"
         for attribute, values in attributes.items():
             color_guide += f"  {attribute}: {' '.join(values)}\n"
-    
+
     response = openai.Completion.create(
         engine="text-davinci-003",
         prompt=f"{color_guide}\n\n{content}\n\nBased on the content and the color guide above, identify the primary color and the supporting colors, and provide a detailed rationale for the choices made.",
@@ -78,17 +78,20 @@ def assess_content(content):
     if lines:
         primary_color = lines[0].strip()
         if len(lines) > 1:
-            supporting_colors = lines[1].strip()
-        if len(lines) > 2:
-            rationale = "\n".join(lines[2:]).strip()
-    
+            supporting_line = lines[1].strip()
+            if "Supporting Colors:" in supporting_line:
+                supporting_colors = supporting_line.replace("Supporting Colors:", "").strip()
+                rationale = "\n".join(lines[2:]).strip() if len(lines) > 2 else "Not Provided"
+            else:
+                rationale = "\n".join(lines[1:]).strip()
+
     return primary_color, supporting_colors, rationale
 
 def main():
     st.title("Webpage Content Color Assessor")
     urls_input = st.text_area("Enter up to 20 URLs (separated by commas):")
     urls = [url.strip() for url in urls_input.split(",") if url.strip()]
-    
+
     if st.button("Assess Content Colors"):
         if not urls or len(urls) > 20:
             st.error("Please enter up to 20 valid URLs.")
@@ -106,10 +109,10 @@ def main():
 
             df = pd.DataFrame(results)
             st.table(df)
-            
+
             colors_df = df["Primary Color"].value_counts().reset_index()
             colors_df.columns = ["Color", "Count"]
-            fig = px.pie(colors_df, names='Color', values='Count', color='Color', color_discrete_map=color_to_hex, hole=0.4)
+            fig = px.pie(colors_df, names='Color', values='Count', color='Color', color_discrete_map=color_to_hex, hole=0.4, width=800, height=400)
             st.plotly_chart(fig)
 
 if __name__ == "__main__":
