@@ -89,9 +89,10 @@ def main():
             for url in urls:
                 content = scrape_text(url)
                 primary_color, supporting_colors, rationale = assess_content(content)
+                
                 st.write(f"**URL:** {url}")
                 st.write(f"**Primary Color:** {primary_color}")
-                st.write(f"**Supporting Colors:** {supporting_colors}")
+                st.write(f"**Supporting Colors:** {supporting_colors if supporting_colors != 'Not Identified' else ''}")
                 st.write(f"**Rationale:** {rationale}")
                 st.write("---")
                 color_count[primary_color] = color_count.get(primary_color, 0) + 1
