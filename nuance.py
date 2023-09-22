@@ -6,6 +6,27 @@ import io
 import base64
 import openai
 
+def analyze_text(text, color_profiles):
+    color_scores = Counter()
+    for color, profile in color_profiles.items():
+        for characteristic in profile['key_characteristics']:
+            color_scores[color] += text.lower().count(characteristic.lower())
+        for tip in profile['messaging_tips']:
+            color_scores[color] += text.lower().count(tip.lower())
+        for tone in profile['tone_and_style']:
+            color_scores[color] += text.lower().count(tone.lower())
+    return color_scores
+
+def draw_donut_chart(color_scores, color_to_hex):
+    labels = list(color_scores.keys())
+    values = [color_scores[color] for color in labels]
+    colors = [color_to_hex[color] for color in labels]
+    fig = go.Figure(data=[go.Pie(labels=labels, values=values, hole=.3, marker=dict(colors=colors))])
+    return fig
+
+def main():
+    st.title('Color Personality Analysis')
+
 color_profiles = {
         'Silver': {'key_characteristics': ['rebellious', 'rule-breaking', 'freedom', 'fearless', 'risks'], 'tone_and_style': ['intriguing', 'expressive', 'focused', 'intentional', 'unbound', 'bold', 'brash'], 'messaging_tips': ['spectrum', 'independence', 'freedom', 'unconventional', 'bold', 'dangerous', 'empower', 'embolden', 'free', 'fearless']},
         'Purple': {'key_characteristics': ['care', 'encourage', 'safe', 'supported', 'help', 'heal'], 'tone_and_style': ['warm', 'gentle', 'accessible', 'relatable', 'personable', 'genuine', 'intimate', 'invitational'], 'messaging_tips': ['personable', 'care', 'compassion', 'friendship', 'deep', 'nurtures', 'protects', 'guides', 'comes alongside']},
