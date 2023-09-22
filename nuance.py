@@ -73,15 +73,15 @@ def assess_content(content):
     primary_color = "Not Identified"
     supporting_colors = "Not Identified"
     rationale = "Not Provided"
-    
+
     lines = output_text.split('\n')
     if lines:
-        primary_color = lines[0].strip()
+        primary_color = lines[0].strip()  # First line is expected to be the primary color
         if len(lines) > 1:
-            supporting_line = lines[1].strip()
-            if "Supporting Colors:" in supporting_line:
-                supporting_colors = supporting_line.replace("Supporting Colors:", "").strip()
-                rationale = "\n".join(lines[2:]).strip() if len(lines) > 2 else "Not Provided"
+            # Check if second line contains supporting colors or is part of rationale
+            if "Supporting Colors:" in lines[1]:
+                supporting_colors = lines[1].replace("Supporting Colors:", "").strip()
+                rationale = "\n".join(lines[2:]) if len(lines) > 2 else "Not Provided"
             else:
                 rationale = "\n".join(lines[1:]).strip()
 
