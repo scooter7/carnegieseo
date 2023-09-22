@@ -6,7 +6,6 @@ import io
 import base64
 import openai
 
-# Define color profiles, color to hex mapping, and color to style mapping here
 color_profiles = {
         'Silver': {'key_characteristics': ['rebellious', 'rule-breaking', 'freedom', 'fearless', 'risks'], 'tone_and_style': ['intriguing', 'expressive', 'focused', 'intentional', 'unbound', 'bold', 'brash'], 'messaging_tips': ['spectrum', 'independence', 'freedom', 'unconventional', 'bold', 'dangerous', 'empower', 'embolden', 'free', 'fearless']},
         'Purple': {'key_characteristics': ['care', 'encourage', 'safe', 'supported', 'help', 'heal'], 'tone_and_style': ['warm', 'gentle', 'accessible', 'relatable', 'personable', 'genuine', 'intimate', 'invitational'], 'messaging_tips': ['personable', 'care', 'compassion', 'friendship', 'deep', 'nurtures', 'protects', 'guides', 'comes alongside']},
@@ -17,7 +16,7 @@ color_profiles = {
         'Blue': {'key_characteristics': ['growth', 'industry leader', 'stability', 'pride', 'strength', 'influence', 'accomplishment'], 'tone_and_style': ['bold', 'confident', 'self-assured', 'proud'], 'messaging_tips': ['bold', 'confident', 'self-assured', 'proud', 'powerful']}
     }
 	
-color_to_hex = {
+	color_to_hex = {
         'Silver': '#C0C0C0',
         'Purple': '#800080',
         'Pink': '#FFC0CB',
@@ -30,22 +29,11 @@ color_to_hex = {
     }
 
 def draw_donut_chart(color_counts, color_to_hex):
-    labels = color_counts.keys()
+    labels = list(color_counts.keys())  # Convert dict_keys to list
     values = color_counts.values()
     colors = [color_to_hex[color] for color in labels]
     fig = go.Figure(data=[go.Pie(labels=labels, values=values, hole=.3, marker=dict(colors=colors))])
     return fig
-
-def analyze_text(text, color_profiles):
-    color_scores = Counter()
-    for color, profile in color_profiles.items():
-        for characteristic in profile['key_characteristics']:
-            color_scores[color] += text.lower().count(characteristic.lower())
-        for tip in profile['messaging_tips']:
-            color_scores[color] += text.lower().count(tip.lower())
-        for tone in profile['tone_and_style']:
-            color_scores[color] += text.lower().count(tone.lower())
-    return color_scores
 
 def main():
     st.title('Color Personality Analysis')
@@ -64,11 +52,13 @@ def main():
         st.plotly_chart(initial_fig)
 
         sentences = re.split(r'[.!?]', user_content)
+        updated_color_scores = Counter(st.session_state['updated_color_scores'])
         for sentence in sentences:
             if sentence.strip():
                 selected_colors = st.multiselect(f"{sentence}.", list(color_profiles.keys()), key=sentence)
-                st.session_state['updated_color_scores'].update(selected_colors)
-
+                updated_color_scores.update(selected_colors)
+        
+        st.session_state['updated_color_scores'] = updated_color_scores
         updated_fig = draw_donut_chart(st.session_state['updated_color_scores'], color_to_hex)
         st.plotly_chart(updated_fig)
 
