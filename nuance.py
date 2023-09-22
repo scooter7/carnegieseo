@@ -64,13 +64,15 @@ def assess_content(content):
         engine="text-davinci-003",
         prompt=f"{color_guide}\n\n{content}\n\nPrimary Color: ",
         temperature=0,
-        max_tokens=100,
+        max_tokens=200,
         top_p=1.0,
         frequency_penalty=0.0,
         presence_penalty=0.0
     )
-    primary_color = response.choices[0].text.strip()
-    return primary_color, "Supporting colors and rationale will also be obtained from OpenAI"
+    primary_color = response.choices[0].text.strip().split('\n')[0]
+    supporting_colors = response.choices[0].text.strip().split('\n')[1] if '\n' in response.choices[0].text.strip() else ''
+    rationale = response.choices[0].text.strip().split('\n')[2] if '\n' in response.choices[0].text.strip() else ''
+    return primary_color, supporting_colors, rationale
 
 def main():
     st.title("Webpage Content Color Assessor")
@@ -85,11 +87,12 @@ def main():
             for url in urls:
                 content = scrape_text(url)
                 if content:
-                    primary_color, rationale = assess_content(content)
+                    primary_color, supporting_colors, rationale = assess_content(content)
                     results.append({
                         "URL": url,
                         "Primary Color": primary_color,
-                        "Supporting Colors and Rationale": rationale
+                        "Supporting Colors": supporting_colors,
+                        "Rationale": rationale
                     })
             
             df = pd.DataFrame(results)
