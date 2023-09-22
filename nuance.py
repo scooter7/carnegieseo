@@ -12,6 +12,24 @@ if 'updated_color_scores' not in st.session_state:
 if 'sentence_to_colors' not in st.session_state:
     st.session_state['sentence_to_colors'] = {}
 
+def analyze_text(text, color_profiles):
+    color_scores = Counter()
+    for color, profile in color_profiles.items():
+        for characteristic in profile['key_characteristics']:
+            color_scores[color] += text.lower().count(characteristic.lower())
+        for tip in profile['messaging_tips']:
+            color_scores[color] += text.lower().count(tip.lower())
+        for tone in profile['tone_and_style']:
+            color_scores[color] += text.lower().count(tone.lower())
+    return color_scores
+
+def draw_donut_chart(color_scores, color_to_hex):
+    labels = list(color_scores.keys())
+    values = list(color_scores.values())
+    colors = [color_to_hex[color] for color in labels]
+    fig = go.Figure(data=[go.Pie(labels=labels, values=values, hole=.3, marker=dict(colors=colors))])
+    return fig
+
 def main():
     st.title('Color Personality Analysis')
     
