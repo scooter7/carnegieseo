@@ -45,7 +45,7 @@ color_to_hex = {
         'Green': '#008000'
     }
     
-    if st.button('Analyze'):
+if st.button('Analyze'):
         st.session_state['color_scores'] = analyze_text(user_content, color_profiles)
         st.session_state['updated_color_scores'] = Counter(st.session_state['color_scores'])
         st.session_state['sentence_to_colors'] = {}
