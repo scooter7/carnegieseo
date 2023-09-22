@@ -3,8 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import openai
 import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
+import plotly.express as px
 
 color_profiles = {
     'Silver': {'key_characteristics': ['rebellious', 'rule-breaking', 'freedom', 'fearless', 'risks'],
@@ -62,17 +61,19 @@ def assess_content(content):
     
     response = openai.Completion.create(
         engine="text-davinci-003",
-        prompt=f"{color_guide}\n\n{content}\n\nBased on the content, the primary color is ",
+        prompt=f"{color_guide}\n\n{content}\n\nBased on the content, the primary color is likely:\n",
         temperature=0.5,
         max_tokens=300,
         top_p=1.0,
         frequency_penalty=0.0,
         presence_penalty=0.0
     )
-    output = response.choices[0].text.strip().split('\n')
-    primary_color = output[0]
-    supporting_colors = output[1] if len(output) > 1 else ''
-    rationale = output[2] if len(output) > 2 else ''
+
+    output_lines = response.choices[0].text.strip().split('\n')
+    primary_color = output_lines[0] if output_lines else ""
+    supporting_colors = output_lines[1] if len(output_lines) > 1 else "No clear supporting colors identified."
+    rationale = output_lines[2] if len(output_lines) > 2 else "No clear rationale provided."
+
     return primary_color, supporting_colors, rationale
 
 def main():
@@ -87,34 +88,21 @@ def main():
             results = []
             for url in urls:
                 content = scrape_text(url)
-                if content:
-                    primary_color, supporting_colors, rationale = assess_content(content)
-                    results.append({
-                        "URL": url,
-                        "Primary Color": primary_color,
-                        "Supporting Colors": supporting_colors,
-                        "Rationale": rationale
-                    })
-            
+                primary_color, supporting_colors, rationale = assess_content(content)
+                results.append({
+                    "URL": url,
+                    "Primary Color": primary_color,
+                    "Supporting Colors": supporting_colors,
+                    "Rationale": rationale
+                })
+
             df = pd.DataFrame(results)
             st.table(df)
             
             colors_df = df["Primary Color"].value_counts().reset_index()
             colors_df.columns = ["Color", "Count"]
-            fig, ax = plt.subplots(figsize=(6, 3), subplot_kw=dict(aspect="equal"))
-            wedges, texts = ax.pie(colors_df["Count"], wedgeprops=dict(width=0.4), startangle=-40, colors=[color_to_hex.get(color, "#FFFFFF") for color in colors_df["Color"]])
-            bbox_props = dict(boxstyle="square,pad=0.3", fc="w", ec="k", lw=0.72)
-            kw = dict(arrowprops=dict(arrowstyle="-"), bbox=bbox_props, zorder=0, va="center")
-            for i, p in enumerate(wedges):
-                ang = (p.theta2 - p.theta1)/2. + p.theta1
-                y = np.sin(np.deg2rad(ang))
-                x = np.cos(np.deg2rad(ang))
-                horizontalalignment = {-1: "right", 1: "left"}[int(np.sign(x))]
-                connectionstyle = "angle,angleA=0,angleB={}".format(ang)
-                kw["arrowprops"].update({"connectionstyle": connectionstyle})
-                ax.annotate(colors_df["Color"].iloc[i], xy=(x, y), xytext=(1.35*np.sign(x), 1.4*y),
-                             horizontalalignment=horizontalalignment, **kw)
-            st.pyplot(fig)
+            fig = px.pie(colors_df, names='Color', values='Count', color='Color', color_discrete_map=color_to_hex, hole=0.4)
+            st.plotly_chart(fig)
 
 if __name__ == "__main__":
     main()
