@@ -82,23 +82,19 @@ def main():
         if not urls or len(urls) > 20:
             st.error("Please enter up to 20 valid URLs.")
         else:
-            results = []
+            color_count = {}
             for url in urls:
                 content = scrape_text(url)
                 primary_color, supporting_colors, rationale = assess_content(content)
-                results.append({
-                    "URL": url,
-                    "Primary Color": primary_color,
-                    "Supporting Colors": supporting_colors,
-                    "Rationale": rationale
-                })
+                st.write(f"**URL:** {url}")
+                st.write(f"**Primary Color:** {primary_color}")
+                st.write(f"**Supporting Colors:** {supporting_colors}")
+                st.write(f"**Rationale:** {rationale}")
+                st.write("---")
+                color_count[primary_color] = color_count.get(primary_color, 0) + 1
 
-            df = pd.DataFrame(results)
-            st.table(df)
-
-            colors_df = df["Primary Color"].value_counts().reset_index()
-            colors_df.columns = ["Color", "Count"]
-            fig = px.pie(colors_df, names='Color', values='Count', color='Color', color_discrete_map=color_to_hex, hole=0.4, width=800, height=400)
+            color_count_df = pd.DataFrame(list(color_count.items()), columns=['Color', 'Count'])
+            fig = px.pie(color_count_df, names='Color', values='Count', color='Color', color_discrete_map=color_to_hex, hole=0.4, width=800, height=400)
             st.plotly_chart(fig)
 
 if __name__ == "__main__":
