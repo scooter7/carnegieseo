@@ -6,9 +6,6 @@ import io
 import base64
 import openai
 
-if 'updated_color_scores' not in st.session_state:
-    st.session_state['updated_color_scores'] = Counter()
-
 def analyze_text(text, color_profiles):
     color_scores = Counter()
     for color, profile in color_profiles.items():
@@ -29,7 +26,7 @@ def draw_donut_chart(color_scores, color_to_hex):
 
 def main():
     st.title('Color Personality Analysis')
-    
+
     color_profiles = {
         'Silver': {'key_characteristics': ['rebellious', 'rule-breaking', 'freedom', 'fearless', 'risks'], 'tone_and_style': ['intriguing', 'expressive', 'focused', 'intentional', 'unbound', 'bold', 'brash'], 'messaging_tips': ['spectrum', 'independence', 'freedom', 'unconventional', 'bold', 'dangerous', 'empower', 'embolden', 'free', 'fearless']},
         'Purple': {'key_characteristics': ['care', 'encourage', 'safe', 'supported', 'help', 'heal'], 'tone_and_style': ['warm', 'gentle', 'accessible', 'relatable', 'personable', 'genuine', 'intimate', 'invitational'], 'messaging_tips': ['personable', 'care', 'compassion', 'friendship', 'deep', 'nurtures', 'protects', 'guides', 'comes alongside']},
@@ -51,44 +48,41 @@ def main():
         'Maroon': '#800000',
         'Green': '#008000'
     }
-    
+
     user_content = st.text_area('Paste your content here:')
     analyze_button = st.button('Analyze')
-    
-    if analyze_button or st.session_state['updated_color_scores']:
+
+    if analyze_button:
         color_scores = analyze_text(user_content, color_profiles)
         initial_fig = draw_donut_chart(color_scores, color_to_hex)
         st.subheader('Initial Donut Chart')
         st.plotly_chart(initial_fig)
-        
+
         sentences = re.split(r'[.!?]', user_content)
-        sentence_to_colors = {}
-        
+        updated_color_scores = Counter()
+
         for sentence in sentences:
             if sentence.strip():
-                sentence_to_colors[sentence] = st.multiselect(f"{sentence}.", list(color_profiles.keys()), key=sentence)
-        
-        for sentence, selected_colors in sentence_to_colors.items():
-            for color in selected_colors:
-                st.session_state['updated_color_scores'][color] += 1
-        
-        if st.session_state['updated_color_scores']:
-            updated_fig = draw_donut_chart(st.session_state['updated_color_scores'], color_to_hex)
+                selected_colors = st.multiselect(f"{sentence}.", list(color_profiles.keys()), key=sentence)
+                updated_color_scores.update(selected_colors)
+
+        if updated_color_scores:
+            updated_fig = draw_donut_chart(updated_color_scores, color_to_hex)
             st.subheader('Updated Donut Chart')
             st.plotly_chart(updated_fig)
-        
-        dominant_color = st.session_state['updated_color_scores'].most_common(1)[0][0] if st.session_state['updated_color_scores'] else None
-        supporting_colors = [color for color, count in st.session_state['updated_color_scores'].items() if color != dominant_color]
-        
+
+        dominant_color = updated_color_scores.most_common(1)[0][0] if updated_color_scores else None
+        supporting_colors = [color for color, count in updated_color_scores.items() if color != dominant_color]
+
         if dominant_color:
             st.write(f"The dominant color in the content appears to be {dominant_color}.")
         else:
             st.write(f"No dominant color could be determined from the content.")
-            
+
         if supporting_colors:
             st.write(f"The supporting colors are {', '.join(supporting_colors)}. They serve to complement the dominant color by adding layers of complexity to the message.")
         else:
             st.write(f"No supporting colors could be determined.")
-        
+
 if __name__ == '__main__':
     main()
