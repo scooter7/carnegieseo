@@ -61,7 +61,7 @@ def assess_content(content):
     
     response = openai.Completion.create(
         engine="text-davinci-003",
-        prompt=f"{color_guide}\n\n{content}\n\nBased on the content, the primary color is likely:\n",
+        prompt=f"{color_guide}\n\n{content}\n\nBased on the content and the color guide above, identify the primary color and the supporting colors, and provide a detailed rationale for the choices made.",
         temperature=0.5,
         max_tokens=300,
         top_p=1.0,
@@ -69,11 +69,19 @@ def assess_content(content):
         presence_penalty=0.0
     )
 
-    output_lines = response.choices[0].text.strip().split('\n')
-    primary_color = output_lines[0] if output_lines else ""
-    supporting_colors = output_lines[1] if len(output_lines) > 1 else "No clear supporting colors identified."
-    rationale = output_lines[2] if len(output_lines) > 2 else "No clear rationale provided."
-
+    output_text = response.choices[0].text.strip()
+    primary_color = "Not Identified"
+    supporting_colors = "Not Identified"
+    rationale = "Not Provided"
+    
+    lines = output_text.split('\n')
+    if lines:
+        primary_color = lines[0].strip()
+        if len(lines) > 1:
+            supporting_colors = lines[1].strip()
+        if len(lines) > 2:
+            rationale = "\n".join(lines[2:]).strip()
+    
     return primary_color, supporting_colors, rationale
 
 def main():
