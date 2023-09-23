@@ -64,11 +64,9 @@ def assess_content(content):
     if lines:
         primary_color_line = lines[0].strip()
         primary_color = primary_color_line.split(":")[1].strip() if ":" in primary_color_line else primary_color_line
-        
         if len(lines) > 1:
             supporting_colors_line = lines[1].strip()
             supporting_colors = supporting_colors_line.split(":")[1].strip() if ":" in supporting_colors_line else supporting_colors_line
-            
             rationale = "\n".join(lines[2:]).strip() if len(lines) > 2 else "Not Provided"
 
     return primary_color, supporting_colors, rationale
@@ -86,13 +84,11 @@ def main():
             for url in urls:
                 content = scrape_text(url)
                 primary_color, supporting_colors, rationale = assess_content(content)
-                
                 st.write(f"**URL:** {url}")
                 st.write(f"**Primary Color:** {primary_color}")
                 st.write(f"**Supporting Colors:** {supporting_colors if supporting_colors != 'Not Identified' else ''}")
                 st.write(f"**Rationale:** {rationale}")
                 st.write("---")
-                
                 color_count[primary_color] = color_count.get(primary_color, 0) + 1
 
             color_count_df = pd.DataFrame(list(color_count.items()), columns=['Color', 'Count'])
