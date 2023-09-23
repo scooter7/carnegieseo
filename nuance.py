@@ -44,22 +44,12 @@ def assess_content(content):
         color_guide += f"{color}:\n"
         for attribute, values in attributes.items():
             color_guide += f"  {attribute}: {' '.join(values)}\n"
-
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=f"Carefully analyze the content provided and compare it with the detailed color guide below. Evaluate the content against each color’s key characteristics, tone & style, and messaging tips to determine the most fitting primary color and any supporting colors.\n\nContent:\n{content}\n\nColor Guide:\n{color_guide}\n\nBased on a detailed comparison of the content and every color profile in the color guide, identify the most aligned primary color and any supporting colors. Provide a thorough rationale explaining why each color was chosen, taking into account the key characteristics, tone & style, and messaging tips of each color.",
-        temperature=0.5,
-        max_tokens=400,
-        top_p=1.0,
-        frequency_penalty=0.0,
-        presence_penalty=0.0
-    )
-
+    prompt = f"Carefully analyze the content and compare it with the detailed color guide. Evaluate the content against each color’s key characteristics, tone & style, and messaging tips to determine the most fitting primary color and any supporting colors.\n\nContent:\n{content}\n\nColor Guide:\n{color_guide}\n\nBased on a detailed comparison of the content and every color profile in the color guide, identify the most aligned primary color and any supporting colors. Provide a thorough rationale explaining why each color was chosen, taking into account the key characteristics, tone & style, and messaging tips of each color. Read the key characteristics, tone & style, and messaging tips for each color before assessing each URL against the full set of criteria for evaluation."
+    response = openai.Completion.create(engine="text-davinci-003", prompt=prompt, temperature=0.5, max_tokens=400, top_p=1.0, frequency_penalty=0.0, presence_penalty=0.0)
     output_text = response.choices[0].text.strip()
     primary_color = "Not Identified"
     supporting_colors = "Not Identified"
     rationale = "Not Provided"
-    
     lines = output_text.split('\n')
     if lines:
         primary_color_line = lines[0].strip()
@@ -68,14 +58,12 @@ def assess_content(content):
             supporting_colors_line = lines[1].strip()
             supporting_colors = supporting_colors_line.split(":")[1].strip() if ":" in supporting_colors_line else supporting_colors_line
             rationale = "\n".join(lines[2:]).strip() if len(lines) > 2 else "Not Provided"
-
     return primary_color, supporting_colors, rationale
 
 def main():
     st.title("Webpage Content Color Assessor")
     urls_input = st.text_area("Enter up to 20 URLs (separated by commas):")
     urls = [url.strip() for url in urls_input.split(",") if url.strip()]
-
     if st.button("Assess Content Colors"):
         if not urls or len(urls) > 20:
             st.error("Please enter up to 20 valid URLs.")
@@ -90,7 +78,6 @@ def main():
                 st.write(f"**Rationale:** {rationale}")
                 st.write("---")
                 color_count[primary_color] = color_count.get(primary_color, 0) + 1
-
             color_count_df = pd.DataFrame(list(color_count.items()), columns=['Color', 'Count'])
             fig = px.pie(color_count_df, names='Color', values='Count', color='Color', color_discrete_map=color_to_hex, hole=0.4, width=800, height=400)
             st.plotly_chart(fig)
