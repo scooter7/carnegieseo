@@ -45,7 +45,7 @@ def assess_content(content):
         for attribute, values in attributes.items():
             color_guide += f"  {attribute}: {' '.join(values)}\n"
 
-response = openai.Completion.create(
+    response = openai.Completion.create(
         engine="text-davinci-003",
         prompt=f"Carefully analyze the content provided and compare it with the detailed color guide below. Evaluate the content against each color’s key characteristics, tone & style, and messaging tips to determine the most fitting primary color and any supporting colors.\n\nContent:\n{content}\n\nColor Guide:\n{color_guide}\n\nBased on a detailed comparison of the content and every color profile in the color guide, identify the most aligned primary color and any supporting colors. Provide a thorough rationale explaining why each color was chosen, taking into account the key characteristics, tone & style, and messaging tips of each color.",
         temperature=0.5,
