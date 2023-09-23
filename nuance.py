@@ -23,6 +23,7 @@ color_to_hex = {
     'Red': '#FF0000',
     'Orange': '#FFA500',
     'Blue': '#0000FF'
+}
 
 if "OPENAI_API_KEY" not in st.secrets:
     st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
