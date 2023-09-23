@@ -47,9 +47,9 @@ def assess_content(content):
 
     response = openai.Completion.create(
         engine="text-davinci-003",
-        prompt=f"Analyze the following content and compare it with the color guide provided below to determine the primary and supporting colors.\n\nContent:\n{content}\n\nColor Guide:\n{color_guide}\n\nBased on the content and the color guide above, identify the primary color and the supporting colors, and provide a detailed rationale for the choices made.",
+        prompt=f"Carefully analyze the content provided and compare it with the detailed color guide below. Evaluate the content against each color’s key characteristics, tone & style, and messaging tips to determine the most fitting primary color and any supporting colors.\n\nContent:\n{content}\n\nColor Guide:\n{color_guide}\n\nBased on a detailed comparison of the content and every color profile in the color guide, identify the most aligned primary color and any supporting colors. Provide a thorough rationale explaining why each color was chosen, taking into account the key characteristics, tone & style, and messaging tips of each color.",
         temperature=0.5,
-        max_tokens=300,
+        max_tokens=400,
         top_p=1.0,
         frequency_penalty=0.0,
         presence_penalty=0.0
