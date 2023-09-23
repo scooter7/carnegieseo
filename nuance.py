@@ -23,7 +23,6 @@ color_to_hex = {
     'Red': '#FF0000',
     'Orange': '#FFA500',
     'Blue': '#0000FF'
-}
 
 if "OPENAI_API_KEY" not in st.secrets:
     st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
@@ -47,7 +46,7 @@ def assess_content(content):
 
     response = openai.Completion.create(
         engine="text-davinci-003",
-        prompt=f"Carefully analyze the content provided and compare it with the detailed color guide below. Evaluate the content against each color’s key characteristics, tone & style, and messaging tips to determine the most fitting primary color and any supporting colors.\n\nContent:\n{content}\n\nColor Guide:\n{color_guide}\n\nBased on a detailed comparison of the content and every color profile in the color guide, identify the most aligned primary color and any supporting colors. Provide a thorough rationale explaining why each color was chosen, taking into account the key characteristics, tone & style, and messaging tips of each color.",
+        prompt=f"Carefully analyze the content provided and compare it with the detailed color guide below. Evaluate the content against each color’s key characteristics, tone & style, and messaging tips to determine the most fitting primary color and any supporting colors.\n\nContent:\n{content}\n\nColor Guide:\n{color_guide}\n\nBased on a detailed comparison of the content and every color profile in the color guide, identify the most aligned primary color and any supporting colors. Provide a thorough rationale explaining why each color was chosen, taking into account the key characteristics, tone & style, and messaging tips of each color before assigning the color values. Cite specific examples of the content analyzed when presenting your rationale for the color assignments.",
         temperature=0.5,
         max_tokens=400,
         top_p=1.0,
@@ -86,19 +85,14 @@ def main():
                 primary_color, supporting_colors, rationale = assess_content(content)
                 st.write(f"**URL:** {url}")
                 st.write(f"**Primary Color:** {primary_color}")
-                st.write(f"**Supporting Colors:** {supporting_colors if supporting_colors != 'Not Identified' else 'None'}")
-                st.write(f"**Rationale:** {rationale if rationale != 'Not Provided' else 'No rationale provided'}")
+                st.write(f"**Supporting Colors:** {supporting_colors if supporting_colors != 'Not Identified' else ''}")
+                st.write(f"**Rationale:** {rationale}")
                 st.write("---")
                 color_count[primary_color] = color_count.get(primary_color, 0) + 1
-            
-            if color_count:
-                color_count_df = pd.DataFrame(list(color_count.items()), columns=['Color', 'Count'])
-                color_discrete_map = {color: color_to_hex.get(color, "#FFFFFF") for color in color_count_df['Color']}
-                fig = px.pie(color_count_df, names='Color', values='Count', color='Color', color_discrete_map=color_discrete_map, hole=0.4, width=1000, height=500)
-                fig.update_layout(legend_title_text='Color')
-                st.plotly_chart(fig)
-            else:
-                st.error("No primary colors were identified for the given URLs.")
+
+            color_count_df = pd.DataFrame(list(color_count.items()), columns=['Color', 'Count'])
+            fig = px.pie(color_count_df, names='Color', values='Count', color='Color', color_discrete_map=color_to_hex, hole=0.4, width=800, height=400)
+            st.plotly_chart(fig)
 
 if __name__ == "__main__":
     main()
