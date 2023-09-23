@@ -91,17 +91,14 @@ def main():
                 st.write("---")
                 color_count[primary_color] = color_count.get(primary_color, 0) + 1
             
-            color_count_df = pd.DataFrame(list(color_count.items()), columns=['Color', 'Count'])
-            color_discrete_map = {color: color_to_hex.get(color, "#FFFFFF") for color in color_count_df['Color']}
-            
-            # Debug statements to check the values
-            st.write("color_count_df:")
-            st.write(color_count_df)
-            st.write("color_discrete_map:")
-            st.write(color_discrete_map)
-
-            fig = px.pie(color_count_df, names='Color', values='Count', color='Color', color_discrete_map=color_discrete_map, hole=0.4, width=800, height=400)
-            st.plotly_chart(fig)
+            if color_count:  # Check if color_count is not empty
+                color_count_df = pd.DataFrame(list(color_count.items()), columns=['Color', 'Count'])
+                color_discrete_map = {color: color_to_hex.get(color, "#FFFFFF") for color in color_count_df['Color']}
+                fig = px.pie(color_count_df, names='Color', values='Count', color='Color', color_discrete_map=color_discrete_map, hole=0.4, width=800, height=400)
+                fig.update_layout(legend_title_text='Color')  # Explicitly set the legend title to 'Color'
+                st.plotly_chart(fig)
+            else:
+                st.error("No primary colors were identified for the given URLs.")
 
 if __name__ == "__main__":
     main()
