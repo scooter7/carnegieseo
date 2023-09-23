@@ -86,14 +86,19 @@ def main():
                 primary_color, supporting_colors, rationale = assess_content(content)
                 st.write(f"**URL:** {url}")
                 st.write(f"**Primary Color:** {primary_color}")
-                st.write(f"**Supporting Colors:** {supporting_colors if supporting_colors != 'Not Identified' else ''}")
-                st.write(f"**Rationale:** {rationale}")
+                st.write(f"**Supporting Colors:** {supporting_colors if supporting_colors != 'Not Identified' else 'None'}")
+                st.write(f"**Rationale:** {rationale if rationale != 'Not Provided' else 'No rationale provided'}")
                 st.write("---")
                 color_count[primary_color] = color_count.get(primary_color, 0) + 1
-
-            color_count_df = pd.DataFrame(list(color_count.items()), columns=['Color', 'Count'])
-            fig = px.pie(color_count_df, names='Color', values='Count', color='Color', color_discrete_map=color_to_hex, hole=0.4, width=800, height=400)
-            st.plotly_chart(fig)
+            
+            if color_count:
+                color_count_df = pd.DataFrame(list(color_count.items()), columns=['Color', 'Count'])
+                color_discrete_map = {color: color_to_hex.get(color, "#FFFFFF") for color in color_count_df['Color']}
+                fig = px.pie(color_count_df, names='Color', values='Count', color='Color', color_discrete_map=color_discrete_map, hole=0.4, width=1000, height=500)
+                fig.update_layout(legend_title_text='Color')
+                st.plotly_chart(fig)
+            else:
+                st.error("No primary colors were identified for the given URLs.")
 
 if __name__ == "__main__":
     main()
