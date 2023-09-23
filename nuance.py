@@ -93,6 +93,13 @@ def main():
             
             color_count_df = pd.DataFrame(list(color_count.items()), columns=['Color', 'Count'])
             color_discrete_map = {color: color_to_hex.get(color, "#FFFFFF") for color in color_count_df['Color']}
+            
+            # Debug statements to check the values
+            st.write("color_count_df:")
+            st.write(color_count_df)
+            st.write("color_discrete_map:")
+            st.write(color_discrete_map)
+
             fig = px.pie(color_count_df, names='Color', values='Count', color='Color', color_discrete_map=color_discrete_map, hole=0.4, width=800, height=400)
             st.plotly_chart(fig)
 
