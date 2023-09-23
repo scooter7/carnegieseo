@@ -96,9 +96,12 @@ def main():
                 color_discrete_map = {color: color_to_hex.get(color, "#FFFFFF") for color in color_count_df['Color']}
                 fig = px.pie(color_count_df, names='Color', values='Count', color='Color', color_discrete_map=color_discrete_map, hole=0.4, width=800, height=400)
                 fig.update_layout(legend_title_text='Color')  # Explicitly set the legend title to 'Color'
-                st.plotly_chart(fig)
+                
+                # Try using st.pyplot to render the chart
+                st.pyplot(fig)
             else:
-                st.error("No primary colors were identified for the given URLs.")
+                # Explicitly displaying an error message if color_count is empty
+                st.error("No primary colors were identified for the given URLs. It seems color_count is empty.")
 
 if __name__ == "__main__":
     main()
