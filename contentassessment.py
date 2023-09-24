@@ -95,8 +95,7 @@ def main():
                 st.write(f"**Rationale:** {rationale if rationale != 'Not Provided' else 'No rationale provided.'}")
                 st.write("---")
                 color_names = list(color_profiles.keys())
-                new_primary_color_line = lines[0].strip() if lines else ""
-                new_primary_color = extract_color_name(new_primary_color_line)
+                new_primary_color = extract_color_name(primary_color)
                 new_supporting_colors = st.multiselect("Reassign Supporting Colors (if needed):", list(color_profiles.keys()), default=[supporting_color for supporting_color in ([supporting_colors] if isinstance(supporting_colors, str) else supporting_colors) if supporting_color in color_profiles.keys()] if supporting_colors != "Not Identified" else [])
                 new_rationale = st.text_area(f"Update Rationale for {url} (if needed):", value=rationale)
                 if new_primary_color != primary_color or set(new_supporting_colors) != set([supporting_colors]) or new_rationale != rationale:
@@ -109,6 +108,7 @@ def main():
                     color_count[extract_color_name(primary_color)] -= 1
 
                 color_count[extract_color_name(primary_color)] = color_count.get(extract_color_name(primary_color), 0) + 1
+
 
             color_count_df = pd.DataFrame(list(color_count.items()), columns=['Color', 'Count'])
             
