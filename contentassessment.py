@@ -122,9 +122,12 @@ def main():
             
             if st.button('Update All Analyses'):
                 for url in urls:
-                    st.session_state[f'primary_{url}'] = st.session_state[f'reassign_primary_{url}']
-                    st.session_state[f'supporting_{url}'] = st.session_state[f'reassign_supporting_{url}']
-                    st.session_state[f'rationale_{url}'] = st.session_state[f'retype_rationale_{url}']
+                    st.session_state[f'reassign_primary_{url}'] = st.selectbox(
+                        f'Reassign Primary Color for {url}', 
+                        list(color_profiles.keys()), 
+                        key=f'primary_{url}', 
+                        index=list(color_profiles.keys()).index(st.session_state[f'primary_{url}'])
+            )
 
             color_count_df = pd.DataFrame(list(color_count.items()), columns=['Color', 'Count'])
             fig = px.pie(color_count_df, names='Color', values='Count', color='Color', color_discrete_map=color_to_hex, hole=0.4, width=1000, height=500)
