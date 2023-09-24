@@ -124,7 +124,7 @@ def main():
                 doc.add_paragraph(f'Primary Color: {primary_color}')
                 if supporting_colors != "Not Identified":
                     doc.add_paragraph(f'Supporting Colors: {supporting_colors}')
-                doc.add_paragraph(f'Rationale: {rationale if rationale != 'Not Provided' else 'No rationale provided.'}')
+                doc.add_paragraph(f"Rationale: {rationale if rationale != 'Not Provided' else 'No rationale provided.'}")
                 doc.add_paragraph('---')
             
             stream = BytesIO()
