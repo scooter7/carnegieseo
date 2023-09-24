@@ -5,8 +5,12 @@ import openai
 import pandas as pd
 import plotly.express as px
 
-color_profiles = {
-    'Silver': {'key_characteristics': ['rebellious', 'rule-breaking', 'freedom', 'fearless', 'risks'], 'tone_and_style': ['intriguing', 'expressive', 'focused', 'intentional', 'unbound', 'bold', 'brash'], 'messaging_tips': ['spectrum', 'independence', 'freedom', 'unconventional', 'bold', 'dangerous', 'empower', 'embolden', 'free', 'fearless']},
+def extract_color_name(description: str) -> str:
+    words = description.split()
+    color_name = words[-1] if words else ""
+    return color_name.rstrip(".")
+
+expressive', 'focused', 'intentional', 'unbound', 'bold', 'brash'], 'messaging_tips': ['spectrum', 'independence', 'freedom', 'unconventional', 'bold', 'dangerous', 'empower', 'embolden', 'free', 'fearless']},
     'Purple': {'key_characteristics': ['care', 'encourage', 'safe', 'supported', 'help', 'heal'], 'tone_and_style': ['warm', 'gentle', 'accessible', 'relatable', 'personable', 'genuine', 'intimate', 'invitational'], 'messaging_tips': ['personable', 'care', 'compassion', 'friendship', 'deep', 'nurtures', 'protects', 'guides', 'comes alongside']},
     'Pink': {'key_characteristics': ['elegant', 'sophisticated', 'experience', 'excellence', 'beauty', 'vitality'], 'tone_and_style': ['elevated', 'ethereal', 'thoughtful', 'meaningful', 'aspirational', 'dreamy'], 'messaging_tips': ['fine details', 'intentionality', 'unique experiences', 'elevated language', 'excellence', 'refinement', 'inspire', 'uplift', 'desired', 'important']},
     'Yellow': {'key_characteristics': ['new concepts', 'experimentation', 'newer', 'better', 'ambiguity', 'unknowns', 'possibilities', 'imagine', 'invent'], 'tone_and_style': ['eager', 'ambitious', 'bold', 'unafraid', 'bright', 'energetic', 'positive', 'optimistic'], 'messaging_tips': ['core intention', 'original', 'transformative', 'invention', 'transformation', 'advancement']},
@@ -56,14 +60,14 @@ def assess_content(content):
     )
 
     output_text = response.choices[0].text.strip()
-    primary_color = "Not Identified"
+    primary_color = extract_color_name(primary_color_descriptive)
     supporting_colors = "Not Identified"
     rationale = "Not Provided"
     
     lines = output_text.split('\n')
     if lines:
         primary_color_line = lines[0].strip()
-        primary_color = primary_color_line.split(":")[1].strip() if ":" in primary_color_line else primary_color_line
+        primary_color = extract_color_name(primary_color_descriptive)
         if len(lines) > 1:
             supporting_colors_line = lines[1].strip()
             supporting_colors = supporting_colors_line.split(":")[1].strip() if ":" in supporting_colors_line else supporting_colors_line
@@ -91,8 +95,8 @@ def main():
                 st.write(f"**Rationale:** {rationale if rationale != 'Not Provided' else 'No rationale provided.'}")
                 st.write("---")
                 color_names = list(color_profiles.keys())
-                new_primary_color = st.selectbox("Reassign Primary Color (if needed):", list(color_profiles.keys()), index=color_names.index(primary_color) if primary_color in color_names else 0)
-                new_supporting_colors = st.multiselect("Reassign Supporting Colors (if needed):", list(color_profiles.keys()), default=[color for color in supporting_colors if color in color_profiles.keys()] if supporting_colors != "Not Identified" and supporting_colors in color_profiles.keys() else [])
+                new_primary_color = extract_color_name(primary_color_descriptive)
+                new_supporting_colors = st.multiselect("Reassign Supporting Colors (if needed):", list(color_profiles.keys()), default=[supporting_color for supporting_color in ([supporting_colors] if isinstance(supporting_colors, str) else supporting_colors) if supporting_color in color_profiles.keys()] if supporting_colors != "Not Identified" else [])
                 new_rationale = st.text_area(f"Update Rationale for {url} (if needed):", value=rationale)
                 if new_primary_color != primary_color or set(new_supporting_colors) != set([supporting_colors]) or new_rationale != rationale:
                     st.write("**Updated Assignments for this URL:**")
@@ -124,7 +128,7 @@ def main():
                 doc.add_paragraph(f'Primary Color: {primary_color}')
                 if supporting_colors != "Not Identified":
                     doc.add_paragraph(f'Supporting Colors: {supporting_colors}')
-                doc.add_paragraph(f"Rationale: {rationale if rationale != 'Not Provided' else 'No rationale provided.'}")
+                doc.add_paragraph(f'Rationale: {rationale if rationale != 'Not Provided' else 'No rationale provided.'}')
                 doc.add_paragraph('---')
             
             stream = BytesIO()
