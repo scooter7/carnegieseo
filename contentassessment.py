@@ -7,12 +7,12 @@ import plotly.express as px
 from docx import Document
 
 color_profiles = {
-    'Silver': {'key_characteristics': ['rebellious', 'rule-breaking', 'freedom', 'fearless', 'risks'], 'tone_and_style': ['intriguing', 'expressive', 'focused', 'intentional', 'unbound', 'bold', 'brash'], 'messaging_tips': ['spectrum', 'independence', 'freedom', 'unconventional', 'bold', 'dangerous', 'empower', 'embolden', 'free', 'fearless']},
-    'Purple': {'key_characteristics': ['care', 'encourage', 'safe', 'supported', 'help', 'heal'], 'tone_and_style': ['warm', 'gentle', 'accessible', 'relatable', 'personable', 'genuine', 'intimate', 'invitational'], 'messaging_tips': ['personable', 'care', 'compassion', 'friendship', 'deep', 'nurtures', 'protects', 'guides', 'comes alongside']},
-    'Pink': {'key_characteristics': ['elegant', 'sophisticated', 'experience', 'excellence', 'beauty', 'vitality'], 'tone_and_style': ['elevated', 'ethereal', 'thoughtful', 'meaningful', 'aspirational', 'dreamy'], 'messaging_tips': ['fine details', 'intentionality', 'unique experiences', 'elevated language', 'excellence', 'refinement', 'inspire', 'uplift', 'desired', 'important']},
-    'Yellow': {'key_characteristics': ['new concepts', 'experimentation', 'newer', 'better', 'ambiguity', 'unknowns', 'possibilities', 'imagine', 'invent'], 'tone_and_style': ['eager', 'ambitious', 'bold', 'unafraid', 'bright', 'energetic', 'positive', 'optimistic'], 'messaging_tips': ['core intention', 'original', 'transformative', 'invention', 'transformation', 'advancement']},
-    'Red': {'key_characteristics': ['cheerful', 'upbeat', 'entertain', 'uplift', 'fun', 'amusement', 'energized', 'happy'], 'tone_and_style': ['energetic', 'passionate', 'optimistic', 'extroverted', 'playful', 'humorous'], 'messaging_tips': ['upbeat', 'extroverted', 'positive energy', 'light', 'casual', 'invitational', 'surprise', 'unexpected', 'fun', 'energy', 'engaged community']},
-    'Orange': {'key_characteristics': ['creative', 'original', 'self-expression', 'artistry', 'new ideas', 'modes of expression'], 'tone_and_style': ['exuberant', 'vivid', 'colorful', 'unrestrained', 'abstract', 'unconventional', 'interesting constructs', 'sentence structure'], 'messaging_tips': ['expressive freedom', 'art for art’s sake', 'original', 'creative', 'diversity', 'imagination', 'ideation']},
+    'Silver': {'key_characteristics': ['independence', 'self-control', 'adjustment', 'restraint', 'quiet', 'introspective', 'self-sufficient'], 'tone_and_style': ['calm', 'balanced', 'neutral', 'unbiased'], 'messaging_tips': ['clear', 'concise', 'balanced', 'neutral']},
+    'Purple': {'key_characteristics': ['sensitive', 'compassionate', 'understanding', 'supportive', 'kind', 'generous', 'good listener'], 'tone_and_style': ['warm', 'empathetic', 'encouraging', 'supportive'], 'messaging_tips': ['positive reinforcement', 'encouragement', 'support', 'understanding']},
+    'Pink': {'key_characteristics': ['warm', 'nurturing', 'compassionate', 'caring', 'affectionate', 'loving'], 'tone_and_style': ['gentle', 'soothing', 'nurturing', 'supportive'], 'messaging_tips': ['compassion', 'understanding', 'nurturing', 'support']},
+    'Yellow': {'key_characteristics': ['happy', 'fun', 'light', 'lively', 'energetic'], 'tone_and_style': ['bright', 'uplifting', 'energetic', 'lively'], 'messaging_tips': ['positivity', 'enthusiasm', 'energy', 'brightness']},
+    'Red': {'key_characteristics': ['excitement', 'strength', 'love', 'passion', 'heat', 'joy'], 'tone_and_style': ['strong', 'bold', 'passionate', 'exciting'], 'messaging_tips': ['boldness', 'excitement', 'passion', 'strength']},
+    'Orange': {'key_characteristics': ['creative', 'original', 'self-expression', 'artistry', 'new ideas', 'modes of expression'], 'tone_and_style': ['exuberant', 'vivid', 'colorful', 'unrestrained', 'abstract', 'unconventional'], 'messaging_tips': ['expressive freedom', 'art for art’s sake', 'original', 'creative', 'diversity', 'imagination', 'ideation']},
     'Blue': {'key_characteristics': ['growth', 'industry leader', 'stability', 'pride', 'strength', 'influence', 'accomplishment'], 'tone_and_style': ['bold', 'confident', 'self-assured', 'proud'], 'messaging_tips': ['bold', 'confident', 'self-assured', 'proud', 'powerful']}
 }
 
@@ -25,6 +25,49 @@ color_to_hex = {
     'Orange': '#FFA500',
     'Blue': '#0000FF'
 }
+
+openai_api_key = st.secrets["OPENAI_API_KEY"]
+openai.api_key = openai_api_key
+
+def scrape_text(url):
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, 'html.parser')
+    paragraphs = soup.find_all('p')
+    text = " ".join([para.text for para in paragraphs])
+    return text
+
+def assess_content(content):
+    color_guide = ""
+    for color, attributes in color_profiles.items():
+        color_guide += f"{color}:\\n"
+        for attribute, values in attributes.items():
+            color_guide += f"  {attribute}: {' '.join(values)}\\n"
+
+    response = openai.Completion.create(
+        engine="text-davinci-003",
+        prompt=f"Carefully analyze the content provided and compare it with the detailed color guide below. Evaluate the content against each color’s key characteristics, tone & style, and messaging tips to determine the most fitting primary color and any supporting colors.\\n\\nContent:\\n{content}\\n\\nColor Guide:\\n{color_guide}\\n\\nBased on a detailed comparison of the content and every color profile in the color guide, identify the most aligned primary color and any supporting colors. Provide a thorough rationale explaining why each color was chosen.",
+        temperature=0.5,
+        max_tokens=400,
+        top_p=1.0,
+        frequency_penalty=0.0,
+        presence_penalty=0.0
+    )
+
+    output_text = response.choices[0].text.strip()
+    primary_color = "Not Identified"
+    supporting_colors = "Not Identified"
+    rationale = "Not Provided"
+    
+    lines = output_text.split('\\n')
+    if lines:
+        primary_color_line = lines[0].strip()
+        primary_color = primary_color_line.split(":")[1].strip() if ":" in primary_color_line else primary_color_line
+        if len(lines) > 1:
+            supporting_colors_line = lines[1].strip()
+            supporting_colors = supporting_colors_line.split(":")[1].strip() if ":" in supporting_colors_line else supporting_colors_line
+            rationale = "\\n".join(lines[2:]).strip() if len(lines) > 2 else "Not Provided"
+
+    return primary_color, supporting_colors, rationale
 
 def create_word_document(urls_analysis):
     document = Document()
