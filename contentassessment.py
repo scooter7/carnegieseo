@@ -5,13 +5,6 @@ import openai
 import pandas as pd
 import plotly.express as px
 from docx import Document
-from io import BytesIO
-import base64
-
-def extract_color_name(description: str) -> str:
-    words = description.split()
-    color_name = words[-1] if words else ""
-    return color_name.rstrip(".")
 
 color_profiles = {
     'Silver': {'key_characteristics': ['rebellious', 'rule-breaking', 'freedom', 'fearless', 'risks'], 'tone_and_style': ['intriguing', 'expressive', 'focused', 'intentional', 'unbound', 'bold', 'brash'], 'messaging_tips': ['spectrum', 'independence', 'freedom', 'unconventional', 'bold', 'dangerous', 'empower', 'embolden', 'free', 'fearless']},
@@ -33,47 +26,20 @@ color_to_hex = {
     'Blue': '#0000FF'
 }
 
-openai_api_key = st.secrets["OPENAI_API_KEY"] if "OPENAI_API_KEY" in st.secrets else st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
-openai.api_key = openai_api_key
-
-def scrape_text(url):
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    paragraphs = soup.find_all('p')
-    text = " ".join([para.text for para in paragraphs])
-    return text
-
-def assess_content(content):
-    color_guide = ""
-    for color, attributes in color_profiles.items():
-        color_guide += f"{color}:\n"
-        for attribute, values in attributes.items():
-            color_guide += f"  {attribute}: {' '.join(values)}\n"
-
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=f"Carefully analyze the content provided and compare it with the detailed color guide below. Evaluate the content against each color’s key characteristics, tone & style, and messaging tips to determine the most fitting primary color and any supporting colors.\n\nContent:\n{content}\n\nColor Guide:\n{color_guide}\n\nBased on a detailed comparison of the content and every color profile in the color guide, identify the most aligned primary color and any supporting colors. Provide a thorough rationale explaining why each color was chosen, taking into account the key characteristics, tone & style, and messaging tips of each color before assigning the color values. Cite specific examples of the content analyzed when presenting your rationale for the color assignments.",
-        temperature=0.5,
-        max_tokens=400,
-        top_p=1.0,
-        frequency_penalty=0.0,
-        presence_penalty=0.0
-    )
-
-    output_text = response.choices[0].text.strip()
-    lines = output_text.split('\n')
-    primary_color_line = lines[0].strip() if lines else ""
-    primary_color = extract_color_name(primary_color_line)
-    supporting_colors = "Not Identified"
-    rationale = "Not Provided"
-    
-    if lines:
-        if len(lines) > 1:
-            supporting_colors_line = lines[1].strip()
-            supporting_colors = supporting_colors_line.split(":")[1].strip() if ":" in supporting_colors_line else supporting_colors_line
-            rationale = "\n".join(lines[2:]).strip() if len(lines) > 2 else "Not Provided"
-
-    return primary_color, supporting_colors, rationale
+def create_word_document(urls_analysis):
+    document = Document()
+    document.add_heading('Webpage Content Color Assessor Analysis', level=1)
+    for url, analysis in urls_analysis.items():
+        document.add_heading(f'URL: {url}', level=2)
+        document.add_heading('Primary Color:', level=3)
+        document.add_paragraph(analysis['primary_color'])
+        document.add_heading('Supporting Colors:', level=3)
+        document.add_paragraph(', '.join(analysis['supporting_colors']))
+        document.add_heading('Rationale:', level=3)
+        document.add_paragraph(analysis['rationale'])
+    file_path = "/mnt/data/analysis.docx"
+    document.save(file_path)
+    return file_path
 
 def main():
     st.title("Webpage Content Color Assessor")
@@ -84,60 +50,43 @@ def main():
         if not urls or len(urls) > 20:
             st.error("Please enter up to 20 valid URLs.")
         else:
+            urls_analysis = {}
             color_count = {}
             for url in urls:
                 content = scrape_text(url)
                 primary_color, supporting_colors, rationale = assess_content(content)
                 st.write(f"**URL:** {url}")
                 st.write(f"**Primary Color:** {primary_color}")
-                if supporting_colors != "Not Identified":
-                    st.write(f"**Supporting Colors:** {supporting_colors}")
-                st.write(f"**Rationale:** {rationale if rationale != 'Not Provided' else 'No rationale provided.'}")
-                st.write("---")
-                color_names = list(color_profiles.keys())
-                new_primary_color = extract_color_name(primary_color)
-                new_supporting_colors = st.multiselect("Reassign Supporting Colors (if needed):", list(color_profiles.keys()), default=[supporting_color for supporting_color in ([supporting_colors] if isinstance(supporting_colors, str) else supporting_colors) if supporting_color in color_profiles.keys()] if supporting_colors != "Not Identified" else [])
-                new_rationale = st.text_area(f"Update Rationale for {url} (if needed):", value=rationale)
-                if new_primary_color != primary_color or set(new_supporting_colors) != set([supporting_colors]) or new_rationale != rationale:
-                    st.write("**Updated Assignments for this URL:**")
-                    st.write(f"**Primary Color:** {new_primary_color}")
-                    if new_supporting_colors:
-                        st.write(f"**Supporting Colors:** {', '.join(new_supporting_colors)}")
-                    st.write(f"**Rationale:** {new_rationale if new_rationale else 'No rationale provided.'}")
-                    color_count[extract_color_name(new_primary_color)] = color_count.get(extract_color_name(new_primary_color), 0) + 1
-                    color_count[extract_color_name(primary_color)] -= 1
-
-                color_count[extract_color_name(primary_color)] = color_count.get(extract_color_name(primary_color), 0) + 1
-
+                st.write(f"**Supporting Colors:** {supporting_colors if supporting_colors != 'Not Identified' else ''}")
+                st.write(f"**Rationale:** {rationale}")
+                
+                reassign_primary = st.selectbox(f'Reassign Primary Color for {url}', list(color_profiles.keys()), key=f'primary_{url}')
+                reassign_supporting = st.multiselect(f'Reassign Supporting Colors for {url}', list(color_profiles.keys()), key=f'supporting_{url}')
+                retype_rationale = st.text_area(f'Retype Rationale for {url}', value=rationale, key=f'rationale_{url}')
+                
+                if st.button('Update Analysis', key=f'update_{url}'):
+                    primary_color = reassign_primary
+                    supporting_colors = ', '.join(reassign_supporting)
+                    rationale = retype_rationale
+                    st.write(f"Updated Primary Color for {url}: {primary_color}")
+                    st.write(f"Updated Supporting Colors for {url}: {supporting_colors}")
+                    st.write(f"Updated Rationale for {url}: {rationale}")
+                    st.write("---")
+                
+                urls_analysis[url] = {
+                    'primary_color': primary_color,
+                    'supporting_colors': supporting_colors.split(', '),
+                    'rationale': rationale
+                }
+                color_count[primary_color] = color_count.get(primary_color, 0) + 1
 
             color_count_df = pd.DataFrame(list(color_count.items()), columns=['Color', 'Count'])
-            
-            color_count = {k: v for k, v in color_count.items() if v > 0}
-            color_count_df = pd.DataFrame(list(color_count.items()), columns=['Color', 'Count'])
-            fig = px.pie(color_count_df, names='Color', values='Count', color='Color', color_discrete_map=color_to_hex, hole=0.4, width=900, height=500)
-            fig.update_traces(textinfo='none')
-            fig.update_layout(showlegend=True, legend_title_text='')
+            fig = px.pie(color_count_df, names='Color', values='Count', color='Color', color_discrete_map=color_to_hex, hole=0.4, width=1000, height=500)
             st.plotly_chart(fig)
-
-            doc = Document()
-            doc.add_heading('Webpage Content Color Assessor Analysis', level=1)
             
-            for url in urls:
-                content = scrape_text(url)
-                primary_color, supporting_colors, rationale = assess_content(content)
-                doc.add_heading(f'URL: {url}', level=2)
-                doc.add_paragraph(f'Primary Color: {primary_color}')
-                if supporting_colors != "Not Identified":
-                    doc.add_paragraph(f'Supporting Colors: {supporting_colors}')
-                doc.add_paragraph(f'Rationale: {rationale if rationale != "Not Provided" else "No rationale provided."}')
-                doc.add_paragraph('---')
-            
-            stream = BytesIO()
-            doc.save(stream)
-            
-            b64 = base64.b64encode(stream.getvalue()).decode()
-            href = f'<a href="data:application/octet-stream;base64,{b64}" download="analysis.docx">Download Analysis as Word Document</a>'
-            st.markdown(href, unsafe_allow_html=True)
+            if st.button('Download Analysis'):
+                file_path = create_word_document(urls_analysis)
+                st.markdown(f'[Download Analysis]({file_path})')
 
 if __name__ == "__main__":
     main()
