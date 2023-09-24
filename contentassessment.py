@@ -104,10 +104,10 @@ def main():
                     if new_supporting_colors:
                         st.write(f"**Supporting Colors:** {', '.join(new_supporting_colors)}")
                     st.write(f"**Rationale:** {new_rationale if new_rationale else 'No rationale provided.'}")
-                    color_count[new_primary_color] = color_count.get(new_primary_color, 0) + 1
-                    color_count[primary_color] -= 1
+                    color_count[extract_color_name(new_primary_color)] = color_count.get(extract_color_name(new_primary_color), 0) + 1
+                    color_count[extract_color_name(primary_color)] -= 1
 
-                color_count[primary_color] = color_count.get(primary_color, 0) + 1
+                color_count[extract_color_name(primary_color)] = color_count.get(extract_color_name(primary_color), 0) + 1
 
             color_count_df = pd.DataFrame(list(color_count.items()), columns=['Color', 'Count'])
             
