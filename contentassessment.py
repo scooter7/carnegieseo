@@ -98,30 +98,34 @@ def main():
             for url in urls:
                 content = scrape_text(url)
                 primary_color, supporting_colors, rationale = assess_content(content)
+
+                # Initialization of Streamlit session state for each URL
+                if f'primary_{url}' not in st.session_state:
+                    st.session_state[f'primary_{url}'] = primary_color
+                    st.session_state[f'supporting_{url}'] = supporting_colors.split(', ')
+                    st.session_state[f'rationale_{url}'] = rationale
+                
                 st.write(f"**URL:** {url}")
-                st.write(f"**Primary Color:** {primary_color}")
-                st.write(f"**Supporting Colors:** {supporting_colors if supporting_colors != 'Not Identified' else ''}")
-                st.write(f"**Rationale:** {rationale}")
+                st.write(f"**Primary Color:** {st.session_state[f'primary_{url}']}")
+                st.write(f"**Supporting Colors:** {', '.join(st.session_state[f'supporting_{url}']) if st.session_state[f'supporting_{url}'] else ''}")
+                st.write(f"**Rationale:** {st.session_state[f'rationale_{url}']}")
                 
-                reassign_primary = st.selectbox(f'Reassign Primary Color for {url}', list(color_profiles.keys()), key=f'primary_{url}')
-                reassign_supporting = st.multiselect(f'Reassign Supporting Colors for {url}', list(color_profiles.keys()), key=f'supporting_{url}')
-                retype_rationale = st.text_area(f'Retype Rationale for {url}', value=rationale, key=f'rationale_{url}')
-                
-                if st.button('Update Analysis', key=f'update_{url}'):
-                    primary_color = reassign_primary
-                    supporting_colors = ', '.join(reassign_supporting)
-                    rationale = retype_rationale
-                    st.write(f"Updated Primary Color for {url}: {primary_color}")
-                    st.write(f"Updated Supporting Colors for {url}: {supporting_colors}")
-                    st.write(f"Updated Rationale for {url}: {rationale}")
-                    st.write("---")
+                st.session_state[f'reassign_primary_{url}'] = st.selectbox(f'Reassign Primary Color for {url}', list(color_profiles.keys()), key=f'primary_{url}')
+                st.session_state[f'reassign_supporting_{url}'] = st.multiselect(f'Reassign Supporting Colors for {url}', list(color_profiles.keys()), key=f'supporting_{url}')
+                st.session_state[f'retype_rationale_{url}'] = st.text_area(f'Retype Rationale for {url}', value=st.session_state[f'rationale_{url}'], key=f'rationale_{url}')
                 
                 urls_analysis[url] = {
-                    'primary_color': primary_color,
-                    'supporting_colors': supporting_colors.split(', '),
-                    'rationale': rationale
+                    'primary_color': st.session_state[f'primary_{url}'],
+                    'supporting_colors': st.session_state[f'supporting_{url}'],
+                    'rationale': st.session_state[f'rationale_{url}']
                 }
-                color_count[primary_color] = color_count.get(primary_color, 0) + 1
+                color_count[st.session_state[f'primary_{url}']] = color_count.get(st.session_state[f'primary_{url}'], 0) + 1
+            
+            if st.button('Update All Analyses'):
+                for url in urls:
+                    st.session_state[f'primary_{url}'] = st.session_state[f'reassign_primary_{url}']
+                    st.session_state[f'supporting_{url}'] = st.session_state[f'reassign_supporting_{url}']
+                    st.session_state[f'rationale_{url}'] = st.session_state[f'retype_rationale_{url}']
 
             color_count_df = pd.DataFrame(list(color_count.items()), columns=['Color', 'Count'])
             fig = px.pie(color_count_df, names='Color', values='Count', color='Color', color_discrete_map=color_to_hex, hole=0.4, width=1000, height=500)
