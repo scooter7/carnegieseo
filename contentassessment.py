@@ -71,7 +71,7 @@ def assess_content(content):
 
 def create_word_document(urls_analysis):
     document = Document()
-    document.add_heading('Webpage Content Color Assessor Analysis', level=1)
+        document.add_heading('Webpage Content Color Assessor Analysis', level=1)
     for url, analysis in urls_analysis.items():
         document.add_heading(f'URL: {url}', level=2)
         document.add_heading('Primary Color:', level=3)
@@ -99,7 +99,6 @@ def main():
                 content = scrape_text(url)
                 primary_color, supporting_colors, rationale = assess_content(content)
 
-                # Initialization of Streamlit session state for each URL
                 if f'primary_{url}' not in st.session_state:
                     st.session_state[f'primary_{url}'] = primary_color
                     st.session_state[f'supporting_{url}'] = supporting_colors.split(', ')
@@ -110,8 +109,8 @@ def main():
                 st.write(f"**Supporting Colors:** {', '.join(st.session_state[f'supporting_{url}']) if st.session_state[f'supporting_{url}'] else ''}")
                 st.write(f"**Rationale:** {st.session_state[f'rationale_{url}']}")
                 
-                st.session_state[f'reassign_primary_{url}'] = st.selectbox(f'Reassign Primary Color for {url}', list(color_profiles.keys()), key=f'primary_{url}')
-                st.session_state[f'reassign_supporting_{url}'] = st.multiselect(f'Reassign Supporting Colors for {url}', list(color_profiles.keys()), key=f'supporting_{url}')
+                st.session_state[f'reassign_primary_{url}'] = st.selectbox(f'Reassign Primary Color for {url}', list(color_profiles.keys()), key=f'primary_{url}', value=st.session_state[f'primary_{url}'])
+                st.session_state[f'reassign_supporting_{url}'] = st.multiselect(f'Reassign Supporting Colors for {url}', list(color_profiles.keys()), key=f'supporting_{url}', default=st.session_state[f'supporting_{url}'])
                 st.session_state[f'retype_rationale_{url}'] = st.text_area(f'Retype Rationale for {url}', value=st.session_state[f'rationale_{url}'], key=f'rationale_{url}')
                 
                 urls_analysis[url] = {
