@@ -88,7 +88,7 @@ def main():
                 st.write(f"**Primary Color:** {primary_color}")
                 if supporting_colors != "Not Identified":
                     st.write(f"**Supporting Colors:** {supporting_colors}")
-                st.write(f"**Rationale:** {rationale if rationale != "Not Provided" else "No rationale provided."}")
+                st.write(f"**Rationale:** {rationale if rationale != 'Not Provided' else 'No rationale provided.'}")
                 st.write("---")
                 new_primary_color = st.selectbox("Reassign Primary Color (if needed):", list(color_profiles.keys()), index=list(color_profiles.keys()).index(primary_color))
                 new_supporting_colors = st.multiselect("Reassign Supporting Colors (if needed):", list(color_profiles.keys()), default=[supporting_colors] if supporting_colors != "Not Identified" else [])
