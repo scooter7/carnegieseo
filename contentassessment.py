@@ -4,6 +4,9 @@ from bs4 import BeautifulSoup
 import openai
 import pandas as pd
 import plotly.express as px
+from docx import Document
+from io import BytesIO
+import base64
 
 def extract_color_name(description: str) -> str:
     words = description.split()
@@ -30,11 +33,8 @@ color_to_hex = {
     'Blue': '#0000FF'
 }
 
-if "OPENAI_API_KEY" not in st.secrets:
-    st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
-else:
-    openai_api_key = st.secrets["OPENAI_API_KEY"]
-    openai.api_key = openai_api_key
+openai_api_key = st.secrets["OPENAI_API_KEY"] if "OPENAI_API_KEY" in st.secrets else st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
+openai.api_key = openai_api_key
 
 def scrape_text(url):
     response = requests.get(url)
@@ -61,14 +61,13 @@ def assess_content(content):
     )
 
     output_text = response.choices[0].text.strip()
-    primary_color = extract_color_name(primary_color_descriptive)
+    lines = output_text.split('\n')
+    primary_color_line = lines[0].strip() if lines else ""
+    primary_color = extract_color_name(primary_color_line)
     supporting_colors = "Not Identified"
     rationale = "Not Provided"
     
-    lines = output_text.split('\n')
     if lines:
-        primary_color_line = lines[0].strip()
-        primary_color = extract_color_name(primary_color_descriptive)
         if len(lines) > 1:
             supporting_colors_line = lines[1].strip()
             supporting_colors = supporting_colors_line.split(":")[1].strip() if ":" in supporting_colors_line else supporting_colors_line
@@ -96,7 +95,8 @@ def main():
                 st.write(f"**Rationale:** {rationale if rationale != 'Not Provided' else 'No rationale provided.'}")
                 st.write("---")
                 color_names = list(color_profiles.keys())
-                new_primary_color = extract_color_name(primary_color_descriptive)
+                new_primary_color_line = lines[0].strip() if lines else ""
+                new_primary_color = extract_color_name(new_primary_color_line)
                 new_supporting_colors = st.multiselect("Reassign Supporting Colors (if needed):", list(color_profiles.keys()), default=[supporting_color for supporting_color in ([supporting_colors] if isinstance(supporting_colors, str) else supporting_colors) if supporting_color in color_profiles.keys()] if supporting_colors != "Not Identified" else [])
                 new_rationale = st.text_area(f"Update Rationale for {url} (if needed):", value=rationale)
                 if new_primary_color != primary_color or set(new_supporting_colors) != set([supporting_colors]) or new_rationale != rationale:
@@ -115,8 +115,8 @@ def main():
             color_count = {k: v for k, v in color_count.items() if v > 0}
             color_count_df = pd.DataFrame(list(color_count.items()), columns=['Color', 'Count'])
             fig = px.pie(color_count_df, names='Color', values='Count', color='Color', color_discrete_map=color_to_hex, hole=0.4, width=900, height=500)
-            fig.update_traces(textinfo='none')  # Removing percentage labels
-            fig.update_layout(showlegend=True, legend_title_text='')  # Showing only color names in the legend
+            fig.update_traces(textinfo='none')
+            fig.update_layout(showlegend=True, legend_title_text='')
             st.plotly_chart(fig)
 
             doc = Document()
@@ -129,7 +129,7 @@ def main():
                 doc.add_paragraph(f'Primary Color: {primary_color}')
                 if supporting_colors != "Not Identified":
                     doc.add_paragraph(f'Supporting Colors: {supporting_colors}')
-                doc.add_paragraph(f"Rationale: {rationale if rationale != 'Not Provided' else 'No rationale provided.'}")
+                doc.add_paragraph(f'Rationale: {rationale if rationale != 'Not Provided' else 'No rationale provided.'}')
                 doc.add_paragraph('---')
             
             stream = BytesIO()
@@ -138,8 +138,6 @@ def main():
             b64 = base64.b64encode(stream.getvalue()).decode()
             href = f'<a href="data:application/octet-stream;base64,{b64}" download="analysis.docx">Download Analysis as Word Document</a>'
             st.markdown(href, unsafe_allow_html=True)
-
-
 
 if __name__ == "__main__":
     main()
