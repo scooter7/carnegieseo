@@ -92,7 +92,7 @@ def main():
                 st.write("---")
                 color_names = list(color_profiles.keys())
                 new_primary_color = st.selectbox("Reassign Primary Color (if needed):", list(color_profiles.keys()), index=color_names.index(primary_color) if primary_color in color_names else 0)
-                new_supporting_colors = st.multiselect("Reassign Supporting Colors (if needed):", list(color_profiles.keys()), default=[supporting_colors] if supporting_colors != "Not Identified" else [])
+                new_supporting_colors = st.multiselect("Reassign Supporting Colors (if needed):", list(color_profiles.keys()), default=[color for color in supporting_colors if color in color_profiles.keys()] if supporting_colors != "Not Identified" and supporting_colors in color_profiles.keys() else [])
                 new_rationale = st.text_area(f"Update Rationale for {url} (if needed):", value=rationale)
                 if new_primary_color != primary_color or set(new_supporting_colors) != set([supporting_colors]) or new_rationale != rationale:
                     st.write("**Updated Assignments for this URL:**")
@@ -124,7 +124,7 @@ def main():
                 doc.add_paragraph(f'Primary Color: {primary_color}')
                 if supporting_colors != "Not Identified":
                     doc.add_paragraph(f'Supporting Colors: {supporting_colors}')
-                doc.add_paragraph(f"Rationale: {rationale if rationale != 'Not Provided' else 'No rationale provided.'}")
+                doc.add_paragraph(f'Rationale: {rationale if rationale != 'Not Provided' else 'No rationale provided.'}')
                 doc.add_paragraph('---')
             
             stream = BytesIO()
