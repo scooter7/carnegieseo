@@ -64,15 +64,17 @@ def assess_content(content):
     supporting_colors = "Beige"
     rationale = "Not Provided"
     
+    mentioned_colors = [color for color in color_profiles.keys() if color.lower() in output_text.lower()]
+
+    if mentioned_colors:
+        primary_color = mentioned_colors[0]
+        if len(mentioned_colors) > 1:
+            supporting_colors = ', '.join(mentioned_colors[1:])
+    
     lines = output_text.split('\\n')
     if lines:
-        primary_color_line = lines[0].strip()
-        primary_color = primary_color_line.split(":")[1].strip() if ":" in primary_color_line else primary_color_line
-        if len(lines) > 1:
-            supporting_colors_line = lines[1].strip()
-            st.write(f"**Debug - Supporting Colors Line:** {supporting_colors_line}")
-            supporting_colors = supporting_colors_line.split(":")[1].strip() if ":" in supporting_colors_line else supporting_colors_line
-            rationale = "\\n".join(lines[2:]).strip() if len(lines) > 2 else "Not Provided"
+        rationale_line_start = 2 if "Supporting Colors:" in output_text else 1
+        rationale = "\\n".join(lines[rationale_line_start:]).strip() if len(lines) > rationale_line_start else "Not Provided"
 
     return primary_color, supporting_colors, rationale
 
