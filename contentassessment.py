@@ -90,7 +90,7 @@ def main():
                 content = scrape_text(url)
                 primary_color, supporting_colors, rationale = assess_content(content)
                 st.write(f"**URL:** {url}")
-                st.write(f"**Primary Color:** {primary_color.split()[0] if " " in primary_color else primary_color}")
+                st.write(f"**Primary Color:** {primary_color.split()[0] if ' ' in primary_color else primary_color}")
                 st.write(f"**Supporting Colors:** {supporting_colors}")
                 st.write(f"**Rationale:** {rationale}")
                 st.write("---")
