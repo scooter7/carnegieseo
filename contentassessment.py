@@ -59,7 +59,7 @@ def assess_content(content):
     primary_color = "Beige"
     supporting_colors = "Beige"
     rationale = "Not Provided"
-    
+
     mentioned_colors = [color for color in color_profiles.keys() if color.lower() in output_text.lower()]
 
     if mentioned_colors:
