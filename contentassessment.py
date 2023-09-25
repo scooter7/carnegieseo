@@ -29,7 +29,6 @@ color_to_hex = {
     'Maroon': '#800000'
 }
 
-
 if "OPENAI_API_KEY" not in st.secrets:
     st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
 else:
@@ -52,7 +51,7 @@ def assess_content(content):
 
     response = openai.Completion.create(
         engine="text-davinci-003",
-        prompt=f"Carefully analyze the content provided and compare it with the detailed color guide below. Evaluate the content against each color’s key characteristics, tone & style, and messaging tips to determine the most fitting primary color and any supporting colors.\n\nContent:\n{content}\n\nColor Guide:\n{color_guide}\n\nBased on a detailed comparison of the content and every color profile in the color guide, identify the most aligned primary color and any supporting colors. Provide a thorough rationale explaining why each color was chosen, taking into account the key characteristics, tone & style, and messaging tips of each color before assigning the color values. Cite specific examples of the content analyzed when presenting your rationale for the color assignments.",
+        prompt=f"Carefully analyze the content provided and compare it with the detailed color guide below. Evaluate the content against each color’s key characteristics, tone & style, and messaging tips to determine the most fitting primary color and any supporting colors.\\n\\nContent:\\n{content}\\n\\nColor Guide:\\n{color_guide}\\n\\nBased on a detailed comparison of the content and every color profile in the color guide, identify the most aligned primary color and any supporting colors. Provide a thorough rationale explaining why each color was chosen, taking into account the key characteristics, tone & style, and messaging tips of each color before assigning the color values. Cite specific examples of the content analyzed when presenting your rationale for the color assignments.",
         temperature=0.5,
         max_tokens=400,
         top_p=1.0,
@@ -65,14 +64,15 @@ def assess_content(content):
     supporting_colors = "Beige"
     rationale = "Not Provided"
     
-    lines = output_text.split('\n')
+    lines = output_text.split('\\n')
     if lines:
         primary_color_line = lines[0].strip()
         primary_color = primary_color_line.split(":")[1].strip() if ":" in primary_color_line else primary_color_line
         if len(lines) > 1:
             supporting_colors_line = lines[1].strip()
+            st.write(f"**Debug - Supporting Colors Line:** {supporting_colors_line}")
             supporting_colors = supporting_colors_line.split(":")[1].strip() if ":" in supporting_colors_line else supporting_colors_line
-            rationale = "\n".join(lines[2:]).strip() if len(lines) > 2 else "Not Provided"
+            rationale = "\\n".join(lines[2:]).strip() if len(lines) > 2 else "Not Provided"
 
     return primary_color, supporting_colors, rationale
 
@@ -91,7 +91,7 @@ def main():
                 primary_color, supporting_colors, rationale = assess_content(content)
                 st.write(f"**URL:** {url}")
                 st.write(f"**Primary Color:** {primary_color.split()[0] if ' ' in primary_color else primary_color}")
-                st.write(f"**Supporting Colors:** {supporting_colors}")
+                st.write(f"**Supporting Colors:** {', '.join(supporting_colors.split()) if ' ' in supporting_colors else supporting_colors}")
                 st.write(f"**Rationale:** {rationale}")
                 st.write("---")
                 color_count[primary_color] = color_count.get(primary_color, 0) + 1
