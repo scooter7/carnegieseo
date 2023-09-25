@@ -93,11 +93,11 @@ def main():
                 content = scrape_text(url)
                 primary_color, supporting_colors, rationale = assess_content(content)
                 st.write(f"**URL:** {url}")
-                st.write(f"**Primary Color:** {primary_color.split()[0] if ' ' in primary_color else primary_color}")
-                st.write(f"**Supporting Colors:** {', '.join(supporting_colors.split()) if ' ' in supporting_colors else supporting_colors}")
-                st.write(f"**Rationale:** {rationale}")
-                st.write("---")
+                primary_color = st.selectbox("Select Primary Color:", list(color_profiles.keys()), key=url + "1", index=list(color_profiles.keys()).index(primary_color))
+                selected_supporting_colors = st.multiselect("Select Supporting Colors:", list(color_profiles.keys()), key=url + "2", default=supporting_colors.split(', '))
+                rationale = st.text_area("Rationale:", value=rationale, key=url + "3")
                 color_count[primary_color] = color_count.get(primary_color, 0) + 1
+                st.write("---")
 
             color_count_df = pd.DataFrame(list(color_count.items()), columns=['Color', 'Count'])
             fig = px.pie(color_count_df, names='Color', values='Count', color='Color', color_discrete_map=color_to_hex, hole=0.4, width=800, height=400)
