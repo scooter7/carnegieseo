@@ -70,11 +70,12 @@ def assess_content(content):
         primary_color = mentioned_colors[0]
         if len(mentioned_colors) > 1:
             supporting_colors = ', '.join(mentioned_colors[1:])
-    
-    lines = output_text.split('\\n')
-    if lines:
-        rationale_line_start = 2 if "Supporting Colors:" in output_text else 1
-        rationale = "\\n".join(lines[rationale_line_start:]).strip() if len(lines) > rationale_line_start else "Not Provided"
+
+    try:
+        rationale_start_index = output_text.lower().index(primary_color.lower()) + len(primary_color)
+        rationale = output_text[rationale_start_index:].strip()
+    except ValueError:
+        rationale = "Not Provided"
 
     return primary_color, supporting_colors, rationale
 
