@@ -84,43 +84,36 @@ def main():
         if not urls or len(urls) > 20:
             st.error("Please enter up to 20 valid URLs.")
         else:
-            if 'color_count' not in st.session_state:
-                st.session_state.color_count = {}
-            if 'analyses' not in st.session_state:
-                st.session_state.analyses = {}
+            color_count = {}
+            analyses = {}
+            for url in urls:
+                content = scrape_text(url)
+                primary_color, supporting_colors, rationale = assess_content(content)
+                color_count[primary_color] = color_count.get(primary_color, 0) + 1
+                analyses[url] = {"primary_color": primary_color, "supporting_colors": supporting_colors, "rationale": rationale}
 
             for url in urls:
-                if url not in st.session_state.analyses:
-                    content = scrape_text(url)
-                    primary_color, supporting_colors, rationale = assess_content(content)
-                    st.session_state.color_count[primary_color] = st.session_state.color_count.get(primary_color, 0) + 1
-                    st.session_state.analyses[url] = {
-                        "primary_color": primary_color,
-                        "supporting_colors": supporting_colors,
-                        "rationale": rationale
-                    }
-                
                 st.write(f"**URL:** {url}")
-                user_primary_color = st.selectbox("Select Primary Color:", list(color_profiles.keys()), key=url + "1", index=list(color_profiles.keys()).index(st.session_state.analyses[url]["primary_color"]))
-                user_supporting_colors = st.multiselect("Select Supporting Colors:", list(color_profiles.keys()), key=url + "2", default=st.session_state.analyses[url]["supporting_colors"].split(', '))
-                user_rationale = st.text_area("Rationale:", value=st.session_state.analyses[url]["rationale"], key=url + "3")
+                user_primary_color = st.selectbox("Select Primary Color:", list(color_profiles.keys()), key=url + "1", index=list(color_profiles.keys()).index(analyses[url]["primary_color"]))
+                user_supporting_colors = st.multiselect("Select Supporting Colors:", list(color_profiles.keys()), key=url + "2", default=analyses[url]["supporting_colors"].split(', '))
+                user_rationale = st.text_area("Rationale:", value=analyses[url]["rationale"], key=url + "3")
+
+                if user_primary_color != analyses[url]["primary_color"]:
+                    color_count[user_primary_color] = color_count.get(user_primary_color, 0) + 1
+                    color_count[analyses[url]["primary_color"]] -= 1
+                    if color_count[analyses[url]["primary_color"]] <= 0:
+                        del color_count[analyses[url]["primary_color"]]
+                    analyses[url]["primary_color"] = user_primary_color
                 
-                if user_primary_color != st.session_state.analyses[url]["primary_color"]:
-                    st.session_state.color_count[user_primary_color] = st.session_state.color_count.get(user_primary_color, 0) + 1
-                    st.session_state.color_count[st.session_state.analyses[url]["primary_color"]] -= 1
-                    if st.session_state.color_count[st.session_state.analyses[url]["primary_color"]] <= 0:
-                        del st.session_state.color_count[st.session_state.analyses[url]["primary_color"]]
-                    st.session_state.analyses[url]["primary_color"] = user_primary_color
-
-                if ', '.join(user_supporting_colors) != st.session_state.analyses[url]["supporting_colors"]:
-                    st.session_state.analyses[url]["supporting_colors"] = ', '.join(user_supporting_colors)
-
-                if user_rationale != st.session_state.analyses[url]["rationale"]:
-                    st.session_state.analyses[url]["rationale"] = user_rationale
+                if ', '.join(user_supporting_colors) != analyses[url]["supporting_colors"]:
+                    analyses[url]["supporting_colors"] = ', '.join(user_supporting_colors)
+                
+                if user_rationale != analyses[url]["rationale"]:
+                    analyses[url]["rationale"] = user_rationale
                 
                 st.write("---")
 
-            color_count_df = pd.DataFrame(list(st.session_state.color_count.items()), columns=['Color', 'Count'])
+            color_count_df = pd.DataFrame(list(color_count.items()), columns=['Color', 'Count'])
             fig = px.pie(color_count_df, names='Color', values='Count', color='Color', color_discrete_map=color_to_hex, hole=0.4, width=800, height=400)
             st.plotly_chart(fig)
 
