@@ -86,33 +86,37 @@ def main():
         else:
             if 'color_count' not in st.session_state:
                 st.session_state.color_count = {}
+            if 'analyses' not in st.session_state:
+                st.session_state.analyses = {}
 
             for url in urls:
-                content = scrape_text(url)
-                primary_color, supporting_colors, rationale = assess_content(content)
-                st.session_state.color_count[primary_color] = st.session_state.color_count.get(primary_color, 0) + 1
-                st.session_state[url] = {
-                    "primary_color": primary_color,
-                    "supporting_colors": supporting_colors,
-                    "rationale": rationale
-                }
+                if url not in st.session_state.analyses:
+                    content = scrape_text(url)
+                    primary_color, supporting_colors, rationale = assess_content(content)
+                    st.session_state.color_count[primary_color] = st.session_state.color_count.get(primary_color, 0) + 1
+                    st.session_state.analyses[url] = {
+                        "primary_color": primary_color,
+                        "supporting_colors": supporting_colors,
+                        "rationale": rationale
+                    }
                 
-                user_primary_color = st.selectbox("Select Primary Color:", list(color_profiles.keys()), key=url + "1", index=list(color_profiles.keys()).index(st.session_state[url]["primary_color"]))
-                user_supporting_colors = st.multiselect("Select Supporting Colors:", list(color_profiles.keys()), key=url + "2", default=st.session_state[url]["supporting_colors"].split(', '))
-                user_rationale = st.text_area("Rationale:", value=st.session_state[url]["rationale"], key=url + "3")
+                st.write(f"**URL:** {url}")
+                user_primary_color = st.selectbox("Select Primary Color:", list(color_profiles.keys()), key=url + "1", index=list(color_profiles.keys()).index(st.session_state.analyses[url]["primary_color"]))
+                user_supporting_colors = st.multiselect("Select Supporting Colors:", list(color_profiles.keys()), key=url + "2", default=st.session_state.analyses[url]["supporting_colors"].split(', '))
+                user_rationale = st.text_area("Rationale:", value=st.session_state.analyses[url]["rationale"], key=url + "3")
                 
-                if user_primary_color != st.session_state[url]["primary_color"]:
+                if user_primary_color != st.session_state.analyses[url]["primary_color"]:
                     st.session_state.color_count[user_primary_color] = st.session_state.color_count.get(user_primary_color, 0) + 1
-                    st.session_state.color_count[st.session_state[url]["primary_color"]] -= 1
-                    if st.session_state.color_count[st.session_state[url]["primary_color"]] <= 0:
-                        del st.session_state.color_count[st.session_state[url]["primary_color"]]
-                    st.session_state[url]["primary_color"] = user_primary_color
+                    st.session_state.color_count[st.session_state.analyses[url]["primary_color"]] -= 1
+                    if st.session_state.color_count[st.session_state.analyses[url]["primary_color"]] <= 0:
+                        del st.session_state.color_count[st.session_state.analyses[url]["primary_color"]]
+                    st.session_state.analyses[url]["primary_color"] = user_primary_color
 
-                if ', '.join(user_supporting_colors) != st.session_state[url]["supporting_colors"]:
-                    st.session_state[url]["supporting_colors"] = ', '.join(user_supporting_colors)
+                if ', '.join(user_supporting_colors) != st.session_state.analyses[url]["supporting_colors"]:
+                    st.session_state.analyses[url]["supporting_colors"] = ', '.join(user_supporting_colors)
 
-                if user_rationale != st.session_state[url]["rationale"]:
-                    st.session_state[url]["rationale"] = user_rationale
+                if user_rationale != st.session_state.analyses[url]["rationale"]:
+                    st.session_state.analyses[url]["rationale"] = user_rationale
                 
                 st.write("---")
 
