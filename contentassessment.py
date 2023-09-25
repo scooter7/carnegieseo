@@ -29,11 +29,7 @@ color_to_hex = {
     'Maroon': '#800000'
 }
 
-if "OPENAI_API_KEY" not in st.secrets:
-    st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
-else:
-    openai_api_key = st.secrets["OPENAI_API_KEY"]
-    openai.api_key = openai_api_key
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 def scrape_text(url):
     response = requests.get(url)
@@ -94,6 +90,7 @@ def main():
             for url in urls:
                 content = scrape_text(url)
                 primary_color, supporting_colors, rationale = assess_content(content)
+                st.session_state.color_count[primary_color] = st.session_state.color_count.get(primary_color, 0) + 1
                 st.write(f"**URL:** {url}")
                 
                 user_primary_color = st.selectbox("Select Primary Color:", list(color_profiles.keys()), key=url + "1", index=list(color_profiles.keys()).index(primary_color))
@@ -102,6 +99,9 @@ def main():
                 
                 if user_primary_color != primary_color:
                     st.session_state.color_count[user_primary_color] = st.session_state.color_count.get(user_primary_color, 0) + 1
+                    st.session_state.color_count[primary_color] -= 1
+                    if st.session_state.color_count[primary_color] <= 0:
+                        del st.session_state.color_count[primary_color]
                 
                 st.write("---")
 
