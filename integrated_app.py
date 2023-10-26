@@ -1,7 +1,6 @@
 import streamlit as st
 from bs4 import BeautifulSoup
 import requests
-import re
 from collections import Counter
 import openai
 import base64
@@ -21,11 +20,10 @@ def scrape_text(url):
 
 def analyze_text(text, color_keywords):
     text = text.lower()
-    words = re.findall(r'\b\w+\b', text)
     color_counts = Counter()
     for color, keywords in color_keywords.items():
         for keyword in keywords['verbs'] + keywords['adjectives']:
-            color_counts[color] += words.count(keyword.lower())
+            color_counts[color] += text.count(keyword.lower())
     sorted_colors = sorted(color_counts.items(), key=lambda x: x[1], reverse=True)
     return [color for color, _ in sorted_colors[:3]]
 
@@ -42,24 +40,6 @@ color_keywords = {
     "Beige - dedicated, humble": {"verbs": ["dedicate", "humble"], "adjectives": ["dedicated", "humble"]}
 }
 
-def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats):
-    full_prompt = user_prompt if user_prompt else "Write an article with the following guidelines:"
-    if keywords:
-        full_prompt += f"\nKeywords: {keywords}"
-    if audience:
-        full_prompt += f"\nAudience: {audience}"
-    if specific_facts_stats:
-        full_prompt += f"\nFacts/Stats: {specific_facts_stats}"
-    messages = [{"role": "system", "content": full_prompt}]
-    if content:
-        messages.append({"role": "user", "content": content})
-    if writing_styles and style_weights:
-        for i, style in enumerate(writing_styles):
-            weight = style_weights[i]
-            messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style.split(' - ')[1]} manner."})
-    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
-    return response.choices[0].message["content"].strip()
-
 url_input = st.text_area("Paste a list of comma-separated URLs:")
 
 if st.button("Analyze"):
@@ -69,7 +49,7 @@ if st.button("Analyze"):
         try:
             content = scrape_text(url)
             top_colors = analyze_text(content, color_keywords)
-            results.append((url, *top_colors))
+            results.append((url, content, *top_colors))
         except:
             results.append((url, "Error", "", ""))
     st.session_state.results = results
@@ -77,10 +57,10 @@ if st.button("Analyze"):
 if 'results' not in st.session_state:
     st.session_state.results = []
 
-for idx, (url, color1, color2, color3) in enumerate(st.session_state.results):
-    if color1 != "Error":
-        st.write(f"URL: {url}")
-        st.write(f"Identified Colors: {color1}, {color2}, {color3}")
+for idx, (url, content, color1, color2, color3) in enumerate(st.session_state.results):
+    st.write(f"URL: {url}")
+    st.write(content)
+    st.write(f"Identified Colors: {color1}, {color2}, {color3}")
         selected_colors = st.multiselect(f"Select new color profiles for {url}:", list(color_keywords.keys()), default=[color1, color2, color3], key=f"color_{idx}")
         sliders = {}
         for color in selected_colors:
