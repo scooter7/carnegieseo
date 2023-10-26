@@ -62,9 +62,7 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
 
 url_input = st.text_area("Paste a list of comma-separated URLs:")
 
-analyze_button = st.button("Analyze")
-
-if analyze_button and url_input:
+if st.button("Analyze"):
     urls = [url.strip() for url in url_input.split(",")]
     results = []
 
@@ -75,16 +73,20 @@ if analyze_button and url_input:
             results.append((url, *top_colors))
         except:
             results.append((url, "Error", "", ""))
+    
+    # Update session state with the results
+    st.session_state.results = results
 
-    for idx, (url, color1, color2, color3) in enumerate(results):
-        if color1 != "Error":
-            st.write(f"URL: {url}")
-            st.write(f"Identified Colors: {color1}, {color2}, {color3}")
-            selected_colors = st.multiselect(f"Select new color profiles for {url}:", list(color_keywords.keys()), default=[color1, color2, color3], key=f"color_{idx}")
-            seo_keywords = st.text_input(f"Additional SEO keywords for {url}:", key=f"keywords_{idx}")
-            facts = st.text_area(f"Specific facts or stats for {url}:", key=f"facts_{idx}")
-            if st.button("Revise", key=f"revise_{idx}"):
-                original_content = scrape_content_from_url(url)
-                revised_content = generate_article(original_content, None, None, None, seo_keywords, None, facts)
-                st.write("Revised Content:")
-                st.write(revised_content)
+# Display the results from session state
+for idx, (url, color1, color2, color3) in enumerate(st.session_state.results):
+    if color1 != "Error":
+        st.write(f"URL: {url}")
+        st.write(f"Identified Colors: {color1}, {color2}, {color3}")
+        selected_colors = st.multiselect(f"Select new color profiles for {url}:", list(color_keywords.keys()), default=[color1, color2, color3], key=f"color_{idx}")
+        seo_keywords = st.text_input(f"Additional SEO keywords for {url}:", key=f"keywords_{idx}")
+        facts = st.text_area(f"Specific facts or stats for {url}:", key=f"facts_{idx}")
+        if st.button("Revise", key=f"revise_{idx}"):
+            original_content = scrape_content_from_url(url)
+            revised_content = generate_article(original_content, None, None, None, seo_keywords, None, facts)
+            st.write("Revised Content:")
+            st.write(revised_content)
