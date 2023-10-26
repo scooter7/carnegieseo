@@ -49,9 +49,16 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
     if audience:
         full_prompt += f"\nAudience: {audience}"
     if specific_facts_stats:
-        full_prompt += f"\nFacts: {specific_facts_stats}"
-    response = openai.Completion.create(prompt=full_prompt, max_tokens=150)
-    return response.choices[0].text.strip()
+        full_prompt += f"\nFacts/Stats: {specific_facts_stats}"
+
+    messages = [{"role": "system", "content": full_prompt}]
+    messages.append({"role": "user", "content": content})
+    for i, style in enumerate(writing_styles):
+        weight = style_weights[i]
+        messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style.split(' - ')[1]} manner."})
+
+    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
+    return response.choices[0].message["content"].strip()
 
 placeholders = {
     "Purple - caring, encouraging": {"verbs": ["care", "encourage"], "adjectives": ["caring", "encouraging"]},
