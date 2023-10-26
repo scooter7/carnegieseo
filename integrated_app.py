@@ -4,6 +4,7 @@ import requests
 import re
 from collections import Counter
 import openai
+import base64
 
 if "OPENAI_API_KEY" not in st.secrets:
     st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
@@ -13,7 +14,6 @@ else:
 
 def scrape_content_from_url(url):
     response = requests.get(url)
-    response.raise_for_status()
     soup = BeautifulSoup(response.content, 'html.parser')
     for tag in soup.find_all(['header', 'footer', 'nav']):
         tag.decompose()
@@ -65,7 +65,6 @@ url_input = st.text_area("Paste a list of comma-separated URLs:")
 if st.button("Analyze"):
     urls = [url.strip() for url in url_input.split(",")]
     results = []
-
     for url in urls:
         try:
             content = scrape_content_from_url(url)
@@ -73,25 +72,27 @@ if st.button("Analyze"):
             results.append((url, *top_colors))
         except:
             results.append((url, "Error", "", ""))
-    
-    # Update session state with the results
     st.session_state.results = results
 
-# Initialize st.session_state.results if it's not already present
 if 'results' not in st.session_state:
     st.session_state.results = []
 
-# Display the results from session state, only if there are any results
 if st.session_state.results:
     for idx, (url, color1, color2, color3) in enumerate(st.session_state.results):
         if color1 != "Error":
             st.write(f"URL: {url}")
             st.write(f"Identified Colors: {color1}, {color2}, {color3}")
             selected_colors = st.multiselect(f"Select new color profiles for {url}:", list(color_keywords.keys()), default=[color1, color2, color3], key=f"color_{idx}")
+            sliders = {}
+            for color in selected_colors:
+                sliders[color] = st.slider(f"Ratio for {color}:", 0, 100, 100 // len(selected_colors), key=f"slider_{color}_{idx}")
             seo_keywords = st.text_input(f"Additional SEO keywords for {url}:", key=f"keywords_{idx}")
             facts = st.text_area(f"Specific facts or stats for {url}:", key=f"facts_{idx}")
             if st.button("Revise", key=f"revise_{idx}"):
                 original_content = scrape_content_from_url(url)
-                revised_content = generate_article(original_content, None, None, None, seo_keywords, None, facts)
+                revised_content = generate_article(original_content, selected_colors, [sliders[color] for color in selected_colors], None, seo_keywords, None, facts)
                 st.write("Revised Content:")
                 st.write(revised_content)
+                b64 = base64.b64encode(revised_content.encode()).decode()
+                dl_link = f'<a download="revised_content_{idx}.txt" href="data:text/plain;charset=UTF-8;base64,{b64}" >Download Revised Content for {url}</a><br></br>'
+                st.markdown(dl_link, unsafe_allow_html=True)
