@@ -1,11 +1,16 @@
-
 import streamlit as st
 from bs4 import BeautifulSoup
 import requests
 import re
 from collections import Counter
+import openai
 
-# Functions from collegeurls.py
+if "OPENAI_API_KEY" not in st.secrets:
+    st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
+else:
+    openai_api_key = st.secrets["OPENAI_API_KEY"]
+    openai.api_key = openai_api_key
+
 def scrape_content_from_url(url):
     response = requests.get(url)
     response.raise_for_status()
@@ -24,12 +29,10 @@ def analyze_text(text, color_keywords):
     sorted_colors = sorted(color_counts.items(), key=lambda x: x[1], reverse=True)
     return [color for color, _ in sorted_colors[:3]]
 
-color_keywords = {
+color_keywords = {'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'], 'Purple': ['Care', 'Encourage', 'Support', 'Help', 'Assist', 'Guide', 'Caring', 'Encouraging', 'Supportive', 'Helpful', 'Assisting', 'Guiding']}
     'Red': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift', 'Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited'],
-    # More colors and keywords can be added
 }
 
-# Placeholder function for generate_article (will be replaced with actual implementation)
 def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats):
     full_prompt = user_prompt
     if keywords:
@@ -38,14 +41,13 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
         full_prompt += f"\nAudience: {audience}"
     if specific_facts_stats:
         full_prompt += f"\nFacts: {specific_facts_stats}"
-    return content + "\n" + full_prompt
+    response = openai.Completion.create(prompt=full_prompt, max_tokens=150)
+    return response.choices[0].text.strip()
 
-placeholders = {
+placeholders = {'Red': {'verbs': ['Activate', 'Animate', 'Amuse', 'Captivate', 'Cheer', 'Delight', 'Encourage', 'Energize', 'Engage', 'Enjoy', 'Enliven', 'Entertain', 'Excite', 'Express', 'Inspire', 'Joke', 'Motivate', 'Play', 'Stir', 'Uplift'], 'adjectives': ['Amusing', 'Clever', 'Comedic', 'Dynamic', 'Energetic', 'Engaging', 'Enjoyable', 'Entertaining', 'Enthusiastic', 'Exciting', 'Expressive', 'Extroverted', 'Fun', 'Humorous', 'Interesting', 'Lively', 'Motivational', 'Passionate', 'Playful', 'Spirited']}, 'Purple': {'verbs': ['Care', 'Encourage', 'Support', 'Help', 'Assist', 'Guide'], 'adjectives': ['Caring', 'Encouraging', 'Supportive', 'Helpful', 'Assisting', 'Guiding']}}
     "Purple - caring, encouraging": {"verbs": ["care", "encourage"], "adjectives": ["caring", "encouraging"]},
-    # More color profiles can be added
 }
 
-# Streamlit interface
 url_input = st.text_area("Paste a list of comma-separated URLs:")
 
 if url_input:
@@ -64,11 +66,9 @@ if url_input:
         if color1 != "Error":
             st.write(f"URL: {url}")
             st.write(f"Identified Colors: {color1}, {color2}, {color3}")
-
             color_profile = st.selectbox(f"Select a new color profile for {url}:", list(placeholders.keys()), key=f"color_{idx}")
             seo_keywords = st.text_input(f"Additional SEO keywords for {url}:", key=f"keywords_{idx}")
             facts = st.text_area(f"Specific facts or stats for {url}:", key=f"facts_{idx}")
-
             original_content = scrape_content_from_url(url)
             revised_content = generate_article(original_content, None, None, None, seo_keywords, None, facts)
             st.write("Revised Content:")
