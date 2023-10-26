@@ -12,13 +12,12 @@ else:
     openai_api_key = st.secrets["OPENAI_API_KEY"]
     openai.api_key = openai_api_key
 
-def scrape_content_from_url(url):
+def scrape_text(url):
     response = requests.get(url)
     soup = BeautifulSoup(response.content, 'html.parser')
-    for tag in soup.find_all(['header', 'footer', 'nav']):
-        tag.decompose()
-    content = ' '.join([tag.get_text() for tag in soup.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'])])
-    return content
+    paragraphs = soup.find_all('p')
+    text = " ".join([para.text for para in paragraphs])
+    return text
 
 def analyze_text(text, color_keywords):
     text = text.lower()
@@ -27,8 +26,6 @@ def analyze_text(text, color_keywords):
     for color, keywords in color_keywords.items():
         for keyword in keywords['verbs'] + keywords['adjectives']:
             color_counts[color] += words.count(keyword.lower())
-    st.write(text[:100])
-    st.write(color_counts)
     sorted_colors = sorted(color_counts.items(), key=lambda x: x[1], reverse=True)
     return [color for color, _ in sorted_colors[:3]]
 
@@ -70,7 +67,7 @@ if st.button("Analyze"):
     results = []
     for url in urls:
         try:
-            content = scrape_content_from_url(url)
+            content = scrape_text(url)
             top_colors = analyze_text(content, color_keywords)
             results.append((url, *top_colors))
         except:
@@ -91,7 +88,7 @@ for idx, (url, color1, color2, color3) in enumerate(st.session_state.results):
         seo_keywords = st.text_input(f"Additional SEO keywords for {url}:", key=f"keywords_{idx}")
         facts = st.text_area(f"Specific facts or stats for {url}:", key=f"facts_{idx}")
         if st.button("Revise", key=f"revise_{idx}"):
-            original_content = scrape_content_from_url(url)
+            original_content = scrape_text(url)
             revised_content = generate_article(original_content, selected_colors, [sliders[color] for color in selected_colors], None, seo_keywords, None, facts)
             st.write("Revised Content:")
             st.write(revised_content)
