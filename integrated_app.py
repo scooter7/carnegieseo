@@ -22,11 +22,13 @@ def scrape_content_from_url(url):
 
 def analyze_text(text, color_keywords):
     text = text.lower()
-    words = re.findall(r'\b\w+\b', text)
     color_counts = Counter()
+
     for color, keywords in color_keywords.items():
         for keyword in keywords:
-            color_counts[color] += words.count(keyword.lower())
+            if keyword.lower() in text:
+                color_counts[color] += text.count(keyword.lower())
+
     sorted_colors = sorted(color_counts.items(), key=lambda x: x[1], reverse=True)
     return [color for color, _ in sorted_colors[:3]]
 
