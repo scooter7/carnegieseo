@@ -53,9 +53,11 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
 
     messages = [{"role": "system", "content": full_prompt}]
     messages.append({"role": "user", "content": content})
-    for i, style in enumerate(writing_styles):
-        weight = style_weights[i]
-        messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style.split(' - ')[1]} manner."})
+    
+    if writing_styles and style_weights:
+        for i, style in enumerate(writing_styles):
+            weight = style_weights[i]
+            messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style.split(' - ')[1]} manner."})
 
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
     return response.choices[0].message["content"].strip()
