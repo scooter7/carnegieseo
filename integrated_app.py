@@ -1,4 +1,3 @@
-
 import streamlit as st
 from bs4 import BeautifulSoup
 import requests
@@ -23,7 +22,7 @@ def scrape_content_from_url(url):
 
 def analyze_text(text, color_keywords):
     text = text.lower()
-    words = re.findall(r'\b\w+\b', text)
+    words = re.findall(r'\\b\\w+\\b', text)
     color_counts = Counter()
     for color, keywords in color_keywords.items():
         color_counts[color] = sum(words.count(k.lower()) for k in keywords)
@@ -46,11 +45,11 @@ color_keywords = {
 def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats):
     full_prompt = user_prompt if user_prompt else "Write an article with the following guidelines:"
     if keywords:
-        full_prompt += f"\nKeywords: {keywords}"
+        full_prompt += f"\\nKeywords: {keywords}"
     if audience:
-        full_prompt += f"\nAudience: {audience}"
+        full_prompt += f"\\nAudience: {audience}"
     if specific_facts_stats:
-        full_prompt += f"\nFacts/Stats: {specific_facts_stats}"
+        full_prompt += f"\\nFacts/Stats: {specific_facts_stats}"
     messages = [{"role": "system", "content": full_prompt}]
     if content:
         messages.append({"role": "user", "content": content})
@@ -63,7 +62,9 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
 
 url_input = st.text_area("Paste a list of comma-separated URLs:")
 
-if url_input:
+analyze_button = st.button("Analyze")
+
+if analyze_button and url_input:
     urls = [url.strip() for url in url_input.split(",")]
     results = []
 
@@ -79,10 +80,11 @@ if url_input:
         if color1 != "Error":
             st.write(f"URL: {url}")
             st.write(f"Identified Colors: {color1}, {color2}, {color3}")
-            color_profile = st.selectbox(f"Select a new color profile for {url}:", list(color_keywords.keys()), key=f"color_{idx}")
+            selected_colors = st.multiselect(f"Select new color profiles for {url}:", list(color_keywords.keys()), default=[color1, color2, color3], key=f"color_{idx}")
             seo_keywords = st.text_input(f"Additional SEO keywords for {url}:", key=f"keywords_{idx}")
             facts = st.text_area(f"Specific facts or stats for {url}:", key=f"facts_{idx}")
-            original_content = scrape_content_from_url(url)
-            revised_content = generate_article(original_content, None, None, None, seo_keywords, None, facts)
-            st.write("Revised Content:")
-            st.write(revised_content)
+            if st.button("Revise", key=f"revise_{idx}"):
+                original_content = scrape_content_from_url(url)
+                revised_content = generate_article(original_content, None, None, None, seo_keywords, None, facts)
+                st.write("Revised Content:")
+                st.write(revised_content)
