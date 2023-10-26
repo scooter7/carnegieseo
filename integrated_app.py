@@ -78,25 +78,24 @@ if st.button("Analyze"):
 if 'results' not in st.session_state:
     st.session_state.results = []
 
-for result in st.session_state.results:
+for idx, result in enumerate(st.session_state.results):
     url = result[0]
     if len(result) == 4:
         color1, color2, color3 = result[1], result[2], result[3]
         st.write(f"URL: {url}")
         st.write(f"Identified Colors: {color1}, {color2}, {color3}")
-        selected_colors = st.multiselect(f"Select new color profiles for {url}:", list(color_keywords.keys()), default=[color1, color2, color3])
+        selected_colors = st.multiselect(f"Select new color profiles for {url}:", list(color_keywords.keys()), default=[color1, color2, color3], key=f"color_{idx}")
         sliders = {}
         for color in selected_colors:
-            sliders[color] = st.slider(f"Ratio for {color}:", 0, 100, 100 // len(selected_colors))
-        seo_keywords = st.text_input(f"Additional SEO keywords for {url}:")
-        facts = st.text_area(f"Specific facts or stats for {url}:")
-        if st.button("Revise"):
+            sliders[color] = st.slider(f"Ratio for {color}:", 0, 100, 100 // len(selected_colors), key=f"slider_{color}_{idx}_{url}")
+        seo_keywords = st.text_input(f"Additional SEO keywords for {url}:", key=f"keywords_{idx}_{url}")
+        facts = st.text_area(f"Specific facts or stats for {url}:", key=f"facts_{idx}_{url}")
+        if st.button("Revise", key=f"revise_{idx}_{url}"):
             original_content = scrape_content_from_url(url)
             revised_content = generate_article(original_content, selected_colors, [sliders[color] for color in selected_colors], None, seo_keywords, None, facts)
             st.write("Revised Content:")
             st.write(revised_content)
             b64 = base64.b64encode(revised_content.encode()).decode()
-            dl_button = st.download_button(label="Download Revised Content", data=b64, file_name=f'revised_content.txt', mime='text/plain')
+            dl_button = st.download_button(label="Download Revised Content", data=b64, file_name=f'revised_content_{idx}.txt', mime='text/plain')
     else:
         st.write(f"URL: {url} - Error in fetching or analyzing content.")
-
