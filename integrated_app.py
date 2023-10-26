@@ -82,17 +82,22 @@ if st.button("Analyze"):
 if 'results' not in st.session_state:
     st.session_state.results = []
 
-for idx, (url, color1, color2, color3) in enumerate(st.session_state.results):
-    if color1 != "Error":
-        st.write(f"URL: {url}")
-        st.write(f"Identified Colors: {color1}, {color2}, {color3}")
-        selected_colors = st.multiselect(f"Select new color profiles for {url}:", list(color_keywords.keys()), default=[color1, color2, color3], key=f"color_{idx}")
-        seo_keywords = st.text_input(f"Additional SEO keywords for {url}:", key=f"keywords_{idx}")
-        facts = st.text_area(f"Specific facts or stats for {url}:", key=f"facts_{idx}")
-        if st.button("Revise", key=f"revise_{idx}"):
-            original_content = scrape_content_from_url(url)
-            revised_content = generate_article(original_content, selected_colors, [100 // len(selected_colors) for _ in selected_colors], None, seo_keywords, None, facts)
-            st.write("Revised Content:")
-            st.write(revised_content)
+# Display the results from session state
+for idx, result in enumerate(st.session_state.results):
+    if len(result) == 4:
+        url, color1, color2, color3 = result
+        if color1 != "Error":
+            st.write(f"URL: {url}")
+            st.write(f"Identified Colors: {color1}, {color2}, {color3}")
+            selected_colors = st.multiselect(f"Select new color profiles for {url}:", list(color_keywords.keys()), default=[color1, color2, color3], key=f"color_{idx}")
+            seo_keywords = st.text_input(f"Additional SEO keywords for {url}:", key=f"keywords_{idx}")
+            facts = st.text_area(f"Specific facts or stats for {url}:", key=f"facts_{idx}")
+            if st.button("Revise", key=f"revise_{idx}"):
+                original_content = scrape_content_from_url(url)
+                revised_content = generate_article(original_content, selected_colors, None, None, seo_keywords, None, facts)
+                st.write("Revised Content:")
+                st.write(revised_content)
+    else:
+        st.write(f"URL: {result[0]} - Error in fetching or analyzing content.")
             b64 = base64.b64encode(revised_content.encode()).decode()
             st.download_button(label="Download Revised Content", data=b64, file_name=f'revised_content_{idx}.txt', mime='text/plain')
