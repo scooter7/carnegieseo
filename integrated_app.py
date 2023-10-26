@@ -14,6 +14,7 @@ else:
 
 def scrape_content_from_url(url):
     response = requests.get(url)
+    response.raise_for_status()
     soup = BeautifulSoup(response.content, 'html.parser')
     for tag in soup.find_all(['header', 'footer', 'nav']):
         tag.decompose()
