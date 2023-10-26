@@ -94,5 +94,3 @@ for idx, result in enumerate(st.session_state.results):
                 st.write(revised_content)
                 b64 = base64.b64encode(revised_content.encode()).decode()
                 st.download_button(label="Download Revised Content", data=b64, file_name=f'revised_content_{idx}.txt', mime='text/plain')
-    else:
-        st.write(f"URL: {result[0]} - Error in fetching or analyzing content.")
