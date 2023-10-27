@@ -28,20 +28,19 @@ def analyze_text(text, color_keywords):
     return [color for color, _ in sorted_colors[:3]]
 
 def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats):
-    full_prompt = user_prompt if user_prompt else "Write an article with the following guidelines:"
+    full_prompt = user_prompt if user_prompt else "Modify the given content with the following guidelines:"
     if keywords:
-        full_prompt += f"\nKeywords: {keywords}"
+        full_prompt += f"\nInclude Keywords: {keywords}"
     if audience:
         full_prompt += f"\nAudience: {audience}"
     if specific_facts_stats:
-        full_prompt += f"\nFacts/Stats: {specific_facts_stats}"
+        full_prompt += f"\nInclude Facts/Stats: {specific_facts_stats}"
     messages = [{"role": "system", "content": full_prompt}]
-    if content:
-        messages.append({"role": "user", "content": content})
+    messages.append({"role": "user", "content": content})
     if writing_styles and style_weights:
         for i, style in enumerate(writing_styles):
             weight = style_weights[i]
-            messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style.split(' - ')[1]} manner."})
+            messages.append({"role": "assistant", "content": f"Modify approximately {weight}% of the content in a {style.split(' - ')[1]} manner."})
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
     return response.choices[0].message["content"].strip()
 
@@ -86,8 +85,7 @@ for idx, (url, content, color1, color2, color3) in enumerate(st.session_state.re
     seo_keywords = st.text_input(f"Additional SEO keywords for {url}:", key=f"keywords_{idx}")
     facts = st.text_area(f"Specific facts or stats for {url}:", key=f"facts_{idx}")
     if st.button("Revise", key=f"revise_{idx}"):
-        original_content = scrape_text(url)
-        revised_content = generate_article(original_content, selected_colors, [sliders[color] for color in selected_colors], None, seo_keywords, None, facts)
+        revised_content = generate_article(content, selected_colors, [sliders[color] for color in selected_colors], None, seo_keywords, None, facts)
         st.write("Revised Content:")
         st.write(revised_content)
         b64 = base64.b64encode(revised_content.encode()).decode()
