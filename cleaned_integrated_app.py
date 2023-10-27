@@ -81,10 +81,10 @@ href = f'<a href="data:file/csv;base64,{b64}" download="color_analysis.csv">Down
 st.markdown(href, unsafe_allow_html=True)
 urls = [url.strip() for url in url_input.split(",")]
 results = []
-    for url in urls:
+for url in urls:
         try:
-            content = scrape_text(url)
-            top_colors = analyze_text(content, color_keywords)
+content = scrape_text(url)
+top_colors = analyze_text(content, color_keywords)
             results.append((url, content, *top_colors))
         except:
             results.append((url, "Error", "", ""))
