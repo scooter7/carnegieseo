@@ -109,8 +109,7 @@ for idx, entry in enumerate(st.session_state.results):
     while len(selected_colors) < 3:
         selected_colors.append("")
     sliders = {}
-    for color in selected_colors:
-        color_index = selected_colors.index(color)
+    for color_index, color in enumerate(selected_colors):
         slider_key = f"slider_{idx}_{color_index}"
         sliders[color] = st.slider(f"Ratio for {color}:", 0, 100, 100 // len(selected_colors), key=slider_key)
     seo_keywords = st.text_input(f"Additional SEO keywords for {url}:", key=f"keywords_{idx}")
