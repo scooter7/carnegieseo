@@ -45,11 +45,14 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
     revised_sentences = revised_content.split('. ')
     vectorizer = TfidfVectorizer().fit(revised_sentences)
     for fact in specific_facts_stats.split('\n'):
-        fact_vector = vectorizer.transform([fact]).toarray()[0]
+        fact_vector = vectorizer.transform([fact]).toarray()
         similarities = cosine_similarity(fact_vector, vectorizer.transform(revised_sentences).toarray())
         index = np.argmax(similarities)
         revised_sentences[index] = f"{revised_sentences[index]}. {fact}"
-    return ". ".join(revised_sentences)
+    revised_content = ". ".join(revised_sentences)
+    if keywords:
+        revised_content += f"\nKeywords: {keywords}"
+    return revised_content
 
 color_keywords = {
     "Purple - caring, encouraging": {"verbs": ["care", "encourage"], "adjectives": ["caring", "encouraging"]},
