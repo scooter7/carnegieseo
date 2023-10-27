@@ -32,14 +32,7 @@ def analyze_text(text, color_keywords):
 color_keywords = {
     "Purple - caring, encouraging": {"verbs": ["care", "encourage"], "adjectives": ["caring", "encouraging"]},
     "Green - adventurous, curious": {"verbs": ["explore", "discover"], "adjectives": ["adventurous", "curious"]},
-    "Maroon - gritty, determined": {"verbs": ["persevere", "strive"], "adjectives": ["gritty", "determined"]},
-    "Orange - artistic, creative": {"verbs": ["create", "express"], "adjectives": ["artistic", "creative"]},
-    "Yellow - innovative, intelligent": {"verbs": ["innovate", "intellect"], "adjectives": ["innovative", "intelligent"]},
-    "Red - entertaining, humorous": {"verbs": ["entertain", "amuse"], "adjectives": ["entertaining", "humorous"]},
-    "Blue - confident, influential": {"verbs": ["inspire", "influence"], "adjectives": ["confident", "influential"]},
-    "Pink - charming, elegant": {"verbs": ["charm", "grace"], "adjectives": ["charming", "elegant"]},
-    "Silver - rebellious, daring": {"verbs": ["rebel", "dare"], "adjectives": ["rebellious", "daring"]},
-    "Beige - dedicated, humble": {"verbs": ["dedicate", "humble"], "adjectives": ["dedicated", "humble"]}
+    # ... [other color keywords] ...
 }
 
 def insert_facts_based_on_context(content_sentences, facts):
@@ -53,7 +46,16 @@ def insert_facts_based_on_context(content_sentences, facts):
     return ' '.join(content_sentences)
 
 def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats):
-    # ... [existing code to generate revised content] ...
+    full_prompt = user_prompt if user_prompt else "Modify the article with the following guidelines:"
+    messages = [{"role": "system", "content": full_prompt}]
+    if content:
+        messages.append({"role": "user", "content": content})
+    if writing_styles and style_weights:
+        for i, style in enumerate(writing_styles):
+            weight = style_weights[i]
+            messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style.split(' - ')[1]} manner."})
+    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
+    revised_content = response.choices[0].message["content"].strip()
     revised_sentences = revised_content.split('. ')
     revised_content = insert_facts_based_on_context(revised_sentences, specific_facts_stats.split('\n'))
     return revised_content
