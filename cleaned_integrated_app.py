@@ -73,7 +73,7 @@ url_input = st.text_area("Paste a list of comma-separated URLs:")
 
 if st.button("Analyze"):
     results = process_urls(url_list, openai_api_key)
-            df = pd.DataFrame(results, columns=["URL", "Top Color", "Top Supporting Color", "Additional Supporting Color"])
+df = pd.DataFrame(results, columns=["URL", "Top Color", "Top Supporting Color", "Additional Supporting Color"])
             st.write(df)
             csv = df.to_csv(index=False)
             b64 = base64.b64encode(csv.encode()).decode()
@@ -107,7 +107,7 @@ for idx, (url, content, color1, color2, color3) in enumerate(st.session_state.re
             revised_colors = (url, *top_colors)  # Assuming top_colors contains the revised colors
             results[idx] = revised_colors
             
-            df = pd.DataFrame(results, columns=["URL", "Top Color", "Top Supporting Color", "Additional Supporting Color"])
+df = pd.DataFrame(results, columns=["URL", "Top Color", "Top Supporting Color", "Additional Supporting Color"])
             st.write(df)
             csv = df.to_csv(index=False)
             b64 = base64.b64encode(csv.encode()).decode()
