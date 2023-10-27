@@ -90,6 +90,10 @@ if st.button("Analyze"):
     href = f'<a href="data:file/csv;base64,{b64}" download="color_analysis.csv">Download CSV File</a>'
     st.markdown(href, unsafe_allow_html=True)
 
+# Revised Data Table display
+df_revised = pd.DataFrame(st.session_state.results, columns=["URL", "Content", "Top Color", "Top Supporting Color", "Additional Supporting Color"])
+st.subheader("Revised Data Table")
+st.write(df_revised)
 
 if 'results' not in st.session_state:
     st.session_state.results = []
@@ -106,12 +110,8 @@ for idx, (url, content, color1, color2, color3) in enumerate(st.session_state.re
     facts = st.text_area(f"Specific facts or stats for {url}:", key=f"facts_{idx}")
     if st.button("Revise", key=f"revise_{idx}"):
         revised_content = generate_article(content, selected_colors, [sliders[color] for color in selected_colors], None, seo_keywords, None, facts)
-
-    # Regenerate the data table after revisions
-    df = pd.DataFrame(st.session_state.results, columns=["URL", "Content", "Top Color", "Top Supporting Color", "Additional Supporting Color"])
-    st.write(df)
-    csv = df.to_csv(index=False)
-    b64 = base64.b64encode(csv.encode()).decode()
-    href = f'<a href="data:file/csv;base64,{b64}" download="color_analysis.csv">Download CSV File</a>'
-    st.markdown(href, unsafe_allow_html=True)
-
+        # Update the st.session_state.results with the revised colors
+        st.session_state.results[idx] = (url, content, *selected_colors)
+        # Update the revised data table
+        df_revised = pd.DataFrame(st.session_state.results, columns=["URL", "Content", "Top Color", "Top Supporting Color", "Additional Supporting Color"])
+        st.write(df_revised)
