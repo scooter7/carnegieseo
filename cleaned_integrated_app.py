@@ -4,6 +4,7 @@ import requests
 from collections import Counter
 import openai
 import base64
+import pandas as pd  # Add this line to import pandas
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
