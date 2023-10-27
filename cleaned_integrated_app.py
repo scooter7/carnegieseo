@@ -74,11 +74,11 @@ url_input = st.text_area("Paste a list of comma-separated URLs:")
 if st.button("Analyze"):
     results = process_urls(url_list, openai_api_key)
 df = pd.DataFrame(results, columns=["URL", "Top Color", "Top Supporting Color", "Additional Supporting Color"])
-            st.write(df)
-            csv = df.to_csv(index=False)
-            b64 = base64.b64encode(csv.encode()).decode()
-            href = f'<a href="data:file/csv;base64,{b64}" download="color_analysis.csv">Download CSV File</a>'
-            st.markdown(href, unsafe_allow_html=True)
+st.write(df)
+csv = df.to_csv(index=False)
+b64 = base64.b64encode(csv.encode()).decode()
+href = f'<a href="data:file/csv;base64,{b64}" download="color_analysis.csv">Download CSV File</a>'
+st.markdown(href, unsafe_allow_html=True)
     urls = [url.strip() for url in url_input.split(",")]
     results = []
     for url in urls:
