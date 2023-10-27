@@ -110,7 +110,8 @@ for idx, entry in enumerate(st.session_state.results):
         selected_colors.append("")
     sliders = {}
     for color in selected_colors:
-        slider_key = f"slider_{color}_{idx}_{hash(url)}"
+        combined_string = f"{url}_{color}"
+        slider_key = f"slider_{hash(combined_string)}"
         sliders[color] = st.slider(f"Ratio for {color}:", 0, 100, 100 // len(selected_colors), key=slider_key)
     seo_keywords = st.text_input(f"Additional SEO keywords for {url}:", key=f"keywords_{idx}")
     facts = st.text_area(f"Specific facts or stats for {url}:", key=f"facts_{idx}")
