@@ -105,7 +105,7 @@ for idx, entry in enumerate(st.session_state.results):
     st.write(f"URL: {url}")
     st.write(content)
     st.write(f"Identified Colors: {', '.join([color for color in colors if color])}")
-    selected_colors = st.multiselect(f"Select new color profiles for {url}:", list(color_keywords.keys()), default=[color1, color2, color3], key=f"color_{idx}")
+    selected_colors = st.multiselect(f"Select new color profiles for {url}:", list(color_keywords.keys()), default=[color for color in colors if color], key=f"color_{idx}")
     while len(selected_colors) < 3:
         selected_colors.append("")
     sliders = {}
