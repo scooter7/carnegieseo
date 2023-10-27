@@ -52,6 +52,8 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
     revised_content = ". ".join(revised_sentences)
     if keywords:
         revised_content += f"\nKeywords: {keywords}"
+    st.text(revised_content)
+    st.download_button("Download Revised Content", revised_content, "revised_content.txt")
     return revised_content
 
 color_keywords = {
@@ -96,7 +98,3 @@ for idx, (url, content, color1, color2, color3) in enumerate(st.session_state.re
     facts = st.text_area(f"Specific facts or stats for {url}:", key=f"facts_{idx}")
     if st.button("Revise", key=f"revise_{idx}"):
         revised_content = generate_article(content, selected_colors, [sliders[color] for color in selected_colors], None, seo_keywords, None, facts)
-        st.write("Revised Content:")
-        st.write(revised_content)
-        b64 = base64.b64encode(revised_content.encode('utf-8')).decode()
-        dl_button = st.download_button(label="Download Revised Content", data=b64, file_name=f'revised_content_{idx}.txt', mime='text/plain')
