@@ -108,7 +108,7 @@ for idx, (url, content, color1, color2, color3) in enumerate(st.session_state.re
         revised_content = generate_article(content, selected_colors, [sliders[color] for color in selected_colors], None, seo_keywords, None, facts)
 
     # Regenerate the data table after revisions
-    df = pd.DataFrame(st.session_state.results, columns=["URL", "Top Color", "Top Supporting Color", "Additional Supporting Color"])
+    df = pd.DataFrame(st.session_state.results, columns=["URL", "Content", "Top Color", "Top Supporting Color", "Additional Supporting Color"])
     st.write(df)
     csv = df.to_csv(index=False)
     b64 = base64.b64encode(csv.encode()).decode()
