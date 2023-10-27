@@ -110,7 +110,8 @@ for idx, entry in enumerate(st.session_state.results):
         selected_colors.append("")
     sliders = {}
     for color in selected_colors:
-        sliders[color] = st.slider(f"Ratio for {color}:", 0, 100, 100 // len(selected_colors), key=f"slider_{color}_{idx}")
+        slider_key = f"slider_{color}_{idx}_{hash(url)}"
+        sliders[color] = st.slider(f"Ratio for {color}:", 0, 100, 100 // len(selected_colors), key=slider_key)
     seo_keywords = st.text_input(f"Additional SEO keywords for {url}:", key=f"keywords_{idx}")
     facts = st.text_area(f"Specific facts or stats for {url}:", key=f"facts_{idx}")
     if st.button("Revise", key=f"revise_{idx}"):
