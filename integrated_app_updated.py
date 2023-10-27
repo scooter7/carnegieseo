@@ -99,11 +99,15 @@ df_revised = pd.DataFrame(st.session_state.results, columns=["URL", "Content", "
 st.subheader("Revised Data Table")
 st.write(df_revised)
 
-for idx, (url, content, color1, color2, color3) in enumerate(st.session_state.results):
+for idx, entry in enumerate(st.session_state.results):
+    url, content = entry[:2]
+    colors = entry[2:5]
     st.write(f"URL: {url}")
     st.write(content)
-    st.write(f"Identified Colors: {color1}, {color2}, {color3}")
+    st.write(f"Identified Colors: {', '.join([color for color in colors if color])}")
     selected_colors = st.multiselect(f"Select new color profiles for {url}:", list(color_keywords.keys()), default=[color1, color2, color3], key=f"color_{idx}")
+    while len(selected_colors) < 3:
+        selected_colors.append("")
     sliders = {}
     for color in selected_colors:
         sliders[color] = st.slider(f"Ratio for {color}:", 0, 100, 100 // len(selected_colors), key=f"slider_{color}_{idx}")
