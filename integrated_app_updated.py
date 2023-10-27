@@ -83,7 +83,7 @@ if st.button("Analyze"):
         except:
             results.append((url, "Error", "", ""))
     st.session_state.results = results
-    df = pd.DataFrame(results, columns=["URL", "Top Color", "Top Supporting Color", "Additional Supporting Color"])
+    df = pd.DataFrame(results, columns=["URL", "Content", "Top Color", "Top Supporting Color", "Additional Supporting Color"])
     st.write(df)
     csv = df.to_csv(index=False)
     b64 = base64.b64encode(csv.encode()).decode()
