@@ -40,7 +40,9 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
     if writing_styles and style_weights:
         for i, style in enumerate(writing_styles):
             weight = style_weights[i]
-            messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style.split(' - ')[1]} manner."})
+            style_elements = style.split(' - ')
+            style_description = style_elements[1] if len(style_elements) > 1 else style
+            messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style_description} manner."})
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
     revised_content = response.choices[0].message["content"].strip()
     revised_sentences = revised_content.split('. ')
