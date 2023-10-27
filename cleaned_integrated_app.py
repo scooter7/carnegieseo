@@ -79,7 +79,7 @@ csv = df.to_csv(index=False)
 b64 = base64.b64encode(csv.encode()).decode()
 href = f'<a href="data:file/csv;base64,{b64}" download="color_analysis.csv">Download CSV File</a>'
 st.markdown(href, unsafe_allow_html=True)
-    urls = [url.strip() for url in url_input.split(",")]
+urls = [url.strip() for url in url_input.split(",")]
     results = []
     for url in urls:
         try:
