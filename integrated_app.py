@@ -1,4 +1,3 @@
-import streamlit as st
 from bs4 import BeautifulSoup
 import requests
 from collections import Counter
@@ -53,7 +52,7 @@ def insert_facts_based_on_context(content_sentences, facts):
     return ' '.join(content_sentences)
 
 def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats):
-    full_prompt = user_prompt if user_prompt else "Modify the article with the following guidelines:"
+    full_prompt = user_prompt if user_prompt else "Starting with the original content, modify the article with the following guidelines:"
     messages = [{"role": "system", "content": full_prompt}]
     if content:
         messages.append({"role": "user", "content": content})
