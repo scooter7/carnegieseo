@@ -72,6 +72,10 @@ color_keywords = {
 
 url_input = st.text_area("Paste a list of comma-separated URLs:")
 
+# Initialize st.session_state.results if it's not already initialized
+if 'results' not in st.session_state:
+    st.session_state.results = []
+
 if st.button("Analyze"):
     urls = [url.strip() for url in url_input.split(",")]
     results = []
@@ -94,9 +98,6 @@ if st.button("Analyze"):
 df_revised = pd.DataFrame(st.session_state.results, columns=["URL", "Content", "Top Color", "Top Supporting Color", "Additional Supporting Color"])
 st.subheader("Revised Data Table")
 st.write(df_revised)
-
-if 'results' not in st.session_state:
-    st.session_state.results = []
 
 for idx, (url, content, color1, color2, color3) in enumerate(st.session_state.results):
     st.write(f"URL: {url}")
