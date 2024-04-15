@@ -8,37 +8,29 @@ import io
 import base64
 import openai
 
-def analyze_text(text, color_keywords):
-    text = text.lower()
-    words = re.findall(r'\b\w+\b', text)
-    color_counts = Counter()
-    for color, keywords in color_keywords.items():
-        color_counts[color] = sum(words.count(k.lower()) for k in keywords)
-    return color_counts
-
-def draw_donut_chart(color_counts):
-    labels = list(color_counts.keys())
-    sizes = [color_counts.get(color, 0) for color in labels]
-    fig = go.Figure(data=[go.Pie(labels=labels, values=sizes, hole=.3, marker=dict(colors=labels))])
-    return fig
-
 def analyze_tone_with_gpt3(text, api_key):
     openai.api_key = api_key
-    prompt = f"""
-    Please provide a nuanced analysis of the following text, assigning a level to indicate the extent to which the text embodies each of the following tones:
-    - Relaxed
-    - Assertive
-    - Introverted
-    - Extroverted
-    - Conservative
-    - Progressive
-    - Emotive
-    - Informative
-    Text to Analyze:
-    {text}
-    """
-    response = openai.ChatCompletion.create(model="gpt-3.5-turbo")
-    gpt3_output = response.choices[0].text.strip().split('\n')
+    prompt = {
+        "model": "gpt-3.5-turbo",
+        "messages": [{
+            "role": "user",
+            "content": f"""
+            Please provide a nuanced analysis of the following text, assigning a level to indicate the extent to which the text embodies each of the following tones:
+            - Relaxed
+            - Assertive
+            - Introverted
+            - Extroverted
+            - Conservative
+            - Progressive
+            - Emotive
+            - Informative
+            Text to Analyze:
+            {text}
+            """
+        }]
+    }
+    response = openai.ChatCompletion.create(**prompt)
+    gpt3_output = response.choices[0].message['content'].strip().split('\n')
     tone_scores = {}
     for line in gpt3_output:
         if ":" in line:
