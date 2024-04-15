@@ -66,6 +66,14 @@ def generate_word_doc(color_counts, user_content, tone_scores, initial_fig, tone
     doc.save(word_file_path)
     return word_file_path
 
+def analyze_text(text, color_keywords):
+    text = text.lower()
+    words = re.findall(r'\b\w+\b', text)
+    color_counts = Counter()
+    for color, keywords in color_keywords.items():
+        color_counts[color] = sum(words.count(k.lower()) for k in keywords)
+    return color_counts
+
 def get_word_file_download_link(file_path, filename):
     with open(file_path, "rb") as f:
         file_data = f.read()
