@@ -56,7 +56,7 @@ def main():
         weight = st.slider(f"Weight for {style}:", 0, 100, 50)
         style_weights.append(weight)
     
-    if st.button("Generate Revised Content"):
+    if st.button("Generate Content"):
         revised_content = generate_article(user_content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats)
         st.text(revised_content)
         st.download_button("Download Content", revised_content, "content.txt")
