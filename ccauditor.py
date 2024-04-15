@@ -50,28 +50,21 @@ def analyze_tone_with_gpt3(text, api_key):
 def generate_word_doc(color_counts, user_content, tone_scores, initial_fig, tone_fig, updated_fig):
     doc = Document()
     doc.add_heading('Color Personality Analysis', 0)
-
-    # Handling for Initial Donut Chart
     if initial_fig:
         image_stream = io.BytesIO(initial_fig.to_image(format="png"))
         doc.add_heading('Initial Donut Chart:', level=1)
         doc.add_picture(image_stream, width=Inches(4.0))
         image_stream.close()
-
-    # Handling for Tone Analysis Chart
     if tone_fig:
         image_stream = io.BytesIO(tone_fig.to_image(format="png"))
         doc.add_heading('Tone Analysis:', level=1)
         doc.add_picture(image_stream, width=Inches(4.0))
         image_stream.close()
-
-    # Handling for Updated Donut Chart
     if updated_fig:
         image_stream = io.BytesIO(updated_fig.to_image(format="png"))
         doc.add_heading('Updated Donut Chart:', level=1)
         doc.add_picture(image_stream, width=Inches(4.0))
         image_stream.close()
-
     doc.add_heading('Tone Scores:', level=1)
     for tone, score in tone_scores.items():
         doc.add_paragraph(f"{tone}: {score}")
@@ -114,9 +107,6 @@ def main():
     }
     
     user_content = st.text_area('Paste your content here:')
-    color_counts = Counter()
-    tone_fig = None
-    
     if st.button('Analyze'):
         st.session_state.init_done = True
         color_counts = analyze_text(user_content, color_keywords)
@@ -125,36 +115,31 @@ def main():
         st.subheader('Initial Donut Chart')
         st.plotly_chart(st.session_state.initial_fig)
         st.session_state.tone_scores = analyze_tone_with_gpt3(user_content, openai_api_key)
-        
+
         sentences = re.split(r'[.!?]', user_content)
         st.session_state.sentence_to_colors = {}
-        
         for sentence in sentences:
             if sentence.strip():
                 initial_colors = [color for color, keywords in color_keywords.items() if any(keyword.lower() in sentence.lower() for keyword in keywords)]
                 st.session_state.sentence_to_colors[sentence] = initial_colors
-                
+
     if st.session_state.init_done:
         if st.session_state.tone_scores:
-    tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
-    st.subheader('Tone Analysis')
-    st.plotly_chart(tone_fig)
-
-        new_color_counts = st.session_state.updated_color_counts.copy()
-        
-        for sentence, initial_colors in st.session_state.sentence_to_colors.items():
-            selected_colors = st.multiselect(f"{sentence}. ({', '.join(initial_colors)})", list(color_keywords.keys()))
-            for color in selected_colors:
-                new_color_counts[color] += 1
-        
-        st.session_state.updated_color_counts = new_color_counts
-        updated_fig = draw_donut_chart(st.session_state.updated_color_counts)
-        st.subheader('Updated Donut Chart')
-        st.plotly_chart(updated_fig)
-        
-        word_file_path = generate_word_doc(st.session_state.updated_color_counts, user_content, st.session_state.tone_scores, st.session_state.initial_fig, tone_fig, updated_fig)
-        download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
-        st.markdown(download_link, unsafe_allow_html=True)
+            tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
+            st.subheader('Tone Analysis')
+            st.plotly_chart(tone_fig)
+            new_color_counts = st.session_state.updated_color_counts.copy()
+            for sentence, initial_colors in st.session_state.sentence_to_colors.items():
+                selected_colors = st.multiselect(f"{sentence}. ({', '.join(initial_colors)})", list(color_keywords.keys()))
+                for color in selected_colors:
+                    new_color_counts[color] += 1
+            st.session_state.updated_color_counts = new_color_counts
+            updated_fig = draw_donut_chart(st.session_state.updated_color_counts)
+            st.subheader('Updated Donut Chart')
+            st.plotly_chart(updated_fig)
+            word_file_path = generate_word_doc(st.session_state.updated_color_counts, user_content, st.session_state.tone_scores, st.session_state.initial_fig, tone_fig, updated_fig)
+            download_link = get_word_file_download_link(word_file_path, "Color_Personality_Analysis_Report.docx")
+            st.markdown(download_link, unsafe_allow_html=True)
 
 if __name__ == '__main__':
     main()
