@@ -38,7 +38,7 @@ def analyze_tone_with_gpt3(text, api_key):
     {text}
     """
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=[{"role": "system", "content": "Analyze tone."}, {"role": "user", "content": text}])
-    gpt3_output = response.choices[0].text.strip().split('\n')
+    gpt3_output = response['choices'][0]['message']['content'].strip().split('\n')
     tone_scores = {}
     for line in gpt3_output:
         if ":" in line:
