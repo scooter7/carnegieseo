@@ -50,24 +50,33 @@ def analyze_tone_with_gpt3(text, api_key):
 def generate_word_doc(color_counts, user_content, tone_scores, initial_fig, tone_fig, updated_fig):
     doc = Document()
     doc.add_heading('Color Personality Analysis', 0)
-    image_stream = io.BytesIO(initial_fig.to_image(format="png"))
-    doc.add_heading('Initial Donut Chart:', level=1)
-    doc.add_picture(image_stream, width=Inches(4.0))
-    image_stream.close()
-    image_stream = io.BytesIO(tone_fig.to_image(format="png"))
-    doc.add_heading('Tone Analysis:', level=1)
-    doc.add_picture(image_stream, width=Inches(4.0))
-    image_stream.close()
-    image_stream = io.BytesIO(updated_fig.to_image(format="png"))
-    doc.add_heading('Updated Donut Chart:', level=1)
-    doc.add_picture(image_stream, width=Inches(4.0))
-    image_stream.close()
+    
+    if initial_fig is not None:
+        image_stream = io.BytesIO(initial_fig.to_image(format="png"))
+        doc.add_heading('Initial Donut Chart:', level=1)
+        doc.add_picture(image_stream, width=Inches(4.0))
+        image_stream.close()
+    
+    if tone_fig is not None:
+        image_stream = io.BytesIO(tone_fig.to_image(format="png"))
+        doc.add_heading('Tone Analysis:', level=1)
+        doc.add_picture(image_stream, width=Inches(4.0))
+        image_stream.close()
+    
+    if updated_fig is not None:
+        image_stream = io.BytesIO(updated_fig.to_image(format="png"))
+        doc.add_heading('Updated Donut Chart:', level=1)
+        doc.add_picture(image_stream, width=Inches(4.0))
+        image_stream.close()
+    
     doc.add_heading('Tone Scores:', level=1)
     for tone, score in tone_scores.items():
         doc.add_paragraph(f"{tone}: {score}")
+    
     doc.add_heading('Scored Sentences:', level=1)
     for sentence, colors in st.session_state.sentence_to_colors.items():
         doc.add_paragraph(f"{sentence}: {', '.join(colors)}")
+    
     doc.add_heading('Original Text:', level=1)
     doc.add_paragraph(user_content)
     word_file_path = "Color_Personality_Analysis_Report.docx"
