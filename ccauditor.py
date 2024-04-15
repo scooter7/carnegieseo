@@ -50,18 +50,28 @@ def analyze_tone_with_gpt3(text, api_key):
 def generate_word_doc(color_counts, user_content, tone_scores, initial_fig, tone_fig, updated_fig):
     doc = Document()
     doc.add_heading('Color Personality Analysis', 0)
-    image_stream = io.BytesIO(initial_fig.to_image(format="png"))
-    doc.add_heading('Initial Donut Chart:', level=1)
-    doc.add_picture(image_stream, width=Inches(4.0))
-    image_stream.close()
-    image_stream = io.BytesIO(tone_fig.to_image(format="png"))
-    doc.add_heading('Tone Analysis:', level=1)
-    doc.add_picture(image_stream, width=Inches(4.0))
-    image_stream.close()
-    image_stream = io.BytesIO(updated_fig.to_image(format="png"))
-    doc.add_heading('Updated Donut Chart:', level=1)
-    doc.add_picture(image_stream, width=Inches(4.0))
-    image_stream.close()
+
+    # Handling for Initial Donut Chart
+    if initial_fig:
+        image_stream = io.BytesIO(initial_fig.to_image(format="png"))
+        doc.add_heading('Initial Donut Chart:', level=1)
+        doc.add_picture(image_stream, width=Inches(4.0))
+        image_stream.close()
+
+    # Handling for Tone Analysis Chart
+    if tone_fig:
+        image_stream = io.BytesIO(tone_fig.to_image(format="png"))
+        doc.add_heading('Tone Analysis:', level=1)
+        doc.add_picture(image_stream, width=Inches(4.0))
+        image_stream.close()
+
+    # Handling for Updated Donut Chart
+    if updated_fig:
+        image_stream = io.BytesIO(updated_fig.to_image(format="png"))
+        doc.add_heading('Updated Donut Chart:', level=1)
+        doc.add_picture(image_stream, width=Inches(4.0))
+        image_stream.close()
+
     doc.add_heading('Tone Scores:', level=1)
     for tone, score in tone_scores.items():
         doc.add_paragraph(f"{tone}: {score}")
@@ -126,11 +136,9 @@ def main():
                 
     if st.session_state.init_done:
         if st.session_state.tone_scores:
-            for tone, score in st.session_state.tone_scores.items():
-                st.session_state.tone_scores[tone] = st.slider(f"{tone}", 0, 10, int(score))
-            tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
-            st.subheader('Tone Analysis')
-            st.plotly_chart(tone_fig)
+    tone_fig = go.Figure(data=[go.Bar(x=list(st.session_state.tone_scores.keys()), y=list(st.session_state.tone_scores.values()))])
+    st.subheader('Tone Analysis')
+    st.plotly_chart(tone_fig)
 
         new_color_counts = st.session_state.updated_color_counts.copy()
         
