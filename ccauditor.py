@@ -37,7 +37,7 @@ def analyze_tone_with_gpt3(text, api_key):
     Text to Analyze:
     {text}
     """
-    response = openai.Completion.create(engine="text-davinci-002", prompt=prompt, max_tokens=100)
+    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=revision_messages)
     gpt3_output = response.choices[0].text.strip().split('\n')
     tone_scores = {}
     for line in gpt3_output:
