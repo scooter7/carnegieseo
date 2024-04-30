@@ -1,0 +1,82 @@
+import streamlit as st
+import openai
+import sys
+import logging
+import random
+
+user_prompt = st.text_area("Specify a prompt about the type of content you want produced:", "")
+keywords = st.text_area("Optional: Specify specific keywords to be used:", "")
+audience = st.text_input("Optional: Define the audience for the generated content:", "")
+specific_facts_stats = st.text_area("Optional: Add specific facts or stats to be included:", "")
+
+if "OPENAI_API_KEY" not in st.secrets:
+    st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
+    sys.exit(1)
+
+openai_api_key = st.secrets["OPENAI_API_KEY"]
+
+placeholders = {
+    "Purple - caring, encouraging": {"verbs": ["care", "encourage"], "adjectives": ["caring", "encouraging"]},
+    "Green - adventurous, curious": {"verbs": ["explore", "discover"], "adjectives": ["adventurous", "curious"]},
+    "Maroon - gritty, determined": {"verbs": ["persevere", "strive"], "adjectives": ["gritty", "determined"]},
+    "Orange - artistic, creative": {"verbs": ["create", "express"], "adjectives": ["artistic", "creative"]},
+    "Yellow - innovative, intelligent": {"verbs": ["innovate", "intellect"], "adjectives": ["innovative", "intelligent"]},
+    "Red - entertaining, humorous": {"verbs": ["entertain", "amuse"], "adjectives": ["entertaining", "humorous"]},
+    "Blue - confident, influential": {"verbs": ["inspire", "influence"], "adjectives": ["confident", "influential"]},
+    "Pink - charming, elegant": {"verbs": ["charm", "grace"], "adjectives": ["aesthetic", "charming", "classic", "dignified", "idealistic", "meticulous", "poised", "polished", "refined", "sophisticated" "elegant"]},
+    "Silver - rebellious, daring": {"verbs": ["rebel", "dare"], "adjectives": ["rebellious", "daring"]},
+    "Beige - dedicated, humble": {"verbs": ["dedicate", "humble"], "adjectives": ["dedicated", "humble"]}
+}
+
+def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats):
+    full_prompt = user_prompt
+    if keywords:
+        full_prompt += f"\nKeywords: {keywords}"
+    if audience:
+        full_prompt += f"\nAudience: {audience}"
+    if specific_facts_stats:
+        full_prompt += f"\nFacts/Stats: {specific_facts_stats}"
+
+    messages = [{"role": "system", "content": full_prompt}]
+    messages.append({"role": "user", "content": content})
+    for i, style in enumerate(writing_styles):
+        weight = style_weights[i]
+        messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style.split(' - ')[1]} manner."})
+
+    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
+    return response.choices[0].message["content"].strip()
+
+def main():
+    
+    user_content = st.text_area("Paste your content here:")
+    writing_styles = st.multiselect("Select Writing Styles:", list(placeholders.keys()))
+    
+    style_weights = []
+    for style in writing_styles:
+        weight = st.slider(f"Weight for {style}:", 0, 100, 50)
+        style_weights.append(weight)
+    
+    if st.button("Generate Content"):
+        revised_content = generate_article(user_content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats)
+        st.text(revised_content)
+        st.download_button("Download Content", revised_content, "content.txt")
+
+    st.markdown("---")
+    st.header("Revision Section")
+
+    pasted_content = st.text_area("Paste Generated Content Here (for further revisions):")
+    revision_requests = st.text_area("Specify Revisions Here:")
+
+    if st.button("Revise Further"):
+        revision_messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": pasted_content},
+            {"role": "user", "content": revision_requests}
+        ]
+        response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=revision_messages)
+        revised_content = response.choices[0].message["content"].strip()
+        st.text(revised_content)
+        st.download_button("Download Revised Content", revised_content, "revised_content_revision.txt")
+
+if __name__ == "__main__":
+    main()
