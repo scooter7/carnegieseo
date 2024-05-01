@@ -50,23 +50,14 @@ def match_text_to_color(text_analysis, original_text):
         
         relevant_beliefs = [belief for belief in traits['beliefs'] if any(word in belief.lower() for word in words)]
         
-        # Extracting narrative analysis from the detailed response
-        narrative_analysis = extract_narrative_analysis(text_analysis, color)
-        
         color_details[color] = {
             'score': total_hits,
             'keywords': list(verb_hits.union(adj_hits)),
-            'relevant_beliefs': relevant_beliefs,
-            'narrative_analysis': narrative_analysis
+            'relevant_beliefs': relevant_beliefs
         }
 
     sorted_colors = sorted(color_details.items(), key=lambda item: item[1]['score'], reverse=True)[:3]
-    return sorted_colors
-
-def extract_narrative_analysis(detailed_text, color):
-    # This is a placeholder for extracting the specific narrative related to the color from the detailed_text
-    # For now, it returns a summary. You might need to customize this to suit how the API returns data.
-    return f"From the text, the verbs related to {color} are " + ", ".join(placeholders[color]['verbs']) + ". The adjective(s) include " + ", ".join(placeholders[color]['adjectives']) + "."
+    return sorted_colors, text_analysis
 
 # Streamlit interface
 st.title("Color Persona Text Analysis")
@@ -74,7 +65,7 @@ st.title("Color Persona Text Analysis")
 user_input = st.text_area("Paste your content here:", height=300)
 if st.button("Analyze Text"):
     raw_analysis = analyze_text(user_input)
-    top_colors = match_text_to_color(raw_analysis, user_input)
+    top_colors, detailed_analysis = match_text_to_color(raw_analysis, user_input)
     st.write("Top color matches and their explanations:")
     for color, details in top_colors:
         st.write(f"**{color}** - Score: {details['score']}")
@@ -82,8 +73,9 @@ if st.button("Analyze Text"):
         st.write("Relevant Beliefs:")
         for belief in details['relevant_beliefs']:
             st.write(f"- {belief}")
-        st.write("Narrative Analysis:")
-        st.write(details['narrative_analysis'])
+        # Here you might extract specific sections of the detailed analysis related to this color
+        st.write("Detailed Analysis for this Color:")
+        st.write(detailed_analysis)  # Adjust this to filter or focus the analysis per color if needed
 
-    st.write("Detailed Analysis:")
+    st.write("General Detailed Analysis:")
     st.write(raw_analysis)
