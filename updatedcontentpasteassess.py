@@ -30,36 +30,43 @@ placeholders = {
 }
 
 def analyze_text(text):
+    # Asking the model to identify relevant words and explain their significance
+    prompt_text = f"Please analyze the following text and identify which verbs and adjectives from the following categories are present. Also, explain how these relate to the predefined beliefs of each category:\n\nText: {text}\n\nCategories:\n" + "\n".join([f"{color}: Verbs({', '.join(info['verbs'])}), Adjectives({', '.join(info['adjectives'])})" for color, info in placeholders.items()])
     response = openai.ChatCompletion.create(
         model="gpt-4",
-        messages=[{"role": "user", "content": f"Analyze this text: {text}"}],
-        max_tokens=150
+        messages=[{"role": "user", "content": prompt_text}],
+        max_tokens=500
     )
     return response.choices[0].message['content'].strip()
 
 def match_text_to_color(text_analysis):
-    word_counts = Counter(text_analysis.split())
+    # Simple keyword extraction from the analysis
+    words = text_analysis.lower().split()
     color_scores = defaultdict(int)
     
     for color, traits in placeholders.items():
-        verb_score = sum(word_counts[verb] for verb in traits['verbs'] if verb in word_counts)
-        adjective_score = sum(word_counts[adjective] for adjective in traits['adjectives'] if adjective in word_counts)
-        color_scores[color] += verb_score + adjective_score
+        verbs_set = set(traits['verbs'])
+        adjectives_set = set(traits['adjectives'])
+        # Count only relevant verbs and adjectives
+        color_scores[color] += sum(word in verbs_set for word in words)
+        color_scores[color] += sum(word in adjectives_set for word in words)
 
     # Sorting colors by scores and selecting the top 3
     sorted_colors = sorted(color_scores.items(), key=lambda item: item[1], reverse=True)[:3]
-    return sorted_colors
+    return sorted_colors, text_analysis
 
 # Streamlit interface
 st.title("Color Persona Text Analysis")
 
 user_input = st.text_area("Paste your content here:", height=300)
 if st.button("Analyze Text"):
-    analysis = analyze_text(user_input)
-    top_colors = match_text_to_color(analysis)
-    st.write("Top color matches:")
+    analysis, raw_analysis = analyze_text(user_input)
+    top_colors, explanation = match_text_to_color(analysis)
+    st.write("Top color matches and their explanations:")
     for color, score in top_colors:
         st.write(f"**{color}** - Score: {score}")
         st.write("Reasons:")
         for belief in placeholders[color]['beliefs']:
             st.write(f"- {belief}")
+    st.write("Detailed Analysis:")
+    st.write(raw_analysis)
