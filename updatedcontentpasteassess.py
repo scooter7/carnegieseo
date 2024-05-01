@@ -1,6 +1,6 @@
 import streamlit as st
 import openai
-from collections import defaultdict
+from collections import Counter, defaultdict
 
 # Load your API key from Streamlit's secrets
 openai.api_key = st.secrets["OPENAI_API_KEY"]
@@ -31,7 +31,7 @@ placeholders = {
 
 def analyze_text(text):
     # Creating a detailed prompt for OpenAI's API
-    prompt_text = "Please analyze the following text and identify which verbs and adjectives from the following categories are present. Explain how these relate to the predefined beliefs of each category:\n\n" + f"Text: {text}\n\n" + "Categories:\n" + "\n".join([f"{color}: Verbs({', '.join(info['verbs'])}), Adjectives({', '.join(info['adjectives'])})" for color, info in placeholders.items()])
+    prompt_text = "Analyze this text and identify relevant verbs and adjectives, and how they relate to predefined categories:\n\n" + f"Text: {text}\n\n" + "Categories:\n" + "\n".join([f"{color}: Verbs({', '.join(info['verbs'])}), Adjectives({', '.join(info['adjectives'])})" for color, info in placeholders.items()])
     response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt_text}],
@@ -41,8 +41,7 @@ def analyze_text(text):
 
 def match_text_to_color(text_analysis, original_text):
     words = set(original_text.lower().split())
-    color_details = defaultdict(dict)
-
+    color_details = {}
     for color, traits in placeholders.items():
         verb_hits = {verb for verb in traits['verbs'] if verb in words}
         adj_hits = {adj for adj in traits['adjectives'] if adj in words}
@@ -50,23 +49,24 @@ def match_text_to_color(text_analysis, original_text):
         
         relevant_beliefs = [belief for belief in traits['beliefs'] if any(word in belief.lower() for word in words)]
         
+        # Extract parts of the general analysis relevant to this color
+        relevant_analysis = filter_relevant_analysis(text_analysis, color)
+        
         color_details[color] = {
             'score': total_hits,
             'keywords': list(verb_hits.union(adj_hits)),
-            'relevant_beliefs': relevant_beliefs
+            'relevant_beliefs': relevant_beliefs,
+            'relevant_analysis': relevant_analysis
         }
-
-    # Filter general detailed analysis per color
-    for color in color_details.keys():
-        color_details[color]['specific_analysis'] = extract_relevant_analysis(text_analysis, color, color_details[color]['keywords'])
-
     sorted_colors = sorted(color_details.items(), key=lambda item: item[1]['score'], reverse=True)[:3]
     return sorted_colors
 
-def extract_relevant_analysis(detailed_text, color, keywords):
+def filter_relevant_analysis(detailed_text, color):
+    # Example simplistic filter, looking for sentences that contain the color name or key attributes
+    # Real implementation might need more advanced text parsing or NLP techniques
     sentences = detailed_text.split('.')
-    relevant_sentences = [sentence for sentence in sentences if color.lower() in sentence.lower() or any(keyword in sentence.lower() for keyword in keywords)]
-    return ' '.join(relevant_sentences).strip()
+    filtered_sentences = [sentence for sentence in sentences if color.lower() in sentence.lower() or any(word in sentence.lower() for word in placeholders[color]['verbs'] + placeholders[color]['adjectives'])]
+    return ' '.join(filtered_sentences)
 
 # Streamlit interface
 st.title("Color Persona Text Analysis")
@@ -82,8 +82,8 @@ if st.button("Analyze Text"):
         st.write("Relevant Beliefs:")
         for belief in details['relevant_beliefs']:
             st.write(f"- {belief}")
-        st.write("General Detailed Analysis for this Color:")
-        st.write(details['specific_analysis'])
+        st.write("Relevant Part of General Detailed Analysis:")
+        st.write(details['relevant_analysis'])
 
     st.write("General Detailed Analysis (Full):")
     st.write(raw_analysis)
