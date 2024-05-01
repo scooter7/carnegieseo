@@ -30,19 +30,19 @@ placeholders = {
 }
 
 def analyze_text(text):
+    # Constructing the prompt for the API
     prompt_text = f"Please analyze the following text and identify which verbs and adjectives from the following categories are present. Also, explain how these relate to the predefined beliefs of each category:\n\nText: {text}\n\nCategories:\n" + "\n".join([f"{color}: Verbs({', '.join(info['verbs'])}), Adjectives({', '.join(info['adjectives'])})" for color, info in placeholders.items()])
     response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt_text}],
         max_tokens=500
     )
-    # Return both the raw content and a simplified analysis or summary
     raw_content = response.choices[0].message['content'].strip()
-    # Process the raw_content to create a summary or another form of processed analysis if needed
-    processed_analysis = "Processed or summarized analysis here based on raw_content"
-    return raw_content, processed_analysis
+    # Here you can optionally process the raw_content if necessary
+    return raw_content  # Return only the raw_content if that's what's needed for further processing
 
 def match_text_to_color(text_analysis):
+    # Processing text to extract keyword matches
     word_counts = Counter(text_analysis.lower().split())
     color_scores = defaultdict(int)
     
@@ -59,8 +59,8 @@ st.title("Color Persona Text Analysis")
 
 user_input = st.text_area("Paste your content here:", height=300)
 if st.button("Analyze Text"):
-    raw_analysis = analyze_text(user_input)  # Assume analyze_text only returns one value, the raw analysis
-    top_colors = match_text_to_color(raw_analysis)  # This function returns the list of top 3 colors
+    raw_analysis = analyze_text(user_input)  # Now this function only returns the raw content
+    top_colors = match_text_to_color(raw_analysis)  # Pass the correct data type
     st.write("Top color matches and their explanations:")
     for color, score in top_colors:
         st.write(f"**{color}** - Score: {score}")
@@ -68,7 +68,8 @@ if st.button("Analyze Text"):
         for belief in placeholders[color]['beliefs']:
             st.write(f"- {belief}")
     st.write("Detailed Analysis:")
-    st.write(raw_analysis)
+    st.write(raw_analysis)  # Display raw analysis for insight
+
 
 
 
