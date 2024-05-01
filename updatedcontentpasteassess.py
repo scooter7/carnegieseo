@@ -75,9 +75,10 @@ user_input = st.text_area("Paste your content here:", height=300)
 if st.button("Analyze Text"):
     raw_analysis = analyze_text(user_input)
     top_colors = match_text_to_color(raw_analysis, user_input)
-    st.write("Top color matches and their explanations:")
+    st.write("General Detailed Analysis (Full):")
+    st.write(raw_analysis)
     for color, details in top_colors:
-        st.write(f"**{color}** - Score: {details['score']}")
+        st.write(f"\n{color} - Score: {details['score']}\n")
         st.write("Identified Keywords: ", ", ".join(details['keywords']))
         st.write("Relevant Beliefs:")
         for belief in details['relevant_beliefs']:
