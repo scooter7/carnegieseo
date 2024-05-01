@@ -30,46 +30,53 @@ placeholders = {
 }
 
 def analyze_text(text):
-    # Constructing the prompt for the API
-    prompt_text = f"Please analyze the following text and identify which verbs and adjectives from the following categories are present. Also, explain how these relate to the predefined beliefs of each category:\n\nText: {text}\n\nCategories:\n" + "\n".join([f"{color}: Verbs({', '.join(info['verbs'])}), Adjectives({', '.join(info['adjectives'])})" for color, info in placeholders.items()])
+    # Constructing the prompt for detailed analysis
+    prompt_text = "Please analyze the following text and identify which verbs and adjectives from the following categories are present. Explain how these relate to the predefined beliefs of each category:\n\n" + f"Text: {text}\n\n" + "Categories:\n" + "\n".join([f"{color}: Verbs({', '.join(info['verbs'])}), Adjectives({', '.join(info['adjectives'])})" for color, info in placeholders.items()])
     response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt_text}],
-        max_tokens=500
+        max_tokens=1000  # Increased to allow more detailed responses
     )
-    raw_content = response.choices[0].message['content'].strip()
-    # Here you can optionally process the raw_content if necessary
-    return raw_content  # Return only the raw_content if that's what's needed for further processing
+    return response.choices[0].message['content'].strip()
 
-def match_text_to_color(text_analysis):
-    # Processing text to extract keyword matches
-    word_counts = Counter(text_analysis.lower().split())
+def match_text_to_color(text_analysis, original_text):
+    words = set(original_text.lower().split())
     color_scores = defaultdict(int)
-    
-    for color, traits in placeholders.items():
-        verb_score = sum(word_counts[verb] for verb in traits['verbs'] if verb in word_counts)
-        adjective_score = sum(word_counts[adjective] for adjective in traits['adjectives'] if adjective in word_counts)
-        color_scores[color] += verb_score + adjective_score
+    color_details = {}
 
-    sorted_colors = sorted(color_scores.items(), key=lambda item: item[1], reverse=True)
-    return sorted_colors[:3]  # Only return the top 3
+    for color, traits in placeholders.items():
+        verb_hits = {verb for verb in traits['verbs'] if verb in words}
+        adj_hits = {adj for adj in traits['adjectives'] if adj in words}
+        total_hits = len(verb_hits) + len(adj_hits)
+        color_scores[color] = total_hits
+        relevant_beliefs = [belief for belief in traits['beliefs'] if any(word in belief.lower() for word in words)]
+        
+        color_details[color] = {
+            'score': total_hits,
+            'keywords': list(verb_hits.union(adj_hits)),
+            'relevant_beliefs': relevant_beliefs
+        }
+
+    # Sorting colors by scores and selecting the top 3 for detailed display
+    sorted_colors = sorted(color_details.items(), key=lambda item: item[1]['score'], reverse=True)[:3]
+    return sorted_colors
 
 # Streamlit interface
 st.title("Color Persona Text Analysis")
 
 user_input = st.text_area("Paste your content here:", height=300)
 if st.button("Analyze Text"):
-    raw_analysis = analyze_text(user_input)  # Now this function only returns the raw content
-    top_colors = match_text_to_color(raw_analysis)  # Pass the correct data type
+    raw_analysis = analyze_text(user_input)
+    top_colors = match_text_to_color(raw_analysis, user_input)
     st.write("Top color matches and their explanations:")
-    for color, score in top_colors:
-        st.write(f"**{color}** - Score: {score}")
-        st.write("Reasons:")
-        for belief in placeholders[color]['beliefs']:
-            st.write(f"- {belief}")
+    for color, details in top_colors:
+        st.write(f"**{color}** - Score: {details['score']}")
+        st.write("Identified Keywords: ", ", ".join(details['keywords']))
+        if details['relevant_beliefs']:
+            st.write("Relevant Beliefs:")
+            for belief in details['relevant_beliefs']:
+                st.write(f"- {belief}")
+        else:
+            st.write("No specific beliefs directly highlighted by the content.")
     st.write("Detailed Analysis:")
-    st.write(raw_analysis)  # Display raw analysis for insight
-
-
-
-
+    st.write(raw_analysis)
