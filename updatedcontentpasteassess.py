@@ -30,12 +30,12 @@ placeholders = {
 }
 
 def analyze_text(text):
-    # Creating a detailed prompt for OpenAI's API
+    # Create a detailed prompt for OpenAI's API
     prompt_text = "Please analyze the following text and identify which verbs and adjectives from the following categories are present. Explain how these relate to the predefined beliefs of each category:\n\n" + f"Text: {text}\n\n" + "Categories:\n" + "\n".join([f"{color}: Verbs({', '.join(info['verbs'])}), Adjectives({', '.join(info['adjectives'])})" for color, info in placeholders.items()])
     response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt_text}],
-        max_tokens=1000
+        max_tokens=1500
     )
     return response.choices[0].message['content'].strip()
 
@@ -50,15 +50,23 @@ def match_text_to_color(text_analysis, original_text):
         
         relevant_beliefs = [belief for belief in traits['beliefs'] if any(word in belief.lower() for word in words)]
         
+        # Extracting narrative analysis from the detailed response
+        narrative_analysis = extract_narrative_analysis(text_analysis, color)
+        
         color_details[color] = {
             'score': total_hits,
             'keywords': list(verb_hits.union(adj_hits)),
-            'relevant_beliefs': relevant_beliefs
+            'relevant_beliefs': relevant_beliefs,
+            'narrative_analysis': narrative_analysis
         }
 
-    # Sorting colors by scores and selecting the top 3 for detailed display
     sorted_colors = sorted(color_details.items(), key=lambda item: item[1]['score'], reverse=True)[:3]
     return sorted_colors
+
+def extract_narrative_analysis(detailed_text, color):
+    # This is a placeholder for extracting the specific narrative related to the color from the detailed_text
+    # For now, it returns a summary. You might need to customize this to suit how the API returns data.
+    return f"From the text, the verbs related to {color} are " + ", ".join(placeholders[color]['verbs']) + ". The adjective(s) include " + ", ".join(placeholders[color]['adjectives']) + "."
 
 # Streamlit interface
 st.title("Color Persona Text Analysis")
@@ -71,12 +79,11 @@ if st.button("Analyze Text"):
     for color, details in top_colors:
         st.write(f"**{color}** - Score: {details['score']}")
         st.write("Identified Keywords: ", ", ".join(details['keywords']))
-        st.write("Relevant Beliefs and Narrative Analysis:")
-        if details['relevant_beliefs']:
-            for belief in details['relevant_beliefs']:
-                st.write(f"- {belief}")
-        else:
-            st.write("No specific beliefs directly highlighted by the content.")
-        # Here you might want to add specific narrative explanations based on the raw analysis if available
+        st.write("Relevant Beliefs:")
+        for belief in details['relevant_beliefs']:
+            st.write(f"- {belief}")
+        st.write("Narrative Analysis:")
+        st.write(details['narrative_analysis'])
+
     st.write("Detailed Analysis:")
     st.write(raw_analysis)
