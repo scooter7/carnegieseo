@@ -30,25 +30,24 @@ placeholders = {
 }
 
 def analyze_text(text):
-    # Constructing the prompt for detailed analysis
+    # Creating a detailed prompt for OpenAI's API
     prompt_text = "Please analyze the following text and identify which verbs and adjectives from the following categories are present. Explain how these relate to the predefined beliefs of each category:\n\n" + f"Text: {text}\n\n" + "Categories:\n" + "\n".join([f"{color}: Verbs({', '.join(info['verbs'])}), Adjectives({', '.join(info['adjectives'])})" for color, info in placeholders.items()])
     response = openai.ChatCompletion.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt_text}],
-        max_tokens=1000  # Increased to allow more detailed responses
+        max_tokens=1000
     )
     return response.choices[0].message['content'].strip()
 
 def match_text_to_color(text_analysis, original_text):
     words = set(original_text.lower().split())
-    color_scores = defaultdict(int)
     color_details = {}
 
     for color, traits in placeholders.items():
         verb_hits = {verb for verb in traits['verbs'] if verb in words}
         adj_hits = {adj for adj in traits['adjectives'] if adj in words}
         total_hits = len(verb_hits) + len(adj_hits)
-        color_scores[color] = total_hits
+        
         relevant_beliefs = [belief for belief in traits['beliefs'] if any(word in belief.lower() for word in words)]
         
         color_details[color] = {
@@ -72,11 +71,12 @@ if st.button("Analyze Text"):
     for color, details in top_colors:
         st.write(f"**{color}** - Score: {details['score']}")
         st.write("Identified Keywords: ", ", ".join(details['keywords']))
+        st.write("Relevant Beliefs and Narrative Analysis:")
         if details['relevant_beliefs']:
-            st.write("Relevant Beliefs:")
             for belief in details['relevant_beliefs']:
                 st.write(f"- {belief}")
         else:
             st.write("No specific beliefs directly highlighted by the content.")
+        # Here you might want to add specific narrative explanations based on the raw analysis if available
     st.write("Detailed Analysis:")
     st.write(raw_analysis)
