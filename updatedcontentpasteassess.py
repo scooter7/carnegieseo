@@ -43,28 +43,24 @@ def analyze_text(text):
     return raw_content, processed_analysis
 
 def match_text_to_color(text_analysis):
-    # Simple keyword extraction from the analysis
-    words = text_analysis.lower().split()
+    word_counts = Counter(text_analysis.lower().split())
     color_scores = defaultdict(int)
     
     for color, traits in placeholders.items():
-        verbs_set = set(traits['verbs'])
-        adjectives_set = set(traits['adjectives'])
-        # Count only relevant verbs and adjectives
-        color_scores[color] += sum(word in verbs_set for word in words)
-        color_scores[color] += sum(word in adjectives_set for word in words)
+        verb_score = sum(word_counts[verb] for verb in traits['verbs'] if verb in word_counts)
+        adjective_score = sum(word_counts[adjective] for adjective in traits['adjectives'] if adjective in word_counts)
+        color_scores[color] += verb_score + adjective_score
 
-    # Sorting colors by scores and selecting the top 3
-    sorted_colors = sorted(color_scores.items(), key=lambda item: item[1], reverse=True)[:3]
-    return sorted_colors, text_analysis
+    sorted_colors = sorted(color_scores.items(), key=lambda item: item[1], reverse=True)
+    return sorted_colors[:3]  # Only return the top 3
 
 # Streamlit interface
 st.title("Color Persona Text Analysis")
 
 user_input = st.text_area("Paste your content here:", height=300)
 if st.button("Analyze Text"):
-    raw_analysis, processed_analysis = analyze_text(user_input)  # Adjust this according to what analyze_text returns
-    top_colors = match_text_to_color(processed_analysis)  # Assuming you process the text for scoring here
+    raw_analysis = analyze_text(user_input)  # Assume analyze_text only returns one value, the raw analysis
+    top_colors = match_text_to_color(raw_analysis)  # This function returns the list of top 3 colors
     st.write("Top color matches and their explanations:")
     for color, score in top_colors:
         st.write(f"**{color}** - Score: {score}")
@@ -73,5 +69,6 @@ if st.button("Analyze Text"):
             st.write(f"- {belief}")
     st.write("Detailed Analysis:")
     st.write(raw_analysis)
+
 
 
