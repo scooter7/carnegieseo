@@ -70,3 +70,4 @@ if st.button("Analyze Text"):
             st.write(f"- {belief}")
     st.write("Detailed Analysis:")
     st.write(raw_analysis)
+
