@@ -41,7 +41,7 @@ def analyze_text(text):
 
 def match_text_to_color(text_analysis, original_text):
     words = set(original_text.lower().split())
-    color_details = {}
+    color_details = defaultdict(dict)
 
     for color, traits in placeholders.items():
         verb_hits = {verb for verb in traits['verbs'] if verb in words}
@@ -50,24 +50,23 @@ def match_text_to_color(text_analysis, original_text):
         
         relevant_beliefs = [belief for belief in traits['beliefs'] if any(word in belief.lower() for word in words)]
         
-        # Extracting specific detailed analysis for this color
-        specific_analysis = extract_color_specific_analysis(text_analysis, color)
-        
         color_details[color] = {
             'score': total_hits,
             'keywords': list(verb_hits.union(adj_hits)),
-            'relevant_beliefs': relevant_beliefs,
-            'specific_analysis': specific_analysis
+            'relevant_beliefs': relevant_beliefs
         }
+
+    # Filter general detailed analysis per color
+    for color in color_details.keys():
+        color_details[color]['specific_analysis'] = extract_relevant_analysis(text_analysis, color, color_details[color]['keywords'])
 
     sorted_colors = sorted(color_details.items(), key=lambda item: item[1]['score'], reverse=True)[:3]
     return sorted_colors
 
-def extract_color_specific_analysis(detailed_text, color):
-    # Example placeholder function to extract color-specific analysis. This would need to be implemented.
-    # This should search and parse detailed_text to find parts relevant to 'color'
-    # For simplicity, you might start with a simple text search for color names or key attributes:
-    return f"From the text, the analysis specific to {color} includes discussion of {', '.join(placeholders[color]['verbs'])} and {', '.join(placeholders[color]['adjectives'])}."
+def extract_relevant_analysis(detailed_text, color, keywords):
+    sentences = detailed_text.split('.')
+    relevant_sentences = [sentence for sentence in sentences if color.lower() in sentence.lower() or any(keyword in sentence.lower() for keyword in keywords)]
+    return ' '.join(relevant_sentences).strip()
 
 # Streamlit interface
 st.title("Color Persona Text Analysis")
@@ -83,8 +82,8 @@ if st.button("Analyze Text"):
         st.write("Relevant Beliefs:")
         for belief in details['relevant_beliefs']:
             st.write(f"- {belief}")
-        st.write("Color-Specific Detailed Analysis:")
+        st.write("General Detailed Analysis for this Color:")
         st.write(details['specific_analysis'])
 
-    st.write("General Detailed Analysis:")
+    st.write("General Detailed Analysis (Full):")
     st.write(raw_analysis)
