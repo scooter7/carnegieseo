@@ -14,7 +14,6 @@ openai_api_key = st.secrets["OPENAI_API_KEY"]
 
 # Placeholder definitions as previously defined
 placeholders = {
-    # Your existing color-category placeholders...
     "Purple - caring, encouraging": {"verbs": ["assist", "befriend", "care", "collaborate", "connect", "embrace", "empower", "encourage", "foster", "give", "help", "nourish", "nurture", "promote", "protect", "provide", "serve", "share", "shepherd", "steward", "tend", "uplift", "value", "welcome"], "adjectives": ["caring", "encouraging", "attentive", "compassionate", "empathetic", "generous", "hospitable", "nurturing", "protective", "selfless", "supportive", "welcoming"], "beliefs": ['Believe people should be cared for and encouraged', 'Desire to make others feel safe and supported', 'Have a strong desire to mend and heal', 'Become loyal teammates and trusted allies', 'Are put off by aggression and selfish motivations']},
     "Green - adventurous, curious": {"verbs": ["analyze", "discover", "examine", "expand", "explore", "extend", "inquire", "journey", "launch", "move", "pioneer", "pursue", "question", "reach", "search", "uncover", "venture", "wonder"], "adjectives": ["adventurous", "curious", "discerning", "examining", "experiential", "exploratory", "inquisitive", "investigative", "intrepid", "philosophical"], "beliefs": ['The noblest pursuit is the quest for new knowledge', 'Continually inquiring and examining everything', 'Have an insatiable thirst for progress and discovery', 'Cannot sit still or accept present realities', 'Curiosity and possibility underpin their actions']},
     "Maroon - gritty, determined": {"verbs": ["accomplish", "achieve", "build", "challenge", "commit", "compete", "contend", "dedicate", "defend", "devote", "drive", "endeavor", "entrust", "endure", "fight", "grapple", "grow", "improve", "increase", "overcome", "persevere", "persist", "press on", "pursue", "resolve"], "adjectives": ["competitive", "determined", "gritty", "industrious", "persevering", "relentless", "resilient", "tenacious", "tough", "unwavering"], "beliefs": ['Value extreme and hard work', 'Gritty and strong, they’re determined to overcome', 'Have no tolerance for laziness or inability', 'Highly competitive and intent on proving prowess', 'Will not be outpaced or outworked']},
@@ -49,27 +48,47 @@ audience = st.text_input("Optional: Define the audience for the generated conten
 # Optional: Add specific facts or stats to be included
 specific_facts_stats = st.text_area("Optional: Add specific facts or stats to be included:", "")
 
-# Generate the donation message based on the selected type and college/university name
-def generate_donation_message(request_type, college_name, keywords, audience, specific_facts_stats):
-    # Construct the basic message based on the selected donation request
-    message_map = {
-        donation_requests[0]: f"We invite you to consider a gift to the annual fund, which is vital for {college_name}'s ongoing success and growth.",
-        donation_requests[1]: f"Have you considered making a lasting impact? Planned giving options are available and can be a significant way to support {college_name}'s future.",
-        donation_requests[2]: f"Major gifts are transformative, and your contribution can lead to remarkable advancements at {college_name}."
-    }
-    
-    # Build the full message with optional parts
-    full_message = message_map[request_type]
-    if keywords:
-        full_message += f"\nKeywords: {keywords}"
-    if audience:
-        full_message += f"\nAudience: {audience}"
-    if specific_facts_stats:
-        full_message += f"\nFacts/Stats: {specific_facts_stats}"
-    
-    return full_message
+# Select writing styles based on color categories
+writing_styles = st.multiselect("Select Writing Styles Based on Color Categories:", list(placeholders.keys()))
 
-# Function to interact with OpenAI's GPT model
+# Function to choose random verbs and adjectives based on selected colors
+def choose_random_words(placeholders, writing_styles):
+    verbs = []
+    adjectives = []
+    for style in writing_styles:
+        verbs.extend(placeholders[style]["verbs"])
+        adjectives.extend(placeholders[style]["adjectives"])
+    chosen_verbs = random.sample(verbs, min(3, len(verbs)))
+    chosen_adjectives = random.sample(adjectives, min(3, len(adjectives)))
+    return chosen_verbs, chosen_adjectives
+
+# Function to generate the full email message
+def generate_full_email(request_type, college_name, keywords, audience, specific_facts_stats, writing_styles):
+    chosen_verbs, chosen_adjectives = choose_random_words(placeholders, writing_styles)
+    
+    # Basic introduction
+    intro = f"Dear {audience or 'Alumni'},\n\n"
+    
+    # Main content based on the selected request type
+    if request_type == donation_requests[0]:
+        main_content = f"As a {random.choice(chosen_adjectives)} supporter of our alma mater, we invite you to {random.choice(chosen_verbs)} the annual fund. This fund is vital for {college_name}'s ongoing success and enables us to {random.choice(chosen_verbs)} a range of initiatives that benefit current and future students."
+    elif request_type == donation_requests[1]:
+        main_content = f"Have you considered making a lasting impact? Our planned giving options are available and can be a significant way to support {college_name}'s future. By choosing to {random.choice(chosen_verbs)}, you ensure that your legacy {random.choice(['continues', 'endures'])}."
+    else:
+        main_content = f"Major gifts are transformative, and your {random.choice(chosen_adjectives)} contribution can lead to remarkable advancements at {college_name}. Your willingness to {random.choice(chosen_verbs)} can make a real difference."
+
+    # Add specific facts or stats
+    if specific_facts_stats:
+        main_content += f"\n\nHere are some important facts: {specific_facts_stats}"
+    
+    # Closing remarks
+    closing = f"\n\nWe are {random.choice(['grateful', 'thankful'])} for your continued support and look forward to your {random.choice(chosen_adjectives)} involvement."
+
+    # Combine all parts
+    full_email = intro + main_content + closing + "\n\nSincerely,\n[Your Name or Signature]"
+    return full_email
+
+# Function to interact with OpenAI's GPT model for revisions
 def interact_with_openai(message):
     response = openai.Completion.create(
         model="text-davinci-003",
@@ -79,19 +98,37 @@ def interact_with_openai(message):
     return response.get('choices')[0].get('text').strip()
 
 def main():
-    # User interaction section
-    if st.button("Generate Donation Message"):
+    # User interaction section to generate the initial email
+    if st.button("Generate Donation Email"):
         if not college_name:
             st.error("Please specify the name of the college/university.")
         else:
-            # Generate the initial donation message
-            donation_message = generate_donation_message(selected_request, college_name, keywords, audience, specific_facts_stats)
+            # Generate the full email
+            full_email = generate_full_email(selected_request, college_name, keywords, audience, specific_facts_stats, writing_styles)
             
-            # Display the generated message
-            st.text_area("Generated Donation Message:", donation_message, height=300)
+            # Display the generated email
+            st.text_area("Generated Donation Email:", full_email, height=300)
             
-            # Allow downloading of the generated message
-            st.download_button("Download Donation Message", donation_message, f"{college_name}_donation_message.txt")
+            # Allow downloading of the generated email
+            st.download_button("Download Donation Email", full_email, f"{college_name}_donation_email.txt")
+
+    st.markdown("---")
+    st.header("Revision Section")
+
+    # Revision functionality as in the original code
+    pasted_content = st.text_area("Paste Generated Content Here (for further revisions):")
+    revision_requests = st.text_area("Specify Revisions Here:")
+
+    if st.button("Revise Further"):
+        revision_messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": pasted_content},
+            {"role": "user", "content": revision_requests}
+        ]
+        response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=revision_messages)
+        revised_content = response.choices[0].message["content"].strip()
+        st.text_area("Revised Content:", revised_content, height=300)
+        st.download_button("Download Revised Content", revised_content, "revised_content.txt")
 
 if __name__ == "__main__":
     main()
