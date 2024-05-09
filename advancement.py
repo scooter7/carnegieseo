@@ -83,7 +83,7 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
     full_prompt += "\n\nCraft a full email that is engaging, thoughtful, and encourages alumni to donate based on the above guidelines."
 
     # Generate content using OpenAI's API
-    response = openai.Completion.create(
+    response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         prompt=full_prompt,
         max_tokens=600,
