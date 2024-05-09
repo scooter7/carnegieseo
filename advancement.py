@@ -1,7 +1,6 @@
 import streamlit as st
 import openai
 import sys
-import logging
 import random
 
 # Check if the OPENAI_API_KEY is set in the Streamlit secrets
@@ -22,7 +21,7 @@ placeholders = {
     "Red - entertaining, humorous": {"verbs": ["animate", "amuse", "captivate", "cheer", "delight", "encourage", "energize", "engage", "enjoy", "enliven", "entertain", "excite", "express", "inspire", "joke", "motivate", "play", "stir", "uplift"], "adjectives": ["dynamic", "energetic", "engaging", "entertaining", "enthusiastic", "exciting", "fun", "lively", "magnetic", "playful", "humorous"], "beliefs": ['Energetic and uplifting', 'Motivated to entertain and create excitement', 'Magnetic and able to rally support for new concepts', 'Often naturally talented presenters and speakers', 'Sensitive to the mood and condition of others']},
     "Blue - confident, influential": {"verbs": ["accomplish", "achieve", "affect", "assert", "cause", "command", "determine", "direct", "dominate", "drive", "empower", "establish", "guide", "impact", "impress", "influence", "inspire", "lead", "outpace", "outshine", "realize", "shape", "succeed", "transform", "win"], "adjectives": ["accomplished", "assertive", "confident", "decisive", "elite", "influential", "powerful", "prominent", "proven", "strong"], "beliefs": ['Achievement is paramount', 'Highly tolerant of risk and stress', 'Seeks influence and accomplishments', 'Comfortable making decisions with incomplete information', 'Set strategic visions and lead the way']},
     "Pink - charming, elegant": {"verbs": ["arise", "aspire", "detail", "dream", "elevate", "enchant", "enrich", "envision", "exceed", "excel", "experience", "improve", "idealize", "imagine", "inspire", "perfect", "poise", "polish", "prepare", "refine", "uplift"], "adjectives": ["aesthetic", "charming", "classic", "dignified", "idealistic", "meticulous", "poised", "polished", "refined", "sophisticated", "elegant"], "beliefs": ['Hold high regard for tradition and excellence', 'Dream up and pursue refinement, beauty, and vitality', 'Typically highly detailed and very observant', 'Mess and disorder only deflates their enthusiasm']},
-    "Silver - rebellious, daring": {"verbs": ["activate", "campaign", "challenge", "commit", "confront", "dare", "defy", "disrupting", "drive", "excite", "face", "ignite", "incite", "influence", "inspire", "inspirit", "motivate", "move", "push", "rebel", "reimagine", "revolutionize", "rise", "spark", "stir", "fight", "free"], "adjectives": ["bold", "daring", "fearless", "independent", "non-conformist", "radical", "rebellious", "resolute", "unconventional", "valiant"], "beliefs": ['Rule breakers and establishment challengers', 'Have a low need to fit in with the pack', 'Value unconventional and independent thinking', 'Value freedom, boldness, and defiant ideas', 'Feel stifled by red tape and bureaucratic systems']},
+    "Silver - rebellious, daring": {"verbs": ["activate", "campaign", "challenge", "commit", "confront", "dare", "defy", "disrupt", "drive", "excite", "face", "ignite", "incite", "influence", "inspire", "inspirit", "motivate", "move", "push", "rebel", "reimagine", "revolutionize", "rise", "spark", "stir", "fight", "free"], "adjectives": ["bold", "daring", "fearless", "independent", "non-conformist", "radical", "rebellious", "resolute", "unconventional", "valiant"], "beliefs": ['Rule breakers and establishment challengers', 'Have a low need to fit in with the pack', 'Value unconventional and independent thinking', 'Value freedom, boldness, and defiant ideas', 'Feel stifled by red tape and bureaucratic systems']},
     "Beige - dedicated, humble": {"verbs": ["dedicate", "humble", "collaborate", "empower", "inspire", "empassion", "transform"], "adjectives": ["dedicated", "collaborative", "consistent", "empowering", "enterprising", "humble", "inspiring", "passionate", "proud", "traditional", "transformative"], "beliefs": ['There’s no need to differentiate from others', 'All perspectives are equally worth holding', 'Will not risk offending anyone', 'Light opinions are held quite loosely', 'Information tells enough of a story']},
 }
 
@@ -51,71 +50,86 @@ specific_facts_stats = st.text_area("Optional: Add specific facts or stats to be
 # Select writing styles based on color categories
 writing_styles = st.multiselect("Select Writing Styles Based on Color Categories:", list(placeholders.keys()))
 
-# Function to choose random verbs and adjectives based on selected colors
-def choose_random_words(placeholders, writing_styles):
-    verbs = []
-    adjectives = []
+# Sliders for color influence ratio
+if writing_styles:
+    st.markdown("### Set the influence ratio for each selected color:")
+    style_weights = {}
     for style in writing_styles:
-        verbs.extend(placeholders[style]["verbs"])
-        adjectives.extend(placeholders[style]["adjectives"])
-    chosen_verbs = random.sample(verbs, min(3, len(verbs)))
-    chosen_adjectives = random.sample(adjectives, min(3, len(adjectives)))
-    return chosen_verbs, chosen_adjectives
+        style_weights[style] = st.slider(f"Weight for {style}:", 0, 100, 100 // len(writing_styles))
 
-# Function to generate the full email message
-def generate_full_email(request_type, college_name, keywords, audience, specific_facts_stats, writing_styles):
-    chosen_verbs, chosen_adjectives = choose_random_words(placeholders, writing_styles)
+# Function to generate dynamic parts of the email
+def generate_dynamic_content(college_name, request_type, specific_facts_stats, placeholders, writing_styles, style_weights):
+    dynamic_content = ""
+    total_weight = sum(style_weights.values())
     
-    # Basic introduction
-    intro = f"Dear {audience or 'Alumni'},\n\n"
+    # Normalize weights if needed
+    if total_weight == 0:
+        for style in writing_styles:
+            style_weights[style] = 1
+        total_weight = sum(style_weights.values())
     
-    # Main content based on the selected request type
-    if request_type == donation_requests[0]:
-        main_content = f"As a {random.choice(chosen_adjectives)} supporter of our alma mater, we invite you to {random.choice(chosen_verbs)} the annual fund. This fund is vital for {college_name}'s ongoing success and enables us to {random.choice(chosen_verbs)} a range of initiatives that benefit current and future students."
-    elif request_type == donation_requests[1]:
-        main_content = f"Have you considered making a lasting impact? Our planned giving options are available and can be a significant way to support {college_name}'s future. By choosing to {random.choice(chosen_verbs)}, you ensure that your legacy {random.choice(['continues', 'endures'])}."
-    else:
-        main_content = f"Major gifts are transformative, and your {random.choice(chosen_adjectives)} contribution can lead to remarkable advancements at {college_name}. Your willingness to {random.choice(chosen_verbs)} can make a real difference."
-
-    # Add specific facts or stats
+    # Calculate how many sentences to generate from each style
+    num_sentences = 5  # Total dynamic sentences to generate
+    style_sentences = {style: (weight / total_weight) * num_sentences for style, weight in style_weights.items()}
+    
+    for style, count in style_sentences.items():
+        for _ in range(int(round(count))):
+            verb = random.choice(placeholders[style]["verbs"])
+            adjective = random.choice(placeholders[style]["adjectives"])
+            if request_type == donation_requests[0]:  # Annual fund
+                dynamic_content += f"Your {adjective} {verb} can empower the next generation of leaders and innovators at {college_name}. "
+            elif request_type == donation_requests[1]:  # Planned giving
+                dynamic_content += f"By choosing to {verb} through planned giving, you are {adjective} shaping the future of our students and faculty. "
+            elif request_type == donation_requests[2]:  # Major gift
+                dynamic_content += f"A {adjective} gift can {verb} areas of critical need and create lasting impact at {college_name}. "
+    
     if specific_facts_stats:
-        main_content += f"\n\nHere are some important facts: {specific_facts_stats}"
-    
-    # Closing remarks
-    closing = f"\n\nWe are {random.choice(['grateful', 'thankful'])} for your continued support and look forward to your {random.choice(chosen_adjectives)} involvement."
+        dynamic_content += f"Did you know? {specific_facts_stats} "
 
-    # Combine all parts
-    full_email = intro + main_content + closing + "\n\nSincerely,\n[Your Name or Signature]"
+    return dynamic_content
+
+# Function to generate the full email
+def generate_full_email(college_name, request_type, keywords, audience, specific_facts_stats, writing_styles, style_weights):
+    # Introductory greeting
+    greeting = f"Dear {audience or 'Alumni'},\n\n"
+
+    # Dynamic introduction based on the college and request type
+    introduction = ""
+    if request_type == donation_requests[0]:
+        introduction = f"We are reaching out to share how the annual fund at {college_name} is making a difference. "
+    elif request_type == donation_requests[1]:
+        introduction = f"As we look to the future, planned giving continues to be a cornerstone for {college_name}'s growth. "
+    elif request_type == donation_requests[2]:
+        introduction = f"We are excited to discuss the transformative power of major gifts at {college_name}. "
+
+    # Generate dynamic content based on the selected colors and their weights
+    dynamic_content = generate_dynamic_content(college_name, request_type, specific_facts_stats, placeholders, writing_styles, style_weights)
+
+    # Closing remarks
+    closing = "\nWe hope you will consider joining us in this effort. Your support is crucial and much appreciated."
+
+    # Signature
+    signature = "\n\nSincerely,\n[Your Name or Signature]"
+
+    # Combine all parts to form the full email
+    full_email = greeting + introduction + dynamic_content + closing + signature
     return full_email
 
-# Function to interact with OpenAI's GPT model for revisions
-def interact_with_openai(message):
-    response = openai.Completion.create(
-        model="text-davinci-003",
-        prompt=message,
-        max_tokens=150
-    )
-    return response.get('choices')[0].get('text').strip()
-
+# Main function to generate and revise content
 def main():
-    # User interaction section to generate the initial email
+    # Section to generate the initial email
     if st.button("Generate Donation Email"):
         if not college_name:
             st.error("Please specify the name of the college/university.")
         else:
-            # Generate the full email
-            full_email = generate_full_email(selected_request, college_name, keywords, audience, specific_facts_stats, writing_styles)
-            
-            # Display the generated email
+            full_email = generate_full_email(college_name, selected_request, keywords, audience, specific_facts_stats, writing_styles, style_weights)
             st.text_area("Generated Donation Email:", full_email, height=300)
-            
-            # Allow downloading of the generated email
             st.download_button("Download Donation Email", full_email, f"{college_name}_donation_email.txt")
 
     st.markdown("---")
     st.header("Revision Section")
 
-    # Revision functionality as in the original code
+    # Revision functionality
     pasted_content = st.text_area("Paste Generated Content Here (for further revisions):")
     revision_requests = st.text_area("Specify Revisions Here:")
 
