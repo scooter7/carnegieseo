@@ -1,7 +1,6 @@
 import streamlit as st
 import openai
 import sys
-import random
 
 # Check if the OPENAI_API_KEY is set in the Streamlit secrets
 if "OPENAI_API_KEY" not in st.secrets:
@@ -27,9 +26,9 @@ placeholders = {
 
 # List of predefined donation requests
 donation_requests = [
-    "Ask the alum to consider donating to the annual fund of the college",
-    "Ask the alum to consider planned giving to the college",
-    "Ask the alum to consider making a major gift to the college"
+    "Consider donating to the annual fund.",
+    "Consider planned giving to support the future.",
+    "Consider making a major gift to transform the campus."
 ]
 
 # User selects the type of donation request
@@ -50,81 +49,64 @@ specific_facts_stats = st.text_area("Optional: Add specific facts or stats to be
 # Select writing styles based on color categories
 writing_styles = st.multiselect("Select Writing Styles Based on Color Categories:", list(placeholders.keys()))
 
-# Sliders for color influence ratio
+# Sliders for color influence ratio if multiple styles are selected
+style_weights = []
 if writing_styles:
-    st.markdown("### Set the influence ratio for each selected color:")
-    style_weights = {}
+    total_weight = 0
+    st.markdown("#### Set the influence ratio for each selected color:")
     for style in writing_styles:
-        style_weights[style] = st.slider(f"Weight for {style}:", 0, 100, 100 // len(writing_styles))
+        weight = st.slider(f"Weight for {style}:", 0, 100, 100 // len(writing_styles) if len(writing_styles) > 0 else 0)
+        style_weights.append(weight)
+        total_weight += weight
 
-# Function to generate dynamic parts of the email
-def generate_dynamic_content(college_name, request_type, specific_facts_stats, placeholders, writing_styles, style_weights):
-    dynamic_content = ""
-    total_weight = sum(style_weights.values())
+    # Normalize weights to sum up to 100 if total weight is greater than 0
+    if total_weight > 0:
+        style_weights = [int((weight / total_weight) * 100) for weight in style_weights]
+
+# Function to generate detailed content using GPT model
+def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats):
+    full_prompt = f"Please generate a compelling email for an alumni donation request. Here is the specific request type: {content}\n"
     
-    # Normalize weights if needed
-    if total_weight == 0:
-        for style in writing_styles:
-            style_weights[style] = 1
-        total_weight = sum(style_weights.values())
-    
-    # Calculate how many sentences to generate from each style
-    num_sentences = 5  # Total dynamic sentences to generate
-    style_sentences = {style: (weight / total_weight) * num_sentences for style, weight in style_weights.items()}
-    
-    for style, count in style_sentences.items():
-        for _ in range(int(round(count))):
-            verb = random.choice(placeholders[style]["verbs"])
-            adjective = random.choice(placeholders[style]["adjectives"])
-            if request_type == donation_requests[0]:  # Annual fund
-                dynamic_content += f"Your {adjective} {verb} can empower the next generation of leaders and innovators at {college_name}. "
-            elif request_type == donation_requests[1]:  # Planned giving
-                dynamic_content += f"By choosing to {verb} through planned giving, you are {adjective} shaping the future of our students and faculty. "
-            elif request_type == donation_requests[2]:  # Major gift
-                dynamic_content += f"A {adjective} gift can {verb} areas of critical need and create lasting impact at {college_name}. "
-    
+    if keywords:
+        full_prompt += f"Keywords: {keywords}\n"
+    if audience:
+        full_prompt += f"Audience: {audience}\n"
     if specific_facts_stats:
-        dynamic_content += f"Did you know? {specific_facts_stats} "
+        full_prompt += f"Facts/Stats: {specific_facts_stats}\n"
 
-    return dynamic_content
+    # Describe the influence of each writing style
+    for i, style in enumerate(writing_styles):
+        if style_weights[i] > 0:
+            full_prompt += f"\nIncorporate {style_weights[i]}% of the '{style.split(' - ')[1]}' writing style using verbs like {', '.join(placeholders[style]['verbs'][:3])} and adjectives like {', '.join(placeholders[style]['adjectives'][:3])}."
 
-# Function to generate the full email
-def generate_full_email(college_name, request_type, keywords, audience, specific_facts_stats, writing_styles, style_weights):
-    # Introductory greeting
-    greeting = f"Dear {audience or 'Alumni'},\n\n"
+    # Add closing instructions
+    full_prompt += "\n\nCraft a full email that is engaging, thoughtful, and encourages alumni to donate based on the above guidelines."
 
-    # Dynamic introduction based on the college and request type
-    introduction = ""
-    if request_type == donation_requests[0]:
-        introduction = f"We are reaching out to share how the annual fund at {college_name} is making a difference. "
-    elif request_type == donation_requests[1]:
-        introduction = f"As we look to the future, planned giving continues to be a cornerstone for {college_name}'s growth. "
-    elif request_type == donation_requests[2]:
-        introduction = f"We are excited to discuss the transformative power of major gifts at {college_name}. "
-
-    # Generate dynamic content based on the selected colors and their weights
-    dynamic_content = generate_dynamic_content(college_name, request_type, specific_facts_stats, placeholders, writing_styles, style_weights)
-
-    # Closing remarks
-    closing = "\nWe hope you will consider joining us in this effort. Your support is crucial and much appreciated."
-
-    # Signature
-    signature = "\n\nSincerely,\n[Your Name or Signature]"
-
-    # Combine all parts to form the full email
-    full_email = greeting + introduction + dynamic_content + closing + signature
-    return full_email
+    # Generate content using OpenAI's API
+    response = openai.Completion.create(
+        model="gpt-3.5-turbo",
+        prompt=full_prompt,
+        max_tokens=600,
+        temperature=0.7,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0
+    )
+    return response.choices[0].text.strip()
 
 # Main function to generate and revise content
 def main():
-    # Section to generate the initial email
+    # Generate the initial email
     if st.button("Generate Donation Email"):
         if not college_name:
             st.error("Please specify the name of the college/university.")
+        elif not writing_styles:
+            st.error("Please select at least one writing style based on color categories.")
         else:
-            full_email = generate_full_email(college_name, selected_request, keywords, audience, specific_facts_stats, writing_styles, style_weights)
-            st.text_area("Generated Donation Email:", full_email, height=300)
-            st.download_button("Download Donation Email", full_email, f"{college_name}_donation_email.txt")
+            content_description = f"{audience or 'Dear Alumni'},\n\n{selected_request} Your support for {college_name} is crucial."
+            generated_content = generate_article(content_description, writing_styles, style_weights, selected_request, keywords, audience, specific_facts_stats)
+            st.text_area("Generated Donation Email:", generated_content, height=300)
+            st.download_button("Download Donation Email", generated_content, f"{college_name}_donation_email.txt")
 
     st.markdown("---")
     st.header("Revision Section")
@@ -140,7 +122,7 @@ def main():
             {"role": "user", "content": revision_requests}
         ]
         response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=revision_messages)
-        revised_content = response.choices[0].message["content"].strip()
+        revised_content = response.choices[0].text.strip()
         st.text_area("Revised Content:", revised_content, height=300)
         st.download_button("Download Revised Content", revised_content, "revised_content.txt")
 
