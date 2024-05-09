@@ -1,8 +1,9 @@
 import streamlit as st
 import openai
 import sys
+import random
 
-# Check if the OPENAI_API_KEY is set in the Streamlit secrets
+# Check if the OPENAI_API_KEY is set in Streamlit secrets
 if "OPENAI_API_KEY" not in st.secrets:
     st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
     sys.exit(1)
@@ -10,7 +11,7 @@ if "OPENAI_API_KEY" not in st.secrets:
 # OpenAI API key from the secrets
 openai_api_key = st.secrets["OPENAI_API_KEY"]
 
-# Placeholder definitions as previously defined
+# Placeholder definitions with verbs and adjectives
 placeholders = {
     "Purple - caring, encouraging": {"verbs": ["assist", "befriend", "care", "collaborate", "connect", "embrace", "empower", "encourage", "foster", "give", "help", "nourish", "nurture", "promote", "protect", "provide", "serve", "share", "shepherd", "steward", "tend", "uplift", "value", "welcome"], "adjectives": ["caring", "encouraging", "attentive", "compassionate", "empathetic", "generous", "hospitable", "nurturing", "protective", "selfless", "supportive", "welcoming"], "beliefs": ['Believe people should be cared for and encouraged', 'Desire to make others feel safe and supported', 'Have a strong desire to mend and heal', 'Become loyal teammates and trusted allies', 'Are put off by aggression and selfish motivations']},
     "Green - adventurous, curious": {"verbs": ["analyze", "discover", "examine", "expand", "explore", "extend", "inquire", "journey", "launch", "move", "pioneer", "pursue", "question", "reach", "search", "uncover", "venture", "wonder"], "adjectives": ["adventurous", "curious", "discerning", "examining", "experiential", "exploratory", "inquisitive", "investigative", "intrepid", "philosophical"], "beliefs": ['The noblest pursuit is the quest for new knowledge', 'Continually inquiring and examining everything', 'Have an insatiable thirst for progress and discovery', 'Cannot sit still or accept present realities', 'Curiosity and possibility underpin their actions']},
@@ -52,20 +53,17 @@ writing_styles = st.multiselect("Select Writing Styles Based on Color Categories
 # Sliders for color influence ratio if multiple styles are selected
 style_weights = []
 if writing_styles:
-    total_weight = 0
     st.markdown("#### Set the influence ratio for each selected color:")
+    total_weight = sum(style_weights)
     for style in writing_styles:
-        weight = st.slider(f"Weight for {style}:", 0, 100, 100 // len(writing_styles) if len(writing_styles) > 0 else 0)
+        weight = st.slider(f"Weight for {style}:", 0, 100, 100 // len(writing_styles))
         style_weights.append(weight)
-        total_weight += weight
-
-    # Normalize weights to sum up to 100 if total weight is greater than 0
-    if total_weight > 0:
-        style_weights = [int((weight / total_weight) * 100) for weight in style_weights]
 
 # Function to generate detailed content using GPT model
 def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats):
-    full_prompt = f"Please generate a compelling email for an alumni donation request. Here is the specific request type: {content}\n"
+    # Build the initial prompt
+    full_prompt = f"Generate a compelling and thoughtful email to encourage alumni to donate. Here are the details:\n"
+    full_prompt += f"Request Type: {content}\nCollege/University Name: {college_name}\n"
     
     if keywords:
         full_prompt += f"Keywords: {keywords}\n"
@@ -73,26 +71,24 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
         full_prompt += f"Audience: {audience}\n"
     if specific_facts_stats:
         full_prompt += f"Facts/Stats: {specific_facts_stats}\n"
-
-    # Describe the influence of each writing style
+    
+    # Add instructions for each writing style
+    messages = [{"role": "system", "content": full_prompt}]
     for i, style in enumerate(writing_styles):
-        if style_weights[i] > 0:
-            full_prompt += f"\nIncorporate {style_weights[i]}% of the '{style.split(' - ')[1]}' writing style using verbs like {', '.join(placeholders[style]['verbs'][:3])} and adjectives like {', '.join(placeholders[style]['adjectives'][:3])}."
-
-    # Add closing instructions
-    full_prompt += "\n\nCraft a full email that is engaging, thoughtful, and encourages alumni to donate based on the above guidelines."
-
-    # Generate content using OpenAI's API
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        prompt=full_prompt,
-        max_tokens=600,
-        temperature=0.7,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0
-    )
-    return response.choices[0].text.strip()
+        if style_weights[i] > 0:  # Only add the style if its weight is positive
+            messages.append({"role": "system", "content": f"Include about {style_weights[i]}% of '{style.split(' - ')[1]}' style using verbs like {', '.join(random.sample(placeholders[style]['verbs'], min(3, len(placeholders[style]['verbs']))))} and adjectives like {', '.join(random.sample(placeholders[style]['adjectives'], min(3, len(placeholders[style]['adjectives']))))}."})
+    
+    # Generate content using the OpenAI Chat API
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=messages,
+            max_tokens=1024
+        )
+        return response['choices'][0]['message']['content'].strip()
+    except Exception as e:
+        st.error(f"An error occurred while generating the content: {str(e)}")
+        return "Error in content generation."
 
 # Main function to generate and revise content
 def main():
@@ -103,7 +99,7 @@ def main():
         elif not writing_styles:
             st.error("Please select at least one writing style based on color categories.")
         else:
-            content_description = f"{audience or 'Dear Alumni'},\n\n{selected_request} Your support for {college_name} is crucial."
+            content_description = f"{selected_request} Support for {college_name} is crucial."
             generated_content = generate_article(content_description, writing_styles, style_weights, selected_request, keywords, audience, specific_facts_stats)
             st.text_area("Generated Donation Email:", generated_content, height=300)
             st.download_button("Download Donation Email", generated_content, f"{college_name}_donation_email.txt")
@@ -121,10 +117,16 @@ def main():
             {"role": "user", "content": pasted_content},
             {"role": "user", "content": revision_requests}
         ]
-        response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=revision_messages)
-        revised_content = response.choices[0].text.strip()
-        st.text_area("Revised Content:", revised_content, height=300)
-        st.download_button("Download Revised Content", revised_content, "revised_content.txt")
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=revision_messages
+            )
+            revised_content = response['choices'][0]['message']['content'].strip()
+            st.text_area("Revised Content:", revised_content, height=300)
+            st.download_button("Download Revised Content", revised_content, "revised_content.txt")
+        except Exception as e:
+            st.error(f"An error occurred while revising the content: {str(e)}")
 
 if __name__ == "__main__":
     main()
