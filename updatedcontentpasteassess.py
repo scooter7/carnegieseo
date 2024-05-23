@@ -57,6 +57,12 @@ def match_text_to_color(text_analysis):
 # Streamlit interface
 st.title("Color Persona Text Analysis")
 
+ hide_toolbar_css = """
+        <style>
+            .css-14xtw13.e8zbici0 { display: none !important; }
+        </style>
+    """
+
 user_input = st.text_area("Paste your content here:", height=300)
 if st.button("Analyze Text"):
     raw_analysis = analyze_text(user_input)  # Now this function only returns the raw content
