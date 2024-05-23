@@ -56,11 +56,11 @@ def match_text_to_color(text_analysis):
 st.title("Color Persona Text Analysis")
 
 # Hide the toolbar using CSS
-    hide_toolbar_css = """
-        <style>
-            .css-14xtw13.e8zbici0 { display: none !important; }
-        </style>
-    """
+hide_toolbar_css = """
+    <style>
+        .css-14xtw13.e8zbici0 { display: none !important; }
+    </style>
+"""
 
 url_input = st.text_area("Paste comma-separated URLs here:", height=100)
 urls = [url.strip() for url in url_input.split(',')]
