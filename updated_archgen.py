@@ -58,6 +58,12 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
 
 def main():
     
+    hide_toolbar_css = """
+        <style>
+            .css-14xtw13.e8zbici0 { display: none !important; }
+        </style>
+    """
+    
     user_content = st.text_area("Paste your content here:")
     writing_styles = st.multiselect("Select Writing Styles:", list(placeholders.keys()))
     
