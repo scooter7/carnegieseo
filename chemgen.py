@@ -50,6 +50,9 @@ def main():
     """
     st.markdown(hide_toolbar_css, unsafe_allow_html=True)
     
+    # Debugging: Print all secrets to verify they are loaded correctly
+    st.write("Secrets loaded:", st.secrets)
+
     # Check if token exists in session state
     if 'token' not in st.session_state:
         # If not, show authorize button
@@ -69,16 +72,13 @@ def main():
         else:
             st.error("Failed to retrieve user info. Please re-authenticate.")
         
-        user_prompt = st.text_area("Specify a prompt about the type of content you want produced:", "")
-        keywords = st.text_area("Optional: Specify specific keywords to be used:", "")
-        audience = st.text_input("Optional: Define the audience for the generated content:", "")
-        specific_facts_stats = st.text_area("Optional: Add specific facts or stats to be included:", "")
-
-        if "openai_api_key" not in st.secrets:
+        # Debugging: Check if OPENAI_API_KEY is present
+        if "openai_api_key" in st.secrets:
+            openai_api_key = st.secrets["openai_api_key"]
+            st.write("OpenAI API key is loaded.")
+        else:
             st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
             sys.exit(1)
-
-        openai_api_key = st.secrets["openai_api_key"]
 
         placeholders = {
             "Purple - caring, encouraging": {"verbs": ["assist", "befriend", "care", "collaborate", "connect", "embrace", "empower", "encourage", "foster", "give", "help", "nourish", "nurture", "promote", "protect", "provide", "serve", "share", "shepherd", "steward", "tend", "uplift", "value", "welcome"], "adjectives": ["caring", "encouraging", "attentive", "compassionate", "empathetic", "generous", "hospitable", "nurturing", "protective", "selfless", "supportive", "welcoming"], 
