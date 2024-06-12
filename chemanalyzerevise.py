@@ -172,33 +172,45 @@ else:
     url_input = st.text_area("Paste comma-separated URLs here:", height=100)
     urls = [url.strip() for url in url_input.split(',')]
 
+    if 'analyses' not in st.session_state:
+        st.session_state.analyses = {}
+
     if st.button("Analyze URLs"):
         for url in urls:
             try:
-                st.write(f"Analyzing URL: {url}")  # Debug statement
                 response = requests.get(url)
                 soup = BeautifulSoup(response.text, "html.parser")
                 content = soup.get_text()
 
-                st.write(f"Content from URL: {url}")
-                st.text_area("Scraped Content", content, height=200)
-                st.download_button(f"Download Content from {url}", content, f"content_{url.split('//')[-1].replace('/', '_')}.txt")
-
                 raw_analysis = analyze_text(content)
                 top_colors = match_text_to_color(raw_analysis)
 
-                st.write(f"Analysis for URL: {url}")
-                for color, score in top_colors:
-                    st.write(f"**{color}** - Score: {score}")
-                    st.write("Reasons:")
-                    for belief in placeholders[color]['beliefs']:
-                        st.write(f"- {belief}")
-                st.write("Detailed Analysis:")
-                st.write(raw_analysis)
-                st.write("---")
+                analysis_result = {
+                    "content": content,
+                    "raw_analysis": raw_analysis,
+                    "top_colors": top_colors
+                }
+
+                st.session_state.analyses[url] = analysis_result
+
             except Exception as e:
                 st.write(f"Error analyzing URL: {url}")
                 st.write(f"Error message: {str(e)}")
+
+    for url, analysis in st.session_state.analyses.items():
+        st.write(f"Content from URL: {url}")
+        st.text_area("Scraped Content", analysis["content"], height=200, key=f"content_{url}")
+        st.download_button(f"Download Content from {url}", analysis["content"], f"content_{url.split('//')[-1].replace('/', '_')}.txt")
+
+        st.write(f"Analysis for URL: {url}")
+        for color, score in analysis["top_colors"]:
+            st.write(f"**{color}** - Score: {score}")
+            st.write("Reasons:")
+            for belief in placeholders[color]['beliefs']:
+                st.write(f"- {belief}")
+        st.write("Detailed Analysis:")
+        st.write(analysis["raw_analysis"])
+        st.write("---")
 
     user_prompt = st.text_area("Specify a prompt about the type of content you want produced:", "")
     keywords = st.text_area("Optional: Specify specific keywords to be used:", "")
