@@ -5,9 +5,6 @@ from collections import Counter, defaultdict
 from bs4 import BeautifulSoup
 from streamlit_oauth import OAuth2Component
 
-# Load your API key from Streamlit's secrets
-openai.api_key = st.secrets["OPENAI_API_KEY"]
-
 # Load Google Auth credentials from Streamlit secrets
 google_auth = {
     "client_id": st.secrets["google_auth"]["client_id"],
@@ -31,6 +28,18 @@ SCOPE = "email profile"
 # Create OAuth2Component instance
 oauth2 = OAuth2Component(CLIENT_ID, CLIENT_SECRET, AUTHORIZE_URL, TOKEN_URL, REFRESH_TOKEN_URL, REVOKE_TOKEN_URL)
 
+def fetch_user_info(token):
+    user_info_endpoint = "https://www.googleapis.com/oauth2/v1/userinfo"
+    headers = {
+        "Authorization": f"Bearer {token['access_token']}"
+    }
+    response = requests.get(user_info_endpoint, headers=headers)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        st.error("Failed to fetch user information.")
+        return None
+
 # Check if token exists in session state
 if 'token' not in st.session_state:
     # If not, show authorize button
@@ -38,11 +47,20 @@ if 'token' not in st.session_state:
     if result and 'token' in result:
         # If authorization successful, save token in session state
         st.session_state.token = result.get('token')
-        st.rerun()
+        user_info = fetch_user_info(result.get('token'))
+        st.session_state.user_info = user_info
+        st.experimental_rerun()
 else:
-    # If token exists in session state, show the token
+    # If token exists in session state, show the user info
     token = st.session_state['token']
-    st.write(f"Logged in as {token['userinfo']['email']}")
+    user_info = st.session_state.get('user_info')
+    if user_info:
+        st.write(f"Logged in as {user_info['email']}")
+    else:
+        st.error("Failed to retrieve user info. Please re-authenticate.")
+    
+    # Load your API key from Streamlit's secrets
+    openai.api_key = st.secrets["OPENAI_API_KEY"]
 
     # Define your color-based personas
     placeholders = {
@@ -159,3 +177,4 @@ else:
             except Exception as e:
                 st.write(f"Error analyzing URL: {url}")
                 st.write(f"Error message: {str(e)}")
+
