@@ -180,6 +180,10 @@ else:
                 soup = BeautifulSoup(response.text, "html.parser")
                 content = soup.get_text()
 
+                st.write(f"Content from URL: {url}")
+                st.text_area("Scraped Content", content, height=200)
+                st.download_button(f"Download Content from {url}", content, f"content_{url.split('//')[-1].replace('/', '_')}.txt")
+
                 raw_analysis = analyze_text(content)
                 top_colors = match_text_to_color(raw_analysis)
 
