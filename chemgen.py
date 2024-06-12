@@ -4,6 +4,7 @@ import sys
 import logging
 import random
 from streamlit_oauth import OAuth2Component
+import requests
 
 # Load Google Auth credentials from Streamlit secrets
 google_auth = {
@@ -28,6 +29,18 @@ SCOPE = "email profile"
 # Create OAuth2Component instance
 oauth2 = OAuth2Component(CLIENT_ID, CLIENT_SECRET, AUTHORIZE_URL, TOKEN_URL, REFRESH_TOKEN_URL, REVOKE_TOKEN_URL)
 
+def fetch_user_info(token):
+    user_info_endpoint = "https://www.googleapis.com/oauth2/v1/userinfo"
+    headers = {
+        "Authorization": f"Bearer {token['access_token']}"
+    }
+    response = requests.get(user_info_endpoint, headers=headers)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        st.error("Failed to fetch user information.")
+        return None
+
 def main():
     # Hide the Streamlit toolbar
     hide_toolbar_css = """
@@ -44,11 +57,17 @@ def main():
         if result and 'token' in result:
             # If authorization successful, save token in session state
             st.session_state.token = result.get('token')
+            user_info = fetch_user_info(result.get('token'))
+            st.session_state.user_info = user_info
             st.experimental_rerun()
     else:
-        # If token exists in session state, show the token
+        # If token exists in session state, show the user info
         token = st.session_state['token']
-        st.write(f"Logged in as {token['userinfo']['email']}")
+        user_info = st.session_state.get('user_info')
+        if user_info:
+            st.write(f"Logged in as {user_info['email']}")
+        else:
+            st.error("Failed to retrieve user info. Please re-authenticate.")
         
         user_prompt = st.text_area("Specify a prompt about the type of content you want produced:", "")
         keywords = st.text_area("Optional: Specify specific keywords to be used:", "")
