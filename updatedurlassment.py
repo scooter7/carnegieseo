@@ -31,32 +31,48 @@ placeholders = {
      "beliefs": ['There’s no need to differentiate from others', 'All perspectives are equally worth holding', 'Will not risk offending anyone', 'Light opinions are held quite loosely', 'Information tells enough of a story']},
 }
 
-def summarize_categories(placeholders):
-    summarized = {}
-    for color, info in placeholders.items():
-        summarized[color] = {
-            'verbs': ', '.join(info['verbs'][:5]) + (', ...' if len(info['verbs']) > 5 else ''),
-            'adjectives': ', '.join(info['adjectives'][:5]) + (', ...' if len(info['adjectives']) > 5 else '')
-        }
-    return summarized
+def chunk_text(text, max_tokens=3000):
+    words = text.split()
+    chunks = []
+    current_chunk = []
+    current_length = 0
 
-def analyze_text_chunked(text, chunk_size=2000):
-    summarized_placeholders = summarize_categories(placeholders)
+    for word in words:
+        if current_length + len(word) + 1 > max_tokens:
+            chunks.append(" ".join(current_chunk))
+            current_chunk = []
+            current_length = 0
+        current_chunk.append(word)
+        current_length += len(word) + 1
+
+    if current_chunk:
+        chunks.append(" ".join(current_chunk))
+
+    return chunks
+
+def analyze_text(text):
+    summarized_placeholders = {
+        color: {
+            'verbs': ', '.join(info['verbs']),
+            'adjectives': ', '.join(info['adjectives'])
+        } for color, info in placeholders.items()
+    }
     prompt_base = f"Please analyze the following text and identify which verbs and adjectives from the following categories are present. Also, explain how these relate to the predefined beliefs of each category:\n\nCategories:\n" + "\n".join([f"{color}: Verbs({info['verbs']}), Adjectives({info['adjectives']})" for color, info in summarized_placeholders.items()]) + "\n\nText: "
-    
-    chunks = [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
-    responses = []
-    for chunk in chunks:
+
+    text_chunks = chunk_text(text)
+    all_responses = []
+
+    for chunk in text_chunks:
         prompt_text = prompt_base + chunk
         response = openai.ChatCompletion.create(
-            model="gpt-4-turbo",
+            model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt_text}],
             max_tokens=500
         )
         raw_content = response.choices[0]['message']['content'].strip()
-        responses.append(raw_content)
-    
-    return "\n".join(responses)
+        all_responses.append(raw_content)
+
+    return "\n".join(all_responses)
 
 def match_text_to_color(text_analysis):
     word_counts = Counter(text_analysis.lower().split())
@@ -84,7 +100,6 @@ url_input = st.text_area("Paste comma-separated URLs here:", height=100)
 urls = [url.strip() for url in url_input.split(',')]
 
 if st.button("Analyze URLs"):
-    st.write("Button clicked!")  # Debug statement
     for url in urls:
         try:
             st.write(f"Analyzing URL: {url}")  # Debug statement
@@ -92,7 +107,7 @@ if st.button("Analyze URLs"):
             soup = BeautifulSoup(response.text, "html.parser")
             content = soup.get_text()
             
-            raw_analysis = analyze_text_chunked(content)
+            raw_analysis = analyze_text(content)
             top_colors = match_text_to_color(raw_analysis)
             
             st.write(f"Analysis for URL: {url}")
