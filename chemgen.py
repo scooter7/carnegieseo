@@ -7,17 +7,16 @@ from streamlit_oauth import OAuth2Component
 import os
 
 # Load environment variables from Streamlit secrets
-AUTHORIZE_URL = st.secrets["AUTHORIZE_URL"]
-TOKEN_URL = st.secrets["TOKEN_URL"]
-REFRESH_TOKEN_URL = st.secrets["REFRESH_TOKEN_URL"]
-REVOKE_TOKEN_URL = st.secrets["REVOKE_TOKEN_URL"]
-CLIENT_ID = st.secrets["CLIENT_ID"]
-CLIENT_SECRET = st.secrets["CLIENT_SECRET"]
-REDIRECT_URI = st.secrets["REDIRECT_URI"]
-SCOPE = st.secrets["SCOPE"]
+google_auth = st.secrets["google_auth"]
+AUTHORIZE_URL = google_auth["auth_uri"]
+TOKEN_URL = google_auth["token_uri"]
+CLIENT_ID = google_auth["client_id"]
+CLIENT_SECRET = google_auth["client_secret"]
+REDIRECT_URI = google_auth["redirect_uris"][0]
+SCOPE = "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile"
 
 # Create OAuth2Component instance
-oauth2 = OAuth2Component(CLIENT_ID, CLIENT_SECRET, AUTHORIZE_URL, TOKEN_URL, REFRESH_TOKEN_URL, REVOKE_TOKEN_URL)
+oauth2 = OAuth2Component(CLIENT_ID, CLIENT_SECRET, AUTHORIZE_URL, TOKEN_URL)
 
 # Check if token exists in session state
 if 'token' not in st.session_state:
@@ -37,11 +36,11 @@ else:
     audience = st.text_input("Optional: Define the audience for the generated content:", "")
     specific_facts_stats = st.text_area("Optional: Add specific facts or stats to be included:", "")
 
-    if "OPENAI_API_KEY" not in st.secrets:
+    if "openai_api_key" not in st.secrets:
         st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
         sys.exit(1)
 
-    openai_api_key = st.secrets["OPENAI_API_KEY"]
+    openai_api_key = st.secrets["openai_api_key"]
 
     placeholders = {
         "Purple - caring, encouraging": {"verbs": ["assist", "befriend", "care", "collaborate", "connect", "embrace", "empower", "encourage", "foster", "give", "help", "nourish", "nurture", "promote", "protect", "provide", "serve", "share", "shepherd", "steward", "tend", "uplift", "value", "welcome"], "adjectives": ["caring", "encouraging", "attentive", "compassionate", "empathetic", "generous", "hospitable", "nurturing", "protective", "selfless", "supportive", "welcoming"], 
