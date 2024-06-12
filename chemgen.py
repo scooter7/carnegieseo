@@ -41,6 +41,24 @@ def fetch_user_info(token):
         st.error("Failed to fetch user information.")
         return None
 
+def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats):
+    full_prompt = user_prompt
+    if keywords:
+        full_prompt += f"\nKeywords: {keywords}"
+    if audience:
+        full_prompt += f"\nAudience: {audience}"
+    if specific_facts_stats:
+        full_prompt += f"\nFacts/Stats: {specific_facts_stats}"
+
+    messages = [{"role": "system", "content": full_prompt}]
+    messages.append({"role": "user", "content": content})
+    for i, style in enumerate(writing_styles):
+        weight = style_weights[i]
+        messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style.split(' - ')[1]} manner."})
+
+    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
+    return response.choices[0].message["content"].strip()
+
 def main():
     # Hide the Streamlit toolbar
     hide_toolbar_css = """
@@ -49,9 +67,6 @@ def main():
     </style>
     """
     st.markdown(hide_toolbar_css, unsafe_allow_html=True)
-    
-    # Debugging: Print all secrets to verify they are loaded correctly
-    st.write("Secrets loaded:", st.secrets)
 
     # Check if token exists in session state
     if 'token' not in st.session_state:
@@ -72,13 +87,17 @@ def main():
         else:
             st.error("Failed to retrieve user info. Please re-authenticate.")
         
-        # Debugging: Check if OPENAI_API_KEY is present
+        # Check if OPENAI_API_KEY is present
         if "OPENAI_API_KEY" in st.secrets:
             openai_api_key = st.secrets["OPENAI_API_KEY"]
-            st.write("OpenAI API key is loaded.")
         else:
             st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
             sys.exit(1)
+
+        user_prompt = st.text_area("Specify a prompt about the type of content you want produced:", "")
+        keywords = st.text_area("Optional: Specify specific keywords to be used:", "")
+        audience = st.text_input("Optional: Define the audience for the generated content:", "")
+        specific_facts_stats = st.text_area("Optional: Add specific facts or stats to be included:", "")
 
         placeholders = {
             "Purple - caring, encouraging": {"verbs": ["assist", "befriend", "care", "collaborate", "connect", "embrace", "empower", "encourage", "foster", "give", "help", "nourish", "nurture", "promote", "protect", "provide", "serve", "share", "shepherd", "steward", "tend", "uplift", "value", "welcome"], "adjectives": ["caring", "encouraging", "attentive", "compassionate", "empathetic", "generous", "hospitable", "nurturing", "protective", "selfless", "supportive", "welcoming"], 
@@ -102,24 +121,6 @@ def main():
             "Beige - dedicated, humble": {"verbs": ["dedicate", "humble", "collaborate", "empower", "inspire", "empassion", "transform"], "adjectives": ["dedicated", "collaborative", "consistent", "empowering", "enterprising", "humble", "inspiring", "passionate", "proud", "traditional", "transformative"], 
             "beliefs": ['There’s no need to differentiate from others', 'All perspectives are equally worth holding', 'Will not risk offending anyone', 'Light opinions are held quite loosely', 'Information tells enough of a story']},
         }
-
-        def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats):
-            full_prompt = user_prompt
-            if keywords:
-                full_prompt += f"\nKeywords: {keywords}"
-            if audience:
-                full_prompt += f"\nAudience: {audience}"
-            if specific_facts_stats:
-                full_prompt += f"\nFacts/Stats: {specific_facts_stats}"
-
-            messages = [{"role": "system", "content": full_prompt}]
-            messages.append({"role": "user", "content": content})
-            for i, style in enumerate(writing_styles):
-                weight = style_weights[i]
-                messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style.split(' - ')[1]} manner."})
-
-            response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
-            return response.choices[0].message["content"].strip()
 
         user_content = st.text_area("Paste your content here:")
         writing_styles = st.multiselect("Select Writing Styles:", list(placeholders.keys()))
