@@ -49,7 +49,7 @@ def analyze_text_chunked(text, chunk_size=2000):
     for chunk in chunks:
         prompt_text = prompt_base + chunk
         response = openai.ChatCompletion.create(
-            model="gpt-4-32k",
+            model="gpt-4-turbo",
             messages=[{"role": "user", "content": prompt_text}],
             max_tokens=500
         )
