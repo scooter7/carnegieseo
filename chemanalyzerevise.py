@@ -157,14 +157,17 @@ else:
 
         full_prompt += "\nContent:\n" + content
 
-        response = openai.Completion.create(
-            model="text-davinci-003",
-            prompt=full_prompt,
-            max_tokens=2000,
-            temperature=0.7
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": full_prompt}
+        ]
+
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=messages
         )
 
-        return response.choices[0].text.strip()
+        return response.choices[0].message["content"].strip()
 
     st.title("Color Persona Text Analysis and Content Revision")
 
