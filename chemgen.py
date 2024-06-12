@@ -73,8 +73,8 @@ def main():
             st.error("Failed to retrieve user info. Please re-authenticate.")
         
         # Debugging: Check if OPENAI_API_KEY is present
-        if "openai_api_key" in st.secrets:
-            openai_api_key = st.secrets["openai_api_key"]
+        if "OPENAI_API_KEY" in st.secrets:
+            openai_api_key = st.secrets["OPENAI_API_KEY"]
             st.write("OpenAI API key is loaded.")
         else:
             st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
