@@ -217,7 +217,7 @@ else:
     audience = st.text_input("Optional: Define the audience for the generated content:", "")
     specific_facts_stats = st.text_area("Optional: Add specific facts or stats to be included:", "")
 
-    user_content = st.text_area("Paste your content here:")
+    pasted_content = st.text_area("Paste your content here:")
     writing_styles = st.multiselect("Select Writing Styles:", list(placeholders.keys()))
     
     style_weights = []
@@ -226,14 +226,13 @@ else:
         style_weights.append(weight)
     
     if st.button("Generate Content"):
-        revised_content = generate_article(user_content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats)
+        revised_content = generate_article(pasted_content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats)
         st.text(revised_content)
         st.download_button("Download Content", revised_content, "content.txt")
 
     st.markdown("---")
     st.header("Revision Section")
 
-    pasted_content = st.text_area("Paste Generated Content Here (for further revisions):")
     revision_requests = st.text_area("Specify Revisions Here:")
 
     if st.button("Revise Further"):
