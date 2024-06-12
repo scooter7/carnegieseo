@@ -142,22 +142,29 @@ else:
         return sorted_colors[:3]
 
     def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats):
-        full_prompt = user_prompt
+        full_prompt = "Revise the following content according to the specified writing styles and other inputs.\n"
+        if user_prompt:
+            full_prompt += f"Prompt: {user_prompt}\n"
         if keywords:
-            full_prompt += f"\nKeywords: {keywords}"
+            full_prompt += f"Keywords: {keywords}\n"
         if audience:
-            full_prompt += f"\nAudience: {audience}"
+            full_prompt += f"Audience: {audience}\n"
         if specific_facts_stats:
-            full_prompt += f"\nFacts/Stats: {specific_facts_stats}"
-
-        messages = [{"role": "system", "content": full_prompt}]
-        messages.append({"role": "user", "content": content})
+            full_prompt += f"Facts/Stats: {specific_facts_stats}\n"
         for i, style in enumerate(writing_styles):
             weight = style_weights[i]
-            messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style.split(' - ')[1]} manner."})
+            full_prompt += f"Modify {weight}% of the content in a {style.split(' - ')[1]} manner.\n"
 
-        response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
-        return response.choices[0].message["content"].strip()
+        full_prompt += "\nContent:\n" + content
+
+        response = openai.Completion.create(
+            model="text-davinci-003",
+            prompt=full_prompt,
+            max_tokens=2000,
+            temperature=0.7
+        )
+
+        return response.choices[0].text.strip()
 
     st.title("Color Persona Text Analysis and Content Revision")
 
