@@ -243,13 +243,15 @@ else:
     st.markdown("---")
     st.header("Revision Section")
 
+    revision_pasted_content = st.text_area("Paste Content to Revise Here:")
     revision_requests = st.text_area("Specify Revisions Here:")
 
     if st.button("Revise Further"):
+        revision_prompt = f"Revise the following content according to the specified revisions.\nRevisions: {revision_requests}\n\nContent:\n{revision_pasted_content}"
+
         revision_messages = [
             {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": pasted_content},
-            {"role": "user", "content": revision_requests}
+            {"role": "user", "content": revision_prompt}
         ]
         response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=revision_messages)
         revised_content = response.choices[0].message["content"].strip()
