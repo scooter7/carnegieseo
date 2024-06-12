@@ -4,19 +4,29 @@ import sys
 import logging
 import random
 from streamlit_oauth import OAuth2Component
-import os
 
-# Load environment variables from Streamlit secrets
-google_auth = st.secrets["google_auth"]
+# Load Google Auth credentials from Streamlit secrets
+google_auth = {
+    "client_id": st.secrets["google_auth"]["client_id"],
+    "project_id": st.secrets["google_auth"]["project_id"],
+    "auth_uri": st.secrets["google_auth"]["auth_uri"],
+    "token_uri": st.secrets["google_auth"]["token_uri"],
+    "auth_provider_x509_cert_url": st.secrets["google_auth"]["auth_provider_x509_cert_url"],
+    "client_secret": st.secrets["google_auth"]["client_secret"],
+    "redirect_uris": st.secrets["google_auth"]["redirect_uris"]
+}
+
 AUTHORIZE_URL = google_auth["auth_uri"]
 TOKEN_URL = google_auth["token_uri"]
+REFRESH_TOKEN_URL = google_auth["token_uri"]
+REVOKE_TOKEN_URL = "https://accounts.google.com/o/oauth2/revoke"
 CLIENT_ID = google_auth["client_id"]
 CLIENT_SECRET = google_auth["client_secret"]
 REDIRECT_URI = google_auth["redirect_uris"][0]
-SCOPE = "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile"
+SCOPE = "email profile"
 
 # Create OAuth2Component instance
-oauth2 = OAuth2Component(CLIENT_ID, CLIENT_SECRET, AUTHORIZE_URL, TOKEN_URL)
+oauth2 = OAuth2Component(CLIENT_ID, CLIENT_SECRET, AUTHORIZE_URL, TOKEN_URL, REFRESH_TOKEN_URL, REVOKE_TOKEN_URL)
 
 # Check if token exists in session state
 if 'token' not in st.session_state:
