@@ -53,7 +53,7 @@ def analyze_text_chunked(text, chunk_size=2000):
             messages=[{"role": "user", "content": prompt_text}],
             max_tokens=500
         )
-        raw_content = response.choices[0].message['content'].strip()
+        raw_content = response.choices[0]['message']['content'].strip()
         responses.append(raw_content)
     
     return "\n".join(responses)
@@ -84,8 +84,10 @@ url_input = st.text_area("Paste comma-separated URLs here:", height=100)
 urls = [url.strip() for url in url_input.split(',')]
 
 if st.button("Analyze URLs"):
+    st.write("Button clicked!")  # Debug statement
     for url in urls:
         try:
+            st.write(f"Analyzing URL: {url}")  # Debug statement
             response = requests.get(url)
             soup = BeautifulSoup(response.text, "html.parser")
             content = soup.get_text()
