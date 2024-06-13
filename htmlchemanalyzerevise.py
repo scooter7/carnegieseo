@@ -3,6 +3,7 @@ import openai
 import requests
 from bs4 import BeautifulSoup
 from transformers import GPT2Tokenizer
+from collections import Counter, defaultdict  # Add this import
 
 # Load your API key from Streamlit's secrets
 openai_api_key = st.secrets["OPENAI_API_KEY"]
