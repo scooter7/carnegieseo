@@ -35,6 +35,10 @@ placeholders = {
      "beliefs": ['There’s no need to differentiate from others', 'All perspectives are equally worth holding', 'Will not risk offending anyone', 'Light opinions are held quite loosely', 'Information tells enough of a story']},
 }
 
+def estimate_token_count(text):
+    tokens = tokenizer.tokenize(text)
+    return len(tokens)
+
 def chunk_html(html, max_tokens=1000):
     soup = BeautifulSoup(html, "html.parser")
     chunks = []
@@ -76,7 +80,8 @@ def analyze_text(html):
     }
     prompt_base = "Please analyze the following HTML content and identify which verbs and adjectives from the following categories are present. Also, explain how these relate to the predefined beliefs of each category:\n\nCategories:\n" + "\n".join([f"{color}: Verbs({', '.join(info['verbs'])}), Adjectives({', '.join(info['adjectives'])})" for color, info in summarized_placeholders.items()]) + "\n\nHTML: "
 
-    html_chunks = chunk_html(html)
+    prompt_base_tokens = estimate_token_count(prompt_base)
+    html_chunks = chunk_html(html, max_tokens=1500 - prompt_base_tokens)
     all_responses = []
 
     for chunk in html_chunks:
@@ -119,18 +124,26 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
 
     full_prompt += "\nContent:\n" + content
 
-    messages = [
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": full_prompt}
-    ]
+    prompt_tokens = estimate_token_count(full_prompt)
+    content_tokens = 2000 - prompt_tokens
+    content_chunks = chunk_html(content, max_tokens=content_tokens)
 
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=messages,
-        max_tokens=2000
-    )
+    revised_content = []
+    for chunk in content_chunks:
+        chunk_prompt = full_prompt + chunk
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": chunk_prompt}
+        ]
 
-    return response.choices[0].message["content"].strip()
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=messages,
+            max_tokens=2000
+        )
+        revised_content.append(response.choices[0].message["content"].strip())
+
+    return "\n".join(revised_content)
 
 def insert_revised_text_to_html(original_html, revised_text):
     soup = BeautifulSoup(original_html, "html.parser")
