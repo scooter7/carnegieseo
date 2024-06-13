@@ -86,20 +86,12 @@ def analyze_text(html):
 
     for chunk in html_chunks:
         prompt_html = prompt_base + chunk
-        response = requests.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {openai_api_key}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "gpt-4-32k",
-                "messages": [{"role": "user", "content": prompt_html}],
-                "max_tokens": 5000
-            }
+        response = openai.ChatCompletion.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt_html}],
+            max_tokens=5000
         )
-        response_json = response.json()
-        raw_content = response_json['choices'][0]['message']['content'].strip()
+        raw_content = response.choices[0]['message']['content'].strip()
         all_responses.append(raw_content)
 
     return "\n".join(all_responses)
@@ -139,23 +131,15 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
     revised_content = []
     for chunk in content_chunks:
         chunk_prompt = full_prompt + chunk
-        response = requests.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {openai_api_key}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "gpt-4-32k",
-                "messages": [
-                    {"role": "system", "content": "You are a helpful assistant."},
-                    {"role": "user", "content": chunk_prompt}
-                ],
-                "max_tokens": 5000
-            }
+        response = openai.ChatCompletion.create(
+            model="gpt-4o",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": chunk_prompt}
+            ],
+            max_tokens=5000
         )
-        response_json = response.json()
-        revised_content.append(response_json['choices'][0]['message']['content'].strip())
+        revised_content.append(response.choices[0]['message']['content'].strip())
 
     return "\n".join(revised_content)
 
@@ -259,20 +243,12 @@ if st.button("Revise Further"):
         {"role": "system", "content": "You are a helpful assistant."},
         {"role": "user", "content": revision_prompt}
     ]
-    response = requests.post(
-        "https://api.openai.com/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {openai_api_key}",
-            "Content-Type": "application/json"
-        },
-        json={
-            "model": "gpt-4-32k",
-            "messages": revision_messages,
-            "max_tokens": 5000
-        }
+    response = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=revision_messages,
+        max_tokens=5000
     )
-    response_json = response.json()
-    revised_content = response_json['choices'][0]['message']['content'].strip()
+    revised_content = response.choices[0]['message']['content'].strip()
     st.text(revised_content)
     st.download_button("Download Revised Content", revised_content, "revised_content_revision.txt")
     # Optionally insert the revised content back into the HTML structure and allow downloading
