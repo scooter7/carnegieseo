@@ -31,43 +31,54 @@ placeholders = {
      "beliefs": ['There’s no need to differentiate from others', 'All perspectives are equally worth holding', 'Will not risk offending anyone', 'Light opinions are held quite loosely', 'Information tells enough of a story']},
 }
 
-def chunk_text(text, max_tokens=3000):
-    words = text.split()
+def chunk_html(html, max_chars=10000):
+    soup = BeautifulSoup(html, "html.parser")
     chunks = []
-    current_chunk = []
+    current_chunk = ""
     current_length = 0
 
-    for word in words:
-        if current_length + len(word) + 1 > max_tokens:
-            chunks.append(" ".join(current_chunk))
-            current_chunk = []
-            current_length = 0
-        current_chunk.append(word)
-        current_length += len(word) + 1
+    for element in soup.recursiveChildGenerator():
+        if isinstance(element, str):
+            if current_length + len(element) > max_chars:
+                chunks.append(current_chunk)
+                current_chunk = ""
+                current_length = 0
+            current_chunk += element
+            current_length += len(element)
+        else:
+            if element.name in ['script', 'style']:
+                continue
+            element_str = str(element)
+            if current_length + len(element_str) > max_chars:
+                chunks.append(current_chunk)
+                current_chunk = ""
+                current_length = 0
+            current_chunk += element_str
+            current_length += len(element_str)
 
     if current_chunk:
-        chunks.append(" ".join(current_chunk))
+        chunks.append(current_chunk)
 
     return chunks
 
-def analyze_text(text):
+def analyze_text(html):
     summarized_placeholders = {
         color: {
             'verbs': ', '.join(info['verbs']),
             'adjectives': ', '.join(info['adjectives'])
         } for color, info in placeholders.items()
     }
-    prompt_base = f"Please analyze the following text and identify which verbs and adjectives from the following categories are present. Also, explain how these relate to the predefined beliefs of each category:\n\nCategories:\n" + "\n".join([f"{color}: Verbs({info['verbs']}), Adjectives({info['adjectives']})" for color, info in summarized_placeholders.items()]) + "\n\nText: "
+    prompt_base = f"Please analyze the following HTML content and identify which verbs and adjectives from the following categories are present. Also, explain how these relate to the predefined beliefs of each category:\n\nCategories:\n" + "\n".join([f"{color}: Verbs({info['verbs'])}, Adjectives({info['adjectives']})" for color, info in summarized_placeholders.items()]) + "\n\nHTML: "
 
-    text_chunks = chunk_text(text)
+    html_chunks = chunk_html(html)
     all_responses = []
 
-    for chunk in text_chunks:
-        prompt_text = prompt_base + chunk
+    for chunk in html_chunks:
+        prompt_html = prompt_base + chunk
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt_text}],
-            max_tokens=500
+            messages=[{"role": "user", "content": prompt_html}],
+            max_tokens=1000
         )
         raw_content = response.choices[0]['message']['content'].strip()
         all_responses.append(raw_content)
@@ -144,7 +155,7 @@ if st.button("Analyze URLs"):
             content = soup.get_text()
             raw_html = str(soup)
 
-            raw_analysis = analyze_text(content)
+            raw_analysis = analyze_text(raw_html)
             top_colors = match_text_to_color(raw_analysis)
 
             analysis_result = {
@@ -194,7 +205,11 @@ if st.button("Generate Content"):
     st.text(revised_content)
     st.download_button("Download Content", revised_content, "content.txt")
     # Optionally insert the revised content back into the HTML structure and allow downloading
-    revised_html = insert_revised_text_to_html(pasted_content, revised_content)
+    revised_html_chunks = []
+    html_chunks = chunk_html(pasted_content)
+    for chunk in html_chunks:
+        revised_html_chunks.append(insert_revised_text_to_html(chunk, revised_content))
+    revised_html = ''.join(revised_html_chunks)
     st.download_button("Download Revised HTML", revised_html, "revised_content.html")
 
 st.markdown("---")
@@ -215,5 +230,9 @@ if st.button("Revise Further"):
     st.text(revised_content)
     st.download_button("Download Revised Content", revised_content, "revised_content_revision.txt")
     # Optionally insert the revised content back into the HTML structure and allow downloading
-    revised_html = insert_revised_text_to_html(revision_pasted_content, revised_content)
+    revised_html_chunks = []
+    html_chunks = chunk_html(revision_pasted_content)
+    for chunk in html_chunks:
+        revised_html_chunks.append(insert_revised_text_to_html(chunk, revised_content))
+    revised_html = ''.join(revised_html_chunks)
     st.download_button("Download Revised HTML", revised_html, "revised_content_revision.html")
