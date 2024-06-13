@@ -3,9 +3,13 @@ import requests
 from bs4 import BeautifulSoup
 from transformers import GPT2Tokenizer
 from collections import Counter, defaultdict
+from groq import Groq
 
 # Load your API key from Streamlit's secrets
 groq_api_key = st.secrets["GROQ_API_KEY"]
+
+# Initialize Groq client
+client = Groq(api_key=groq_api_key)
 
 # Initialize tokenizer
 tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
@@ -86,20 +90,13 @@ def analyze_text(html):
 
     for chunk in html_chunks:
         prompt_html = prompt_base + chunk
-        response = requests.post(
-            "https://api.groq.com/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {groq_api_key}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "groq-1.5-pro",
-                "messages": [{"role": "user", "content": prompt_html}],
-                "max_tokens": 4096
-            }
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {"role": "user", "content": prompt_html}
+            ],
+            model="llama3-8b-8192",
         )
-        response_json = response.json()
-        raw_content = response_json['choices'][0]['message']['content'].strip()
+        raw_content = chat_completion.choices[0].message.content
         all_responses.append(raw_content)
 
     return "\n".join(all_responses)
@@ -139,23 +136,14 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
     revised_content = []
     for chunk in content_chunks:
         chunk_prompt = full_prompt + chunk
-        response = requests.post(
-            "https://api.groq.com/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {groq_api_key}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "groq-1.5-pro",
-                "messages": [
-                    {"role": "system", "content": "You are a helpful assistant."},
-                    {"role": "user", "content": chunk_prompt}
-                ],
-                "max_tokens": 4096
-            }
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": chunk_prompt}
+            ],
+            model="llama3-8b-8192",
         )
-        response_json = response.json()
-        revised_content.append(response_json['choices'][0]['message']['content'].strip())
+        revised_content.append(chat_completion.choices[0].message.content)
 
     return "\n".join(revised_content)
 
@@ -250,24 +238,14 @@ if uploaded_revised_html_file is not None:
     if st.button("Revise Further"):
         revision_prompt = f"Revise the following content according to the specified revisions.\nRevisions: {revision_requests}\n\nContent:\n{revision_pasted_content}"
 
-        revision_messages = [
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": revision_prompt}
-        ]
-        response = requests.post(
-            "https://api.groq.com/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {groq_api_key}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "groq-1.5-pro",
-                "messages": revision_messages,
-                "max_tokens": 4096
-            }
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": revision_prompt}
+            ],
+            model="llama3-8b-8192",
         )
-        response_json = response.json()
-        revised_content = response_json['choices'][0]['message']['content'].strip()
+        revised_content = chat_completion.choices[0].message.content
         st.text_area("Further Revised Content", revised_content, height=200, key="further_revised_content")
 
         revised_html = insert_revised_text_to_html(revision_pasted_content, revised_content)
