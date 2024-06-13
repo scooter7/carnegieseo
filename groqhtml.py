@@ -3,6 +3,14 @@ import requests
 from bs4 import BeautifulSoup
 from transformers import GPT2Tokenizer
 from collections import Counter, defaultdict
+import subprocess
+
+# Install grpcio if not already installed
+try:
+    import grpc
+except ImportError:
+    subprocess.run(["pip", "install", "grpcio"])
+
 from groq.llmcloud import ChatCompletion
 
 # Load your API key from Streamlit's secrets
