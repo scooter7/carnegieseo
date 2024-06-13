@@ -1,11 +1,12 @@
 import streamlit as st
+import openai
 import requests
 from collections import Counter, defaultdict
 from bs4 import BeautifulSoup
 from transformers import GPT2Tokenizer
 
 # Load your API key from Streamlit's secrets
-gemini_api_key = st.secrets["GEMINI_API_KEY"]
+openai_api_key = st.secrets["OPENAI_API_KEY"]
 
 # Initialize tokenizer
 tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
@@ -38,7 +39,7 @@ def estimate_token_count(text):
     tokens = tokenizer.tokenize(text)
     return len(tokens)
 
-def chunk_html(html, max_tokens=5000):
+def chunk_html(html, max_tokens=25000):
     soup = BeautifulSoup(html, "html.parser")
     chunks = []
     current_chunk = ""
@@ -80,19 +81,19 @@ def analyze_text(html):
     prompt_base = "Please analyze the following HTML content and identify which verbs and adjectives from the following categories are present. Also, explain how these relate to the predefined beliefs of each category:\n\nCategories:\n" + "\n".join([f"{color}: Verbs({', '.join(info['verbs'])}), Adjectives({', '.join(info['adjectives'])})" for color, info in summarized_placeholders.items()]) + "\n\nHTML: "
 
     prompt_base_tokens = estimate_token_count(prompt_base)
-    html_chunks = chunk_html(html, max_tokens=15000 - prompt_base_tokens)
+    html_chunks = chunk_html(html, max_tokens=32000 - prompt_base_tokens)
     all_responses = []
 
     for chunk in html_chunks:
         prompt_html = prompt_base + chunk
         response = requests.post(
-            "https://api.gemini1.5pro.com/v1/chat/completions",
+            "https://api.openai.com/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer {gemini_api_key}",
+                "Authorization": f"Bearer {openai_api_key}",
                 "Content-Type": "application/json"
             },
             json={
-                "model": "gemini-1.5-pro",
+                "model": "gpt-4-32k",
                 "messages": [{"role": "user", "content": prompt_html}],
                 "max_tokens": 5000
             }
@@ -132,20 +133,20 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
     full_prompt += "\nContent:\n" + content
 
     prompt_tokens = estimate_token_count(full_prompt)
-    content_tokens = 20000 - prompt_tokens
+    content_tokens = 32000 - prompt_tokens
     content_chunks = chunk_html(content, max_tokens=content_tokens)
 
     revised_content = []
     for chunk in content_chunks:
         chunk_prompt = full_prompt + chunk
         response = requests.post(
-            "https://api.gemini1.5pro.com/v1/chat/completions",
+            "https://api.openai.com/v1/chat/completions",
             headers={
-                "Authorization": f"Bearer {gemini_api_key}",
+                "Authorization": f"Bearer {openai_api_key}",
                 "Content-Type": "application/json"
             },
             json={
-                "model": "gemini-1.5-pro",
+                "model": "gpt-4-32k",
                 "messages": [
                     {"role": "system", "content": "You are a helpful assistant."},
                     {"role": "user", "content": chunk_prompt}
@@ -156,7 +157,7 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
         response_json = response.json()
         revised_content.append(response_json['choices'][0]['message']['content'].strip())
 
-    return "\n".join(revised_content)
+    return "\n.join(revised_content)
 
 def insert_revised_text_to_html(original_html, revised_text):
     soup = BeautifulSoup(original_html, "html.parser")
@@ -259,13 +260,13 @@ if st.button("Revise Further"):
         {"role": "user", "content": revision_prompt}
     ]
     response = requests.post(
-        "https://api.gemini1.5pro.com/v1/chat/completions",
+        "https://api.openai.com/v1/chat/completions",
         headers={
-            "Authorization": f"Bearer {gemini_api_key}",
+            "Authorization": f"Bearer {openai_api_key}",
             "Content-Type": "application/json"
         },
         json={
-            "model": "gemini-1.5-pro",
+            "model": "gpt-4-32k",
             "messages": revision_messages,
             "max_tokens": 5000
         }
