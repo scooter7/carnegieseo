@@ -66,3 +66,4 @@ zipp==3.15.0
 streamlit-oauth
 transformers
 groq
+grpc
