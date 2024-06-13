@@ -68,7 +68,7 @@ def analyze_text(html):
             'adjectives': ', '.join(info['adjectives'])
         } for color, info in placeholders.items()
     }
-    prompt_base = f"Please analyze the following HTML content and identify which verbs and adjectives from the following categories are present. Also, explain how these relate to the predefined beliefs of each category:\n\nCategories:\n" + "\n".join([f"{color}: Verbs({info['verbs'])}, Adjectives({info['adjectives']})" for color, info in summarized_placeholders.items()]) + "\n\nHTML: "
+    prompt_base = "Please analyze the following HTML content and identify which verbs and adjectives from the following categories are present. Also, explain how these relate to the predefined beliefs of each category:\n\nCategories:\n" + "\n".join([f"{color}: Verbs({', '.join(info['verbs'])}), Adjectives({', '.join(info['adjectives'])})" for color, info in summarized_placeholders.items()]) + "\n\nHTML: "
 
     html_chunks = chunk_html(html)
     all_responses = []
