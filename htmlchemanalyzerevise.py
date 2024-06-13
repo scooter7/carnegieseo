@@ -193,6 +193,9 @@ if st.button("Generate Content"):
     revised_content = generate_article(pasted_content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats)
     st.text(revised_content)
     st.download_button("Download Content", revised_content, "content.txt")
+    # Optionally insert the revised content back into the HTML structure and allow downloading
+    revised_html = insert_revised_text_to_html(pasted_content, revised_content)
+    st.download_button("Download Revised HTML", revised_html, "revised_content.html")
 
 st.markdown("---")
 st.header("Revision Section")
@@ -212,7 +215,5 @@ if st.button("Revise Further"):
     st.text(revised_content)
     st.download_button("Download Revised Content", revised_content, "revised_content_revision.txt")
     # Optionally insert the revised content back into the HTML structure and allow downloading
-    original_html = analysis.get('raw_html', '')
-    if original_html:
-        revised_html = insert_revised_text_to_html(original_html, revised_content)
-        st.download_button("Download Revised HTML", revised_html, "revised_content.html")
+    revised_html = insert_revised_text_to_html(revision_pasted_content, revised_content)
+    st.download_button("Download Revised HTML", revised_html, "revised_content_revision.html")
