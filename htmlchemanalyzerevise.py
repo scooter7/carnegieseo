@@ -1,7 +1,6 @@
 import streamlit as st
 import openai
 import requests
-from collections import Counter, defaultdict
 from bs4 import BeautifulSoup
 from transformers import GPT2Tokenizer
 
@@ -57,14 +56,15 @@ def chunk_html(html, max_tokens=25000):
         else:
             if element.name in ['script', 'style']:
                 continue
-            element_str = str(element)
-            tokens = tokenizer.tokenize(element_str)
-            if current_length + len(tokens) > max_tokens:
-                chunks.append(current_chunk)
-                current_chunk = ""
-                current_length = 0
-            current_chunk += element_str
-            current_length += len(tokens)
+            if element.name in ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']:
+                element_str = str(element)
+                tokens = tokenizer.tokenize(element_str)
+                if current_length + len(tokens) > max_tokens:
+                    chunks.append(current_chunk)
+                    current_chunk = ""
+                    current_length = 0
+                current_chunk += element_str
+                current_length += len(tokens)
 
     if current_chunk:
         chunks.append(current_chunk)
@@ -145,8 +145,9 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
 
 def insert_revised_text_to_html(original_html, revised_text):
     soup = BeautifulSoup(original_html, "html.parser")
-    for p_tag in soup.find_all('p'):
-        p_tag.string = revised_text
+    revised_soup = BeautifulSoup(revised_text, "html.parser")
+    for original, revised in zip(soup.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']), revised_soup.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'])):
+        original.replace_with(revised)
     return str(soup)
 
 st.title("Color Persona Text Analysis and Content Revision")
@@ -159,102 +160,71 @@ hide_toolbar_css = """
 """
 st.markdown(hide_toolbar_css, unsafe_allow_html=True)
 
+# Scrape and download HTML file
 url_input = st.text_area("Paste comma-separated URLs here:", height=100)
 urls = [url.strip() for url in url_input.split(',')]
 
-if 'analyses' not in st.session_state:
-    st.session_state.analyses = {}
-
-if st.button("Analyze URLs"):
+if st.button("Scrape and Download HTML"):
     for url in urls:
         try:
             response = requests.get(url)
             soup = BeautifulSoup(response.text, "html.parser")
-            content = soup.get_text()
             raw_html = str(soup)
 
-            raw_analysis = analyze_text(raw_html)
-            top_colors = match_text_to_color(raw_analysis)
-
-            analysis_result = {
-                "content": content,
-                "raw_analysis": raw_analysis,
-                "top_colors": top_colors,
-                "raw_html": raw_html
-            }
-
-            st.session_state.analyses[url] = analysis_result
+            st.download_button(f"Download HTML from {url}", raw_html, f"content_{url.split('//')[-1].replace('/', '_')}.html")
 
         except Exception as e:
-            st.write(f"Error analyzing URL: {url}")
+            st.write(f"Error scraping URL: {url}")
             st.write(f"Error message: {str(e)}")
 
-for url, analysis in st.session_state.analyses.items():
-    st.write(f"Content from URL: {url}")
-    st.text_area("Scraped Content", analysis["content"], height=200, key=f"content_{url}")
-    st.download_button(f"Download Content from {url}", analysis["content"], f"content_{url.split('//')[-1].replace('/', '_')}.txt")
-    st.download_button(f"Download HTML from {url}", analysis["raw_html"], f"content_{url.split('//')[-1].replace('/', '_')}.html")
+# Upload HTML file section
+uploaded_html_file = st.file_uploader("Upload HTML file", type=["html"])
 
-    st.write(f"Analysis for URL: {url}")
-    for color, score in analysis["top_colors"]:
-        st.write(f"**{color}** - Score: {score}")
-        st.write("Reasons:")
-        for belief in placeholders[color]['beliefs']:
-            st.write(f"- {belief}")
-    st.write("Detailed Analysis:")
-    st.write(analysis["raw_analysis"])
-    st.write("---")
+if uploaded_html_file is not None:
+    html_content = uploaded_html_file.read().decode('utf-8')
+    st.text_area("Original HTML Content", html_content, height=200, key="original_html_content")
 
-user_prompt = st.text_area("Specify a prompt about the type of content you want produced:", "")
-keywords = st.text_area("Optional: Specify specific keywords to be used:", "")
-audience = st.text_input("Optional: Define the audience for the generated content:", "")
-specific_facts_stats = st.text_area("Optional: Add specific facts or stats to be included:", "")
+    # Analysis and Revision section
+    user_prompt = st.text_area("Specify a prompt about the type of content you want produced:", "")
+    keywords = st.text_area("Optional: Specify specific keywords to be used:", "")
+    audience = st.text_input("Optional: Define the audience for the generated content:", "")
+    specific_facts_stats = st.text_area("Optional: Add specific facts or stats to be included:", "")
 
-pasted_content = st.text_area("Paste your content here:")
-writing_styles = st.multiselect("Select Writing Styles:", list(placeholders.keys()))
+    writing_styles = st.multiselect("Select Writing Styles:", list(placeholders.keys()))
+    style_weights = [st.slider(f"Weight for {style}:", 0, 100, 50) for style in writing_styles]
 
-style_weights = []
-for style in writing_styles:
-    weight = st.slider(f"Weight for {style}:", 0, 100, 50)
-    style_weights.append(weight)
+    if st.button("Generate Content"):
+        revised_content = generate_article(html_content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats)
+        st.text_area("Revised Content", revised_content, height=200, key="revised_content")
 
-if st.button("Generate Content"):
-    revised_content = generate_article(pasted_content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats)
-    st.text(revised_content)
-    st.download_button("Download Content", revised_content, "content.txt")
-    # Optionally insert the revised content back into the HTML structure and allow downloading
-    revised_html_chunks = []
-    html_chunks = chunk_html(pasted_content)
-    for chunk in html_chunks:
-        revised_html_chunks.append(insert_revised_text_to_html(chunk, revised_content))
-    revised_html = ''.join(revised_html_chunks)
-    st.download_button("Download Revised HTML", revised_html, "revised_content.html")
+        revised_html = insert_revised_text_to_html(html_content, revised_content)
+        st.download_button("Download Revised HTML", revised_html, "revised_content.html")
 
+# Optional revisions section
 st.markdown("---")
 st.header("Revision Section")
 
-revision_pasted_content = st.text_area("Paste Content to Revise Here:")
-revision_requests = st.text_area("Specify Revisions Here:")
+uploaded_revised_html_file = st.file_uploader("Upload Revised HTML file", type=["html"], key="revised_html_uploader")
 
-if st.button("Revise Further"):
-    revision_prompt = f"Revise the following content according to the specified revisions.\nRevisions: {revision_requests}\n\nContent:\n{revision_pasted_content}"
+if uploaded_revised_html_file is not None:
+    revision_pasted_content = uploaded_revised_html_file.read().decode('utf-8')
+    st.text_area("Revised HTML Content", revision_pasted_content, height=200, key="revised_html_content")
+    revision_requests = st.text_area("Specify Revisions Here:")
 
-    revision_messages = [
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": revision_prompt}
-    ]
-    response = openai.ChatCompletion.create(
-        model="gpt-4o",
-        messages=revision_messages,
-        max_tokens=4096
-    )
-    revised_content = response.choices[0]['message']['content'].strip()
-    st.text(revised_content)
-    st.download_button("Download Revised Content", revised_content, "revised_content_revision.txt")
-    # Optionally insert the revised content back into the HTML structure and allow downloading
-    revised_html_chunks = []
-    html_chunks = chunk_html(revision_pasted_content)
-    for chunk in html_chunks:
-        revised_html_chunks.append(insert_revised_text_to_html(chunk, revised_content))
-    revised_html = ''.join(revised_html_chunks)
-    st.download_button("Download Revised HTML", revised_html, "revised_content_revision.html")
+    if st.button("Revise Further"):
+        revision_prompt = f"Revise the following content according to the specified revisions.\nRevisions: {revision_requests}\n\nContent:\n{revision_pasted_content}"
+
+        revision_messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": revision_prompt}
+        ]
+        response = openai.ChatCompletion.create(
+            model="gpt-4o",
+            messages=revision_messages,
+            max_tokens=4096
+        )
+        revised_content = response.choices[0]['message']['content'].strip()
+        st.text_area("Further Revised Content", revised_content, height=200, key="further_revised_content")
+
+        revised_html = insert_revised_text_to_html(revision_pasted_content, revised_content)
+        st.download_button("Download Further Revised HTML", revised_html, "further_revised_content.html")
