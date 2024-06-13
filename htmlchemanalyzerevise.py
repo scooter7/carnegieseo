@@ -31,7 +31,7 @@ placeholders = {
      "beliefs": ['There’s no need to differentiate from others', 'All perspectives are equally worth holding', 'Will not risk offending anyone', 'Light opinions are held quite loosely', 'Information tells enough of a story']},
 }
 
-def chunk_html(html, max_chars=10000):
+def chunk_html(html, max_tokens=1500):
     soup = BeautifulSoup(html, "html.parser")
     chunks = []
     current_chunk = ""
@@ -39,22 +39,22 @@ def chunk_html(html, max_chars=10000):
 
     for element in soup.recursiveChildGenerator():
         if isinstance(element, str):
-            if current_length + len(element) > max_chars:
+            if current_length + len(element.split()) > max_tokens:
                 chunks.append(current_chunk)
                 current_chunk = ""
                 current_length = 0
             current_chunk += element
-            current_length += len(element)
+            current_length += len(element.split())
         else:
             if element.name in ['script', 'style']:
                 continue
             element_str = str(element)
-            if current_length + len(element_str) > max_chars:
+            if current_length + len(element_str.split()) > max_tokens:
                 chunks.append(current_chunk)
                 current_chunk = ""
                 current_length = 0
             current_chunk += element_str
-            current_length += len(element_str)
+            current_length += len(element_str.split())
 
     if current_chunk:
         chunks.append(current_chunk)
@@ -78,7 +78,7 @@ def analyze_text(html):
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt_html}],
-            max_tokens=1000
+            max_tokens=2000
         )
         raw_content = response.choices[0]['message']['content'].strip()
         all_responses.append(raw_content)
@@ -120,7 +120,8 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
 
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
-        messages=messages
+        messages=messages,
+        max_tokens=1500
     )
 
     return response.choices[0].message["content"].strip()
@@ -225,7 +226,7 @@ if st.button("Revise Further"):
         {"role": "system", "content": "You are a helpful assistant."},
         {"role": "user", "content": revision_prompt}
     ]
-    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=revision_messages)
+    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=revision_messages, max_tokens=1500)
     revised_content = response.choices[0].message["content"].strip()
     st.text(revised_content)
     st.download_button("Download Revised Content", revised_content, "revised_content_revision.txt")
