@@ -3,18 +3,14 @@ import requests
 from bs4 import BeautifulSoup
 from transformers import GPT2Tokenizer
 from collections import Counter, defaultdict
-import subprocess
-
-# Install grpcio if not already installed
-try:
-    import grpc
-except ImportError:
-    subprocess.run(["pip", "install", "grpcio"])
-
-from groq.llmcloud import ChatCompletion
+import os
+from groq import Groq
 
 # Load your API key from Streamlit's secrets
 groq_api_key = st.secrets["GROQ_API_KEY"]
+
+# Create the Groq client
+client = Groq(api_key=groq_api_key)
 
 # Initialize tokenizer
 tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
@@ -95,12 +91,11 @@ def analyze_text(html):
 
     for chunk in html_chunks:
         prompt_html = prompt_base + chunk
-        response = ChatCompletion.create(
+        response = client.chat.completions.create(
+            model="llama3-70b-8192",
             messages=[
                 {"role": "user", "content": prompt_html}
             ],
-            model="llama3-8b-8192",
-            api_key=groq_api_key,
         )
         raw_content = response.choices[0].message.content
         all_responses.append(raw_content)
@@ -142,13 +137,12 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
     revised_content = []
     for chunk in content_chunks:
         chunk_prompt = full_prompt + chunk
-        response = ChatCompletion.create(
+        response = client.chat.completions.create(
+            model="llama3-70b-8192",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": chunk_prompt}
             ],
-            model="llama3-8b-8192",
-            api_key=groq_api_key,
         )
         revised_content.append(response.choices[0].message.content)
 
@@ -245,15 +239,14 @@ if uploaded_revised_html_file is not None:
     if st.button("Revise Further"):
         revision_prompt = f"Revise the following content according to the specified revisions.\nRevisions: {revision_requests}\n\nContent:\n{revision_pasted_content}"
 
-        chat_completion = ChatCompletion.create(
+        response = client.chat.completions.create(
+            model="llama3-70b-8192",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": revision_prompt}
             ],
-            model="llama3-8b-8192",
-            api_key=groq_api_key,
         )
-        revised_content = chat_completion.choices[0].message.content
+        revised_content = response.choices[0].message.content
         st.text_area("Further Revised Content", revised_content, height=200, key="further_revised_content")
 
         revised_html = insert_revised_text_to_html(revision_pasted_content, revised_content)
