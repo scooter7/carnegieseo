@@ -3,7 +3,7 @@ import openai
 import requests
 from bs4 import BeautifulSoup
 from transformers import GPT2Tokenizer
-from collections import Counter, defaultdict  # Add this import
+from collections import Counter, defaultdict
 
 # Load your API key from Streamlit's secrets
 openai_api_key = st.secrets["OPENAI_API_KEY"]
@@ -147,8 +147,12 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
 def insert_revised_text_to_html(original_html, revised_text):
     soup = BeautifulSoup(original_html, "html.parser")
     revised_soup = BeautifulSoup(revised_text, "html.parser")
-    for original, revised in zip(soup.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6']), revised_soup.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'])):
-        original.replace_with(revised)
+    original_elements = soup.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
+    revised_elements = revised_soup.find_all(['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
+
+    for original, revised in zip(original_elements, revised_elements):
+        original.string = revised.get_text()
+
     return str(soup)
 
 st.title("Color Persona Text Analysis and Content Revision")
