@@ -81,7 +81,7 @@ def analyze_text(html):
     prompt_base = "Please analyze the following HTML content and identify which verbs and adjectives from the following categories are present. Also, explain how these relate to the predefined beliefs of each category:\n\nCategories:\n" + "\n".join([f"{color}: Verbs({', '.join(info['verbs'])}), Adjectives({', '.join(info['adjectives'])})" for color, info in summarized_placeholders.items()]) + "\n\nHTML: "
 
     prompt_base_tokens = estimate_token_count(prompt_base)
-    html_chunks = chunk_html(html, max_tokens=32000 - prompt_base_tokens)
+    html_chunks = chunk_html(html, max_tokens=128000 - prompt_base_tokens)
     all_responses = []
 
     for chunk in html_chunks:
@@ -89,7 +89,7 @@ def analyze_text(html):
         response = openai.ChatCompletion.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": prompt_html}],
-            max_tokens=5000
+            max_tokens=4096
         )
         raw_content = response.choices[0]['message']['content'].strip()
         all_responses.append(raw_content)
@@ -125,7 +125,7 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
     full_prompt += "\nContent:\n" + content
 
     prompt_tokens = estimate_token_count(full_prompt)
-    content_tokens = 32000 - prompt_tokens
+    content_tokens = 128000 - prompt_tokens
     content_chunks = chunk_html(content, max_tokens=content_tokens)
 
     revised_content = []
@@ -137,7 +137,7 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": chunk_prompt}
             ],
-            max_tokens=5000
+            max_tokens=4096
         )
         revised_content.append(response.choices[0]['message']['content'].strip())
 
@@ -246,7 +246,7 @@ if st.button("Revise Further"):
     response = openai.ChatCompletion.create(
         model="gpt-4o",
         messages=revision_messages,
-        max_tokens=5000
+        max_tokens=4096
     )
     revised_content = response.choices[0]['message']['content'].strip()
     st.text(revised_content)
