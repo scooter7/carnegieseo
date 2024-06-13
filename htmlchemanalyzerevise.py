@@ -160,18 +160,34 @@ hide_toolbar_css = """
 """
 st.markdown(hide_toolbar_css, unsafe_allow_html=True)
 
-# Scrape and download HTML file
+# Scrape and analyze HTML file
 url_input = st.text_area("Paste comma-separated URLs here:", height=100)
 urls = [url.strip() for url in url_input.split(',')]
 
-if st.button("Scrape and Download HTML"):
+if st.button("Scrape and Analyze URLs"):
     for url in urls:
         try:
             response = requests.get(url)
             soup = BeautifulSoup(response.text, "html.parser")
+            content = soup.get_text()
             raw_html = str(soup)
 
+            raw_analysis = analyze_text(raw_html)
+            top_colors = match_text_to_color(raw_analysis)
+
+            st.write(f"Content from URL: {url}")
+            st.text_area("Scraped Content", content, height=200, key=f"content_{url}")
             st.download_button(f"Download HTML from {url}", raw_html, f"content_{url.split('//')[-1].replace('/', '_')}.html")
+
+            st.write(f"Analysis for URL: {url}")
+            for color, score in top_colors:
+                st.write(f"**{color}** - Score: {score}")
+                st.write("Reasons:")
+                for belief in placeholders[color]['beliefs']:
+                    st.write(f"- {belief}")
+            st.write("Detailed Analysis:")
+            st.write(raw_analysis)
+            st.write("---")
 
         except Exception as e:
             st.write(f"Error scraping URL: {url}")
