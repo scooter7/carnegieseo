@@ -3,9 +3,13 @@ import openai
 import requests
 from collections import Counter, defaultdict
 from bs4 import BeautifulSoup
+from transformers import GPT2Tokenizer
 
 # Load your API key from Streamlit's secrets
 openai.api_key = st.secrets["OPENAI_API_KEY"]
+
+# Initialize tokenizer
+tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 
 # Define your color-based personas
 placeholders = {
@@ -31,7 +35,7 @@ placeholders = {
      "beliefs": ['There’s no need to differentiate from others', 'All perspectives are equally worth holding', 'Will not risk offending anyone', 'Light opinions are held quite loosely', 'Information tells enough of a story']},
 }
 
-def chunk_html(html, max_tokens=1500):
+def chunk_html(html, max_tokens=1000):
     soup = BeautifulSoup(html, "html.parser")
     chunks = []
     current_chunk = ""
@@ -39,22 +43,24 @@ def chunk_html(html, max_tokens=1500):
 
     for element in soup.recursiveChildGenerator():
         if isinstance(element, str):
-            if current_length + len(element.split()) > max_tokens:
+            tokens = tokenizer.tokenize(element)
+            if current_length + len(tokens) > max_tokens:
                 chunks.append(current_chunk)
                 current_chunk = ""
                 current_length = 0
             current_chunk += element
-            current_length += len(element.split())
+            current_length += len(tokens)
         else:
             if element.name in ['script', 'style']:
                 continue
             element_str = str(element)
-            if current_length + len(element_str.split()) > max_tokens:
+            tokens = tokenizer.tokenize(element_str)
+            if current_length + len(tokens) > max_tokens:
                 chunks.append(current_chunk)
                 current_chunk = ""
                 current_length = 0
             current_chunk += element_str
-            current_length += len(element_str.split())
+            current_length += len(tokens)
 
     if current_chunk:
         chunks.append(current_chunk)
@@ -121,7 +127,7 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=messages,
-        max_tokens=1500
+        max_tokens=2000
     )
 
     return response.choices[0].message["content"].strip()
@@ -226,7 +232,7 @@ if st.button("Revise Further"):
         {"role": "system", "content": "You are a helpful assistant."},
         {"role": "user", "content": revision_prompt}
     ]
-    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=revision_messages, max_tokens=1500)
+    response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=revision_messages, max_tokens=2000)
     revised_content = response.choices[0].message["content"].strip()
     st.text(revised_content)
     st.download_button("Download Revised Content", revised_content, "revised_content_revision.txt")
