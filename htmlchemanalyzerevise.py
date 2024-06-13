@@ -157,7 +157,7 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
         response_json = response.json()
         revised_content.append(response_json['choices'][0]['message']['content'].strip())
 
-    return "\n.join(revised_content)
+    return "\n".join(revised_content)
 
 def insert_revised_text_to_html(original_html, revised_text):
     soup = BeautifulSoup(original_html, "html.parser")
