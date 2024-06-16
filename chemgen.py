@@ -41,7 +41,7 @@ def fetch_user_info(token):
         st.error("Failed to fetch user information.")
         return None
 
-def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats):
+def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats, min_chars, max_chars):
     full_prompt = user_prompt
     if keywords:
         full_prompt += f"\nKeywords: {keywords}"
@@ -49,6 +49,10 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
         full_prompt += f"\nAudience: {audience}"
     if specific_facts_stats:
         full_prompt += f"\nFacts/Stats: {specific_facts_stats}"
+    if min_chars:
+        full_prompt += f"\nMinimum characters: {min_chars}"
+    if max_chars:
+        full_prompt += f"\nMaximum characters: {max_chars}"
 
     messages = [{"role": "system", "content": full_prompt}]
     messages.append({"role": "user", "content": content})
@@ -124,6 +128,9 @@ def main():
 
         user_content = st.text_area("Paste your content here:")
         writing_styles = st.multiselect("Select Writing Styles:", list(placeholders.keys()))
+
+        min_chars = st.slider("Minimum Character Count:", 0, 5000, 0)
+        max_chars = st.slider("Maximum Character Count:", 0, 5000, 1000)
         
         style_weights = []
         for style in writing_styles:
@@ -131,7 +138,7 @@ def main():
             style_weights.append(weight)
         
         if st.button("Generate Content"):
-            revised_content = generate_article(user_content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats)
+            revised_content = generate_article(user_content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats, min_chars, max_chars)
             st.text(revised_content)
             st.download_button("Download Content", revised_content, "content.txt")
 
