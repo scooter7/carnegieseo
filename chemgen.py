@@ -61,7 +61,15 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
         messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style.split(' - ')[1]} manner."})
 
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
-    return response.choices[0].message["content"].strip()
+    generated_content = response.choices[0].message["content"].strip()
+
+    # Ensure the content respects the min and max character limits
+    if min_chars and len(generated_content) < int(min_chars):
+        generated_content += " " * (int(min_chars) - len(generated_content))
+    if max_chars and len(generated_content) > int(max_chars):
+        generated_content = generated_content[:int(max_chars)]
+
+    return generated_content
 
 def main():
     # Hide the Streamlit toolbar
@@ -129,8 +137,8 @@ def main():
         user_content = st.text_area("Paste your content here:")
         writing_styles = st.multiselect("Select Writing Styles:", list(placeholders.keys()))
 
-        min_chars = st.slider("Minimum Character Count:", 0, 5000, 0)
-        max_chars = st.slider("Maximum Character Count:", 0, 5000, 1000)
+        min_chars = st.text_input("Minimum Character Count:", "")
+        max_chars = st.text_input("Maximum Character Count:", "")
         
         style_weights = []
         for style in writing_styles:
