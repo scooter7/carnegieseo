@@ -7,6 +7,7 @@ from streamlit_oauth import OAuth2Component
 import pandas as pd
 import matplotlib.pyplot as plt
 import io
+import hashlib
 
 # Load Google Auth credentials from Streamlit secrets
 google_auth = {
@@ -144,6 +145,9 @@ else:
         sorted_colors = sorted(color_scores.items(), key=lambda item: item[1], reverse=True)
         return sorted_colors[:3]
 
+    def get_content_hash(content):
+        return hashlib.md5(content.encode()).hexdigest()
+
     st.title("Color Persona Text Analysis")
 
     # Hide the toolbar using CSS
@@ -170,8 +174,18 @@ else:
                 response = requests.get(url)
                 soup = BeautifulSoup(response.text, "html.parser")
                 content = soup.get_text()
+                content_hash = get_content_hash(content)
 
-                raw_analysis = analyze_text(content)
+                # Check if analysis for this content already exists
+                if 'analysis_cache' not in st.session_state:
+                    st.session_state.analysis_cache = {}
+
+                if content_hash in st.session_state.analysis_cache:
+                    raw_analysis = st.session_state.analysis_cache[content_hash]
+                else:
+                    raw_analysis = analyze_text(content)
+                    st.session_state.analysis_cache[content_hash] = raw_analysis
+
                 top_colors = match_text_to_color(raw_analysis)
 
                 url_result = {"URL": url}
