@@ -4,6 +4,9 @@ import requests
 from collections import Counter, defaultdict
 from bs4 import BeautifulSoup
 from streamlit_oauth import OAuth2Component
+import pandas as pd
+import matplotlib.pyplot as plt
+import io
 
 # Load Google Auth credentials from Streamlit secrets
 google_auth = {
@@ -154,7 +157,13 @@ else:
     url_input = st.text_area("Paste comma-separated URLs here:", height=100)
     urls = [url.strip() for url in url_input.split(',')]
 
+    results = st.session_state.get('results', [])
+    aggregate_scores = st.session_state.get('aggregate_scores', defaultdict(int))
+
     if st.button("Analyze URLs"):
+        results = []
+        aggregate_scores = defaultdict(int)
+
         for url in urls:
             try:
                 st.write(f"Analyzing URL: {url}")  # Debug statement
@@ -164,6 +173,12 @@ else:
 
                 raw_analysis = analyze_text(content)
                 top_colors = match_text_to_color(raw_analysis)
+
+                url_result = {"URL": url}
+                for i, (color, score) in enumerate(top_colors):
+                    url_result[f"Top Color {i + 1}"] = color
+                    aggregate_scores[color] += score
+                results.append(url_result)
 
                 st.write(f"Analysis for URL: {url}")
                 for color, score in top_colors:
@@ -177,3 +192,32 @@ else:
             except Exception as e:
                 st.write(f"Error analyzing URL: {url}")
                 st.write(f"Error message: {str(e)}")
+
+        st.session_state.results = results
+        st.session_state.aggregate_scores = aggregate_scores
+
+    if results:
+        df_results = pd.DataFrame(results)
+        st.dataframe(df_results)
+
+        # Downloadable table of results
+        csv = df_results.to_csv(index=False)
+        st.download_button(label="Download Table as CSV", data=csv, file_name="color_persona_analysis.csv", mime="text/csv")
+
+        # Aggregate color scores chart
+        st.subheader("Aggregate Color Scores")
+        colors = list(aggregate_scores.keys())
+        scores = [aggregate_scores[color] for color in colors]
+        plt.figure(figsize=(12, 6))
+        plt.bar(colors, scores, color='skyblue')
+        plt.xlabel("Color Categories")
+        plt.ylabel("Aggregate Scores")
+        plt.title("Aggregate Color Scores for All URLs")
+        plt.xticks(rotation=45)
+        st.pyplot(plt)
+
+        # Downloadable chart
+        buf = io.BytesIO()
+        plt.savefig(buf, format="png")
+        buf.seek(0)
+        st.download_button(label="Download Chart as PNG", data=buf, file_name="aggregate_color_scores.png", mime="image/png")
