@@ -168,7 +168,7 @@ else:
     st.markdown(hide_toolbar_css, unsafe_allow_html=True)
 
     url_input = st.text_area("Paste comma-separated URLs here:", height=100)
-    urls = [url.strip() for url_input.split(',')]
+    urls = [url.strip() for url in url_input.split(',')]
 
     results = st.session_state.get('results', [])
     aggregate_scores = st.session_state.get('aggregate_scores', defaultdict(int))
