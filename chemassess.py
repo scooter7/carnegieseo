@@ -97,11 +97,17 @@ else:
 
     def analyze_url_content(content):
         color_scores = defaultdict(int)
+        color_analysis = defaultdict(dict)
+
         for color, traits in placeholders.items():
             verbs_count = extract_words(content, traits['verbs'])
             adjectives_count = extract_words(content, traits['adjectives'])
-            color_scores[color] = sum(verbs_count.values()) + sum(adjectives_count.values())
-        return color_scores
+            total_count = sum(verbs_count.values()) + sum(adjectives_count.values())
+            color_scores[color] = total_count
+            color_analysis[color]['verbs'] = verbs_count
+            color_analysis[color]['adjectives'] = adjectives_count
+
+        return color_scores, color_analysis
 
     st.title("Color Persona Text Analysis")
 
@@ -136,10 +142,10 @@ else:
                     st.session_state.analysis_cache = {}
 
                 if content_hash in st.session_state.analysis_cache:
-                    color_scores = st.session_state.analysis_cache[content_hash]
+                    color_scores, color_analysis = st.session_state.analysis_cache[content_hash]
                 else:
-                    color_scores = analyze_url_content(content)
-                    st.session_state.analysis_cache[content_hash] = color_scores
+                    color_scores, color_analysis = analyze_url_content(content)
+                    st.session_state.analysis_cache[content_hash] = (color_scores, color_analysis)
 
                 sorted_colors = sorted(color_scores.items(), key=lambda item: item[1], reverse=True)
                 top_colors = sorted_colors[:3]
@@ -156,6 +162,14 @@ else:
                     st.write("Reasons:")
                     for belief in placeholders[color]['beliefs']:
                         st.write(f"- {belief}")
+                    st.write("Verbs found:")
+                    for verb, count in color_analysis[color]['verbs'].items():
+                        if count > 0:
+                            st.write(f"  {verb}: {count}")
+                    st.write("Adjectives found:")
+                    for adjective, count in color_analysis[color]['adjectives'].items():
+                        if count > 0:
+                            st.write(f"  {adjective}: {count}")
                 st.write("---")
             except Exception as e:
                 st.write(f"Error analyzing URL: {url}")
