@@ -133,13 +133,22 @@ else:
 
         return "\n".join(all_responses)
 
+    def extract_words(response_text, word_list):
+        extracted_words = []
+        for word in word_list:
+            if word in response_text:
+                extracted_words.append(word)
+        return extracted_words
+
     def match_text_to_color(text_analysis):
         word_counts = Counter(text_analysis.lower().split())
         color_scores = defaultdict(int)
 
         for color, traits in placeholders.items():
-            verb_score = sum(word_counts[verb] for verb in traits['verbs'] if verb in word_counts)
-            adjective_score = sum(word_counts[adjective] for adjective in traits['adjectives'] if adjective in word_counts)
+            extracted_verbs = extract_words(text_analysis, traits['verbs'])
+            extracted_adjectives = extract_words(text_analysis, traits['adjectives'])
+            verb_score = sum(word_counts[verb] for verb in extracted_verbs)
+            adjective_score = sum(word_counts[adjective] for adjective in extracted_adjectives)
             color_scores[color] += verb_score + adjective_score
 
         sorted_colors = sorted(color_scores.items(), key=lambda item: item[1], reverse=True)
@@ -159,7 +168,7 @@ else:
     st.markdown(hide_toolbar_css, unsafe_allow_html=True)
 
     url_input = st.text_area("Paste comma-separated URLs here:", height=100)
-    urls = [url.strip() for url in url_input.split(',')]
+    urls = [url.strip() for url_input.split(',')]
 
     results = st.session_state.get('results', [])
     aggregate_scores = st.session_state.get('aggregate_scores', defaultdict(int))
