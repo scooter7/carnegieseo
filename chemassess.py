@@ -1,4 +1,5 @@
 import streamlit as st
+import openai
 import requests
 from collections import Counter, defaultdict
 from bs4 import BeautifulSoup
@@ -61,7 +62,10 @@ else:
         st.write(f"Logged in as {user_info['email']}")
     else:
         st.error("Failed to retrieve user info. Please re-authenticate.")
-    
+
+    # Load your API key from Streamlit's secrets
+    openai.api_key = st.secrets["OPENAI_API_KEY"]
+
     # Define your color-based personas
     placeholders = {
         "Purple - caring, encouraging": {"verbs": ["assist", "befriend", "care", "collaborate", "connect", "embrace", "empower", "encourage", "foster", "give", "help", "nourish", "nurture", "promote", "protect", "provide", "serve", "share", "shepherd", "steward", "tend", "uplift", "value", "welcome"], "adjectives": ["caring", "encouraging", "attentive", "compassionate", "empathetic", "generous", "hospitable", "nurturing", "protective", "selfless", "supportive", "welcoming"], 
@@ -109,6 +113,23 @@ else:
 
         return color_scores, color_analysis
 
+    def analyze_text_detailed(content, summarized_placeholders):
+        prompt_base = f"Please analyze the following text and identify which verbs and adjectives from the following categories are present. Also, explain how these relate to the predefined beliefs of each category:\n\nCategories:\n" + "\n".join([f"{color}: Verbs({info['verbs']}), Adjectives({info['adjectives']})" for color, info in summarized_placeholders.items()]) + "\n\nText: "
+
+        text_chunks = [content[i:i+3000] for i in range(0, len(content), 3000)]
+        detailed_responses = []
+
+        for chunk in text_chunks:
+            prompt_text = prompt_base + chunk
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": prompt_text}],
+                max_tokens=500
+            )
+            detailed_responses.append(response.choices[0].message['content'])
+
+        return "\n".join(detailed_responses)
+
     st.title("Color Persona Text Analysis")
 
     # Hide the toolbar using CSS
@@ -147,6 +168,15 @@ else:
                     color_scores, color_analysis = analyze_url_content(content)
                     st.session_state.analysis_cache[content_hash] = (color_scores, color_analysis)
 
+                summarized_placeholders = {
+                    color: {
+                        'verbs': ', '.join(info['verbs']),
+                        'adjectives': ', '.join(info['adjectives'])
+                    } for color, info in placeholders.items()
+                }
+
+                detailed_analysis = analyze_text_detailed(content, summarized_placeholders)
+
                 sorted_colors = sorted(color_scores.items(), key=lambda item: item[1], reverse=True)
                 top_colors = sorted_colors[:3]
 
@@ -170,6 +200,8 @@ else:
                     for adjective, count in color_analysis[color]['adjectives'].items():
                         if count > 0:
                             st.write(f"  {adjective}: {count}")
+                st.write("Detailed Analysis:")
+                st.write(detailed_analysis)
                 st.write("---")
             except Exception as e:
                 st.write(f"Error analyzing URL: {url}")
