@@ -15,26 +15,14 @@ st.markdown(
         margin-bottom: 20px;
     }
     .logo-container img {
-        width: 600px;
+        width: 150px;
     }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-st.markdown(
-    """
-    <div class="logo-container">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/East_Carolina_University.svg/1280px-East_Carolina_University.svg.png" alt="Logo">
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-# Add colors
-st.markdown(
-    """
-    <style>
+    .app-container {
+        border-left: 5px solid #58258b;
+        border-right: 5px solid #58258b;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
     .stTextArea, .stTextInput, .stMultiSelect, .stSlider {
         color: #42145f;
     }
@@ -50,6 +38,17 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
+st.markdown(
+    """
+    <div class="logo-container">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/East_Carolina_University.svg/1280px-East_Carolina_University.svg.png" alt="Logo">
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown('<div class="app-container">', unsafe_allow_html=True)
 
 if "OPENAI_API_KEY" not in st.secrets:
     st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
@@ -144,6 +143,8 @@ def main():
         revised_content = response.choices[0].message["content"].strip()
         st.text(revised_content)
         st.download_button("Download Revised Content", revised_content, "revised_content_revision.txt")
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
