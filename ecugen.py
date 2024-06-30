@@ -109,7 +109,7 @@ def main():
     st.header("Content Generation Section")
 
     with st.expander("Input Fields"):
-        user_content = st.text_area("Paste your content here:")
+        user_content = st.text_area("Paste your content here (ONLY IF MODIFYING EXISTING CONTENT):")
         writing_styles = st.multiselect("Select Writing Styles:", list(placeholders.keys()))
         
         style_weights = []
