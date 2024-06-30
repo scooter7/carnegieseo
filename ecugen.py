@@ -51,11 +51,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-user_prompt = st.text_area("Specify a prompt about the type of content you want produced:", "")
-keywords = st.text_area("Optional: Specify specific keywords to be used:", "")
-audience = st.text_input("Optional: Define the audience for the generated content:", "")
-specific_facts_stats = st.text_area("Optional: Add specific facts or stats to be included:", "")
-
 if "OPENAI_API_KEY" not in st.secrets:
     st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
     sys.exit(1)
@@ -85,7 +80,7 @@ placeholders = {
      "beliefs": ['There’s no need to differentiate from others', 'All perspectives are equally worth holding', 'Will not risk offending anyone', 'Light opinions are held quite loosely', 'Information tells enough of a story']},
 }
 
-def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats):
+def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats, min_chars, max_chars):
     full_prompt = user_prompt
     if keywords:
         full_prompt += f"\nKeywords: {keywords}"
@@ -93,6 +88,10 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
         full_prompt += f"\nAudience: {audience}"
     if specific_facts_stats:
         full_prompt += f"\nFacts/Stats: {specific_facts_stats}"
+    if min_chars:
+        full_prompt += f"\nMinimum Character Count: {min_chars}"
+    if max_chars:
+        full_prompt += f"\nMaximum Character Count: {max_chars}"
 
     messages = [{"role": "system", "content": full_prompt}]
     messages.append({"role": "user", "content": content})
@@ -110,17 +109,23 @@ def main():
 
     with st.expander("Input Fields"):
         user_content = st.text_area("Paste your content here (ONLY IF MODIFYING EXISTING CONTENT):")
+        user_prompt = st.text_area("Specify a prompt about the type of content you want produced:", "")
+        keywords = st.text_area("Optional: Specify specific keywords to be used:", "")
+        audience = st.text_input("Optional: Define the audience for the generated content:", "")
+        specific_facts_stats = st.text_area("Optional: Add specific facts or stats to be included:", "")
+        min_chars = st.text_input("Optional: Specify a minimum character count:", "")
+        max_chars = st.text_input("Optional: Specify a maximum character count:", "")
         writing_styles = st.multiselect("Select Writing Styles:", list(placeholders.keys()))
-        
+
         style_weights = []
         for style in writing_styles:
             weight = st.slider(f"Weight for {style}:", 0, 100, 50)
             style_weights.append(weight)
-        
-        if st.button("Generate Content"):
-            revised_content = generate_article(user_content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats)
-            st.text(revised_content)
-            st.download_button("Download Content", revised_content, "content.txt")
+
+    if st.button("Generate Content"):
+        revised_content = generate_article(user_content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats, min_chars, max_chars)
+        st.text(revised_content)
+        st.download_button("Download Content", revised_content, "content.txt")
 
     st.markdown("---")
     st.header("Revision Section")
@@ -129,16 +134,16 @@ def main():
         pasted_content = st.text_area("Paste Generated Content Here (for further revisions):")
         revision_requests = st.text_area("Specify Revisions Here:")
 
-        if st.button("Revise Further"):
-            revision_messages = [
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": pasted_content},
-                {"role": "user", "content": revision_requests}
-            ]
-            response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=revision_messages)
-            revised_content = response.choices[0].message["content"].strip()
-            st.text(revised_content)
-            st.download_button("Download Revised Content", revised_content, "revised_content_revision.txt")
+    if st.button("Revise Further"):
+        revision_messages = [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": pasted_content},
+            {"role": "user", "content": revision_requests}
+        ]
+        response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=revision_messages)
+        revised_content = response.choices[0].message["content"].strip()
+        st.text(revised_content)
+        st.download_button("Download Revised Content", revised_content, "revised_content_revision.txt")
 
 if __name__ == "__main__":
     main()
