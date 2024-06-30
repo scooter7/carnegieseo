@@ -108,11 +108,11 @@ def main():
     st.header("Content Generation Section")
 
     with st.expander("Input Fields"):
-        user_content = st.text_area("Paste your content here (ONLY IF MODIFYING EXISTING CONTENT):")
         user_prompt = st.text_area("Specify a prompt about the type of content you want produced:", "")
         keywords = st.text_area("Optional: Specify specific keywords to be used:", "")
         audience = st.text_input("Optional: Define the audience for the generated content:", "")
         specific_facts_stats = st.text_area("Optional: Add specific facts or stats to be included:", "")
+        user_content = st.text_area("Paste your content here (ONLY IF MODIFYING EXISTING CONTENT):")
         min_chars = st.text_input("Optional: Specify a minimum character count:", "")
         max_chars = st.text_input("Optional: Specify a maximum character count:", "")
         writing_styles = st.multiselect("Select Writing Styles:", list(placeholders.keys()))
