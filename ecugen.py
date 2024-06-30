@@ -4,6 +4,53 @@ import sys
 import logging
 import random
 
+# Add logo
+st.markdown(
+    """
+    <style>
+    .logo-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    .logo-container img {
+        width: 150px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    """
+    <div class="logo-container">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/East_Carolina_University.svg/1280px-East_Carolina_University.svg.png" alt="Logo">
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# Add colors
+st.markdown(
+    """
+    <style>
+    .stTextArea, .stTextInput, .stMultiSelect, .stSlider {
+        color: #42145f;
+    }
+    .stButton button {
+        background-color: #fec923;
+        color: #42145f;
+    }
+    .stButton button:hover {
+        background-color: #42145f;
+        color: #fec923;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 user_prompt = st.text_area("Specify a prompt about the type of content you want produced:", "")
 keywords = st.text_area("Optional: Specify specific keywords to be used:", "")
 audience = st.text_input("Optional: Define the audience for the generated content:", "")
@@ -41,58 +88,57 @@ placeholders = {
 def generate_article(content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats):
     full_prompt = user_prompt
     if keywords:
-     full_prompt += f"\nKeywords: {keywords}"
+        full_prompt += f"\nKeywords: {keywords}"
     if audience:
-     full_prompt += f"\nAudience: {audience}"
+        full_prompt += f"\nAudience: {audience}"
     if specific_facts_stats:
-     full_prompt += f"\nFacts/Stats: {specific_facts_stats}"
+        full_prompt += f"\nFacts/Stats: {specific_facts_stats}"
 
     messages = [{"role": "system", "content": full_prompt}]
     messages.append({"role": "user", "content": content})
     for i, style in enumerate(writing_styles):
-     weight = style_weights[i]
-     messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style.split(' - ')[1]} manner."})
+        weight = style_weights[i]
+        messages.append({"role": "assistant", "content": f"Modify {weight}% of the content in a {style.split(' - ')[1]} manner."})
 
     response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
     return response.choices[0].message["content"].strip()
 
 def main():
-    
-    hide_toolbar_css = """
-        <style>
-            .css-14xtw13.e8zbici0 { display: none !important; }
-        </style>
-    """
-    
-    user_content = st.text_area("Paste your content here:")
-    writing_styles = st.multiselect("Select Writing Styles:", list(placeholders.keys()))
-    
-    style_weights = []
-    for style in writing_styles:
-     weight = st.slider(f"Weight for {style}:", 0, 100, 50)
-     style_weights.append(weight)
-    
-    if st.button("Generate Content"):
-     revised_content = generate_article(user_content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats)
-     st.text(revised_content)
-     st.download_button("Download Content", revised_content, "content.txt")
+
+    st.markdown("---")
+    st.header("Content Generation Section")
+
+    with st.expander("Input Fields"):
+        user_content = st.text_area("Paste your content here:")
+        writing_styles = st.multiselect("Select Writing Styles:", list(placeholders.keys()))
+        
+        style_weights = []
+        for style in writing_styles:
+            weight = st.slider(f"Weight for {style}:", 0, 100, 50)
+            style_weights.append(weight)
+        
+        if st.button("Generate Content"):
+            revised_content = generate_article(user_content, writing_styles, style_weights, user_prompt, keywords, audience, specific_facts_stats)
+            st.text(revised_content)
+            st.download_button("Download Content", revised_content, "content.txt")
 
     st.markdown("---")
     st.header("Revision Section")
 
-    pasted_content = st.text_area("Paste Generated Content Here (for further revisions):")
-    revision_requests = st.text_area("Specify Revisions Here:")
+    with st.expander("Revision Fields"):
+        pasted_content = st.text_area("Paste Generated Content Here (for further revisions):")
+        revision_requests = st.text_area("Specify Revisions Here:")
 
-    if st.button("Revise Further"):
-     revision_messages = [
-         {"role": "system", "content": "You are a helpful assistant."},
-         {"role": "user", "content": pasted_content},
-         {"role": "user", "content": revision_requests}
-     ]
-     response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=revision_messages)
-     revised_content = response.choices[0].message["content"].strip()
-     st.text(revised_content)
-     st.download_button("Download Revised Content", revised_content, "revised_content_revision.txt")
+        if st.button("Revise Further"):
+            revision_messages = [
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": pasted_content},
+                {"role": "user", "content": revision_requests}
+            ]
+            response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=revision_messages)
+            revised_content = response.choices[0].message["content"].strip()
+            st.text(revised_content)
+            st.download_button("Download Revised Content", revised_content, "revised_content_revision.txt")
 
 if __name__ == "__main__":
     main()
