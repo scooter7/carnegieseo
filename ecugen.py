@@ -15,7 +15,7 @@ st.markdown(
         margin-bottom: 20px;
     }
     .logo-container img {
-        width: 150px;
+        width: 600px;
     }
     </style>
     """,
