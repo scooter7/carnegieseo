@@ -11,7 +11,7 @@ import hashlib
 # Load your API key from Streamlit's secrets
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-client = openai
+client = OpenAI()
 
 # Define your color-based personas
 placeholders = {
