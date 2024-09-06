@@ -3,10 +3,11 @@ import openai
 import requests
 from collections import Counter, defaultdict
 from bs4 import BeautifulSoup
-from streamlit_oauth import OAuth2Component
 import pandas as pd
 import matplotlib.pyplot as plt
 import io
+import hashlib
+from streamlit_oauth import OAuth2Component
 
 # Load Google Auth credentials from Streamlit secrets
 google_auth = {
@@ -61,7 +62,7 @@ else:
         st.write(f"Logged in as {user_info['email']}")
     else:
         st.error("Failed to retrieve user info. Please re-authenticate.")
-    
+
     # Load your API key from Streamlit's secrets
     openai.api_key = st.secrets["OPENAI_API_KEY"]
 
@@ -83,42 +84,40 @@ else:
          "beliefs": ['Achievement is paramount', 'Highly tolerant of risk and stress', 'Seeks influence and accomplishments', 'Comfortable making decisions with incomplete information', 'Set strategic visions and lead the way']},
         "Pink - charming, elegant": {"verbs": ["arise", "aspire", "detail", "dream", "elevate", "enchant", "enrich", "envision", "exceed", "excel", "experience", "improve", "idealize", "imagine", "inspire", "perfect", "poise", "polish", "prepare", "refine", "uplift"], "adjectives": ["aesthetic", "charming", "classic", "dignified", "idealistic", "meticulous", "poised", "polished", "refined", "sophisticated", "elegant"], 
          "beliefs": ['Hold high regard for tradition and excellence', 'Dream up and pursue refinement, beauty, and vitality', 'Typically highly detailed and very observant', 'Mess and disorder only deflates their enthusiasm']},
-        "Silver - rebellious, daring": {"verbs": ["activate", "campaign", "challenge", "commit", "confront", "dare", "defy", "disrupting", "drive", "excite", "face", "ignite", "incite", "influence", "inspire", "inspirit", "motivate", "move", "push", "rebel", "reimagine", "revolutionize", "rise", "spark", "stir", "fight", "free"], "adjectives": ["bold", "daring", "fearless", "independent", "non-conformist", "radical", "rebellious", "resolute", "unconventional", "valiant"], 
+        "Silver - rebellious, daring": {"verbs": ["activate", "campaign", "challenge", "commit", "confront", "dare", "defy", "disrupt", "drive", "excite", "face", "ignite", "incite", "influence", "inspire", "inspirit", "motivate", "move", "push", "rebel", "reimagine", "revolutionize", "rise", "spark", "stir", "fight", "free"], "adjectives": ["bold", "daring", "fearless", "independent", "non-conformist", "radical", "rebellious", "resolute", "unconventional", "valiant"], 
          "beliefs": ['Rule breakers and establishment challengers', 'Have a low need to fit in with the pack', 'Value unconventional and independent thinking', 'Value freedom, boldness, and defiant ideas', 'Feel stifled by red tape and bureaucratic systems']},
         "Beige - dedicated, humble": {"verbs": ["dedicate", "humble", "collaborate", "empower", "inspire", "empassion", "transform"], "adjectives": ["dedicated", "collaborative", "consistent", "empowering", "enterprising", "humble", "inspiring", "passionate", "proud", "traditional", "transformative"], 
          "beliefs": ['There’s no need to differentiate from others', 'All perspectives are equally worth holding', 'Will not risk offending anyone', 'Light opinions are held quite loosely', 'Information tells enough of a story']},
     }
 
-    def chunk_text(text, max_tokens=3000):
-        words = text.split()
-        chunks = []
-        current_chunk = []
-        current_length = 0
+    def get_content_hash(content):
+        return hashlib.md5(content.encode()).hexdigest()
 
-        for word in words:
-            if current_length + len(word) + 1 > max_tokens:
-                chunks.append(" ".join(current_chunk))
-                current_chunk = []
-                current_length = 0
-            current_chunk.append(word)
-            current_length += len(word) + 1
+    def extract_words(text, words_list):
+        words_counter = Counter()
+        for word in words_list:
+            words_counter[word] = text.lower().split().count(word.lower())
+        return words_counter
 
-        if current_chunk:
-            chunks.append(" ".join(current_chunk))
+    def analyze_url_content(content):
+        color_scores = defaultdict(int)
+        color_analysis = defaultdict(dict)
 
-        return chunks
+        for color, traits in placeholders.items():
+            verbs_count = extract_words(content, traits['verbs'])
+            adjectives_count = extract_words(content, traits['adjectives'])
+            total_count = sum(verbs_count.values()) + sum(adjectives_count.values())
+            color_scores[color] = total_count
+            color_analysis[color]['verbs'] = verbs_count
+            color_analysis[color]['adjectives'] = adjectives_count
 
-    def analyze_text(text):
-        summarized_placeholders = {
-            color: {
-                'verbs': ', '.join(info['verbs']),
-                'adjectives': ', '.join(info['adjectives'])
-            } for color, info in placeholders.items()
-        }
+        return color_scores, color_analysis
+
+    def analyze_text_detailed(content, summarized_placeholders):
         prompt_base = f"Please analyze the following text and identify which verbs and adjectives from the following categories are present. Also, explain how these relate to the predefined beliefs of each category:\n\nCategories:\n" + "\n".join([f"{color}: Verbs({info['verbs']}), Adjectives({info['adjectives']})" for color, info in summarized_placeholders.items()]) + "\n\nText: "
 
-        text_chunks = chunk_text(text)
-        all_responses = []
+        text_chunks = [content[i:i+3000] for i in range(0, len(content), 3000)]
+        detailed_responses = []
 
         for chunk in text_chunks:
             prompt_text = prompt_base + chunk
@@ -127,22 +126,9 @@ else:
                 messages=[{"role": "user", "content": prompt_text}],
                 max_tokens=500
             )
-            raw_content = response.choices[0]['message']['content'].strip()
-            all_responses.append(raw_content)
+            detailed_responses.append(response.choices[0].message['content'])
 
-        return "\n".join(all_responses)
-
-    def match_text_to_color(text_analysis):
-        word_counts = Counter(text_analysis.lower().split())
-        color_scores = defaultdict(int)
-
-        for color, traits in placeholders.items():
-            verb_score = sum(word_counts[verb] for verb in traits['verbs'] if verb in word_counts)
-            adjective_score = sum(word_counts[adjective] for adjective in traits['adjectives'] if adjective in word_counts)
-            color_scores[color] += verb_score + adjective_score
-
-        sorted_colors = sorted(color_scores.items(), key=lambda item: item[1], reverse=True)
-        return sorted_colors[:3]
+        return "\n".join(detailed_responses)
 
     st.title("Color Persona Text Analysis")
 
@@ -170,9 +156,29 @@ else:
                 response = requests.get(url)
                 soup = BeautifulSoup(response.text, "html.parser")
                 content = soup.get_text()
+                content_hash = get_content_hash(content)
 
-                raw_analysis = analyze_text(content)
-                top_colors = match_text_to_color(raw_analysis)
+                # Check if analysis for this content already exists
+                if 'analysis_cache' not in st.session_state:
+                    st.session_state.analysis_cache = {}
+
+                if content_hash in st.session_state.analysis_cache:
+                    color_scores, color_analysis = st.session_state.analysis_cache[content_hash]
+                else:
+                    color_scores, color_analysis = analyze_url_content(content)
+                    st.session_state.analysis_cache[content_hash] = (color_scores, color_analysis)
+
+                summarized_placeholders = {
+                    color: {
+                        'verbs': ', '.join(info['verbs']),
+                        'adjectives': ', '.join(info['adjectives'])
+                    } for color, info in placeholders.items()
+                }
+
+                detailed_analysis = analyze_text_detailed(content, summarized_placeholders)
+
+                sorted_colors = sorted(color_scores.items(), key=lambda item: item[1], reverse=True)
+                top_colors = sorted_colors[:3]
 
                 url_result = {"URL": url}
                 for i, (color, score) in enumerate(top_colors):
@@ -186,8 +192,16 @@ else:
                     st.write("Reasons:")
                     for belief in placeholders[color]['beliefs']:
                         st.write(f"- {belief}")
+                    st.write("Verbs found:")
+                    for verb, count in color_analysis[color]['verbs'].items():
+                        if count > 0:
+                            st.write(f"  {verb}: {count}")
+                    st.write("Adjectives found:")
+                    for adjective, count in color_analysis[color]['adjectives'].items():
+                        if count > 0:
+                            st.write(f"  {adjective}: {count}")
                 st.write("Detailed Analysis:")
-                st.write(raw_analysis)
+                st.write(detailed_analysis)
                 st.write("---")
             except Exception as e:
                 st.write(f"Error analyzing URL: {url}")
