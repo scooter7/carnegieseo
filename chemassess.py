@@ -68,7 +68,7 @@ def analyze_text_detailed(content, summarized_placeholders):
 
     for chunk in text_chunks:
         prompt_text = prompt_base + chunk
-        response = client.chat.completions.create(
+        response = openai.client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt_text}],
             max_tokens=500
