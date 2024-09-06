@@ -11,6 +11,8 @@ import hashlib
 # Load your API key from Streamlit's secrets
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
+client = openai
+
 # Define your color-based personas
 placeholders = {
         "Purple - caring, encouraging": {"verbs": ["assist", "befriend", "care", "collaborate", "connect", "embrace", "empower", "encourage", "foster", "give", "help", "nourish", "nurture", "promote", "protect", "provide", "serve", "share", "shepherd", "steward", "tend", "uplift", "value", "welcome"], "adjectives": ["caring", "encouraging", "attentive", "compassionate", "empathetic", "generous", "hospitable", "nurturing", "protective", "selfless", "supportive", "welcoming"], 
