@@ -1,5 +1,5 @@
 import streamlit as st
-import openai
+rom openai import OpenAI
 import requests
 from collections import Counter, defaultdict
 from bs4 import BeautifulSoup
