@@ -8,6 +8,9 @@ else:
     st.error("Please set the OPENAI_API_KEY secret on the Streamlit dashboard.")
     sys.exit(1)
 
+# URL of the logo
+logo_url = "https://www.carnegiehighered.com/wp-content/uploads/2021/11/Twitter-Image-2-2021.png"
+
 placeholders = {
     "Purple - caring, encouraging": {
         "verbs": [
@@ -235,9 +238,6 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
         generated_content = generated_content[:int(max_chars)]
 
     return generated_content
-
-    # URL of the logo
-    logo_url = "https://www.carnegiehighered.com/wp-content/uploads/2021/11/Twitter-Image-2-2021.png"
 
 def main():
     hide_toolbar_css = """
