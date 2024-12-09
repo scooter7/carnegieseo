@@ -236,6 +236,9 @@ def generate_article(content, writing_styles, style_weights, user_prompt, keywor
 
     return generated_content
 
+    # URL of the logo
+    logo_url = "https://www.carnegiehighered.com/wp-content/uploads/2021/11/Twitter-Image-2-2021.png"
+
 def main():
     hide_toolbar_css = """
     <style>
@@ -244,7 +247,11 @@ def main():
     """
     st.markdown(hide_toolbar_css, unsafe_allow_html=True)
 
-    st.header("Content Generation with GPT-4o")
+    # Add logo at the top of the app
+    st.image(logo_url, width=200, caption="Carnegie Higher Ed")
+
+    # App Title
+    st.title("ChemGen")
     
     user_prompt = st.text_area("Specify a prompt about the type of content you want produced:", "")
     keywords = st.text_area("Optional: Specify specific keywords to be used:", "")
