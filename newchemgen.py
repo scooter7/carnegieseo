@@ -248,7 +248,7 @@ def main():
     st.markdown(hide_toolbar_css, unsafe_allow_html=True)
 
     # Add logo at the top of the app
-    st.image(logo_url, width=200, caption="Carnegie Higher Ed")
+    st.image(logo_url, width=800)
 
     # App Title
     st.title("ChemGen")
