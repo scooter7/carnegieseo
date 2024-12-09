@@ -67,3 +67,5 @@ streamlit-oauth
 transformers
 groq
 Groq
+ibxml2 
+libxslt
