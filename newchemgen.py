@@ -249,9 +249,6 @@ def main():
 
     # Add logo at the top of the app
     st.image(logo_url, width=800)
-
-    # App Title
-    st.title("ChemGen")
     
     user_prompt = st.text_area("Specify a prompt about the type of content you want produced:", "")
     keywords = st.text_area("Optional: Specify specific keywords to be used:", "")
